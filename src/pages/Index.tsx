@@ -9,14 +9,58 @@ import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoa
 import { studentsData, type Student } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
+import { Clock, Calendar, AlertCircle } from "lucide-react";
 
 const Index = () => {
   const [searchResult, setSearchResult] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isResultAvailable, setIsResultAvailable] = useState(false);
+  const [timeUntilAvailable, setTimeUntilAvailable] = useState<string>("");
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
+
+  // Set default theme to light mode
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (!savedTheme) {
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  // Check result availability
+  useEffect(() => {
+    const checkAvailability = () => {
+      const resultDate = new Date("2025-08-28T09:55:00");
+      const now = new Date();
+      
+      if (now >= resultDate) {
+        setIsResultAvailable(true);
+        setTimeUntilAvailable("");
+      } else {
+        setIsResultAvailable(false);
+        const timeDiff = resultDate.getTime() - now.getTime();
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (days > 0) {
+          setTimeUntilAvailable(`${days} day${days > 1 ? 's' : ''}, ${hours} hour${hours > 1 ? 's' : ''}`);
+        } else if (hours > 0) {
+          setTimeUntilAvailable(`${hours} hour${hours > 1 ? 's' : ''}, ${minutes} minute${minutes > 1 ? 's' : ''}`);
+        } else {
+          setTimeUntilAvailable(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+        }
+      }
+    };
+
+    checkAvailability();
+    const interval = setInterval(checkAvailability, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Simulate initial page load
   useEffect(() => {
@@ -27,6 +71,15 @@ const Index = () => {
   }, []);
 
   const handleSearch = async (searchTerm: string) => {
+    if (!isResultAvailable) {
+      toast({
+        title: "Results Not Available Yet",
+        description: "Results will be available after 28/08/2025 09:55 AM",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setHasSearched(false);
     
@@ -116,10 +169,21 @@ const Index = () => {
               kugoriental.com
             </p>
             
-            {/* Professional Badge */}
-            <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs sm:text-sm font-medium">Live Results Portal</span>
+            {/* Result Availability Status */}
+            <div className="mt-6 sm:mt-8">
+              {isResultAvailable ? (
+                <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-green-500/30">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs sm:text-sm font-medium text-green-100">Results Now Available</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-yellow-500/30">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-300" />
+                  <span className="text-xs sm:text-sm font-medium text-yellow-100">
+                    Available in {timeUntilAvailable}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -135,6 +199,33 @@ const Index = () => {
           {/* Search Section */}
           <section className="text-center">
             <SearchBox onSearch={handleSearch} isLoading={isLoading} />
+            
+            {/* Result Availability Notice */}
+            {!isResultAvailable && (
+              <div className="mt-6 max-w-2xl mx-auto">
+                <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card">
+                  <div className="flex items-center gap-3 mb-3">
+                    <AlertCircle className="h-5 w-5 text-warning" />
+                    <h3 className="text-sm sm:text-base font-semibold text-foreground">
+                      Results Not Yet Available
+                    </h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+                    The examination results will be published on <strong>28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong>09:55 AM</strong>.
+                  </p>
+                  <div className="flex items-center justify-center gap-4 text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>28/08/2025</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>09:55 AM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Loading State */}
