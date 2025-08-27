@@ -31,7 +31,8 @@ export const ThemeToggle = () => {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="rounded-full w-10 h-10 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-background/90 transition-all duration-300"
+      data-print-hide="true"
+      className="rounded-full w-10 h-10 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-background/90 transition-all duration-300 print:hidden"
       aria-label="Toggle theme"
     >
       {theme === "light" ? (

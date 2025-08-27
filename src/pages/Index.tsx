@@ -5,6 +5,7 @@ import { PrintPDFButtons } from "@/components/PrintPDFButtons";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton, SkeletonHeader, SkeletonCard } from "@/components/Skeleton";
+import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoader";
 import { studentsData, type Student } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -15,7 +16,7 @@ const Index = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { toast } = useToast();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   // Simulate initial page load
   useEffect(() => {
@@ -80,8 +81,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Professional Header */}
-      <header className="relative bg-gradient-primary text-academic-foreground">
+      <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
+        
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-white/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        </div>
         
         {/* Theme Toggle */}
         <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
@@ -107,6 +115,12 @@ const Index = () => {
             <p className="text-xs sm:text-sm md:text-base opacity-70 mt-1 sm:mt-2">
               kugoriental.com
             </p>
+            
+            {/* Professional Badge */}
+            <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-xs sm:text-sm font-medium">Live Results Portal</span>
+            </div>
           </div>
         </div>
         
@@ -128,17 +142,13 @@ const Index = () => {
             <section className="text-center py-8 sm:py-12 md:py-16">
               <div className="inline-flex items-center justify-center">
                 <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 md:p-12 shadow-elegant border border-border/50 animate-scale-in">
-                  <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-academic/30 border-t-academic rounded-full animate-spin"></div>
-                    <div className="space-y-2 text-center">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-display font-semibold text-foreground">
-                        Searching for Result
-                      </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Please wait while we fetch your examination results...
-                      </p>
-                    </div>
-                  </div>
+                  <AcademicLoader 
+                    message="Searching for Result" 
+                    size="lg" 
+                  />
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-4">
+                    Please wait while we fetch your examination results...
+                  </p>
                 </div>
               </div>
             </section>
@@ -166,8 +176,8 @@ const Index = () => {
                   How to Check Your Result
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
                       <span className="text-academic font-bold text-lg sm:text-xl">1</span>
                     </div>
                     <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Enter Details</h3>
@@ -176,8 +186,8 @@ const Index = () => {
                     </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
                       <span className="text-academic font-bold text-lg sm:text-xl">2</span>
                     </div>
                     <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Search Result</h3>
@@ -186,8 +196,8 @@ const Index = () => {
                     </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300 sm:col-span-2 lg:col-span-1">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 sm:col-span-2 lg:col-span-1 group">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
                       <span className="text-academic font-bold text-lg sm:text-xl">3</span>
                     </div>
                     <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">View & Download</h3>
@@ -196,6 +206,27 @@ const Index = () => {
                     </p>
                   </div>
                 </div>
+                
+                {/* Professional Features Highlight */}
+                {isDesktop && (
+                  <div className="mt-8 sm:mt-12 bg-gradient-to-r from-accent/10 to-secondary/10 rounded-xl p-6 border border-border/50">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Professional Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-academic rounded-full"></div>
+                        <span>High-quality PDF generation</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-academic rounded-full"></div>
+                        <span>Print-optimized layouts</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-academic rounded-full"></div>
+                        <span>Responsive design for all devices</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -215,6 +246,13 @@ const Index = () => {
             <p className="text-muted-foreground text-xs md:text-sm mt-1">
               Visit us at kugoriental.com
             </p>
+            
+            {/* Professional Footer Badge */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <div className="w-1 h-1 bg-academic rounded-full"></div>
+              <span>Professional Academic Portal</span>
+              <div className="w-1 h-1 bg-academic rounded-full"></div>
+            </div>
           </div>
         </div>
       </footer>
