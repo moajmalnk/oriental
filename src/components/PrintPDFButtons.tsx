@@ -50,20 +50,22 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+    <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 animate-fade-in">
       <Button
         onClick={handlePrint}
         variant="outline"
-        className="flex items-center gap-2"
+        size="lg"
+        className="flex items-center gap-3 h-12 px-6 text-base font-medium border-2 hover:bg-muted transition-all duration-300 rounded-xl"
       >
-        <Printer className="h-4 w-4" />
+        <Printer className="h-5 w-5" />
         Print Result
       </Button>
       <Button
         onClick={handleDownloadPDF}
-        className="flex items-center gap-2 bg-academic hover:bg-academic/90"
+        size="lg"
+        className="flex items-center gap-3 h-12 px-6 text-base font-medium bg-gradient-primary hover:shadow-elegant transition-all duration-300 rounded-xl"
       >
-        <Download className="h-4 w-4" />
+        <Download className="h-5 w-5" />
         Download PDF
       </Button>
     </div>

@@ -44,6 +44,17 @@ All colors MUST be HSL.
 
     --academic: 30 64 175;
     --academic-foreground: 255 255 255;
+    
+    --academic-light: 59 130 246;
+    --academic-dark: 29 78 216;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(var(--academic)), hsl(var(--academic-light)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(248 250 252));
+    
+    --shadow-elegant: 0 10px 25px -5px hsl(var(--academic) / 0.1), 0 8px 10px -6px hsl(var(--academic) / 0.1);
+    --shadow-card: 0 4px 6px -1px hsl(220 22% 25% / 0.1), 0 2px 4px -2px hsl(220 22% 25% / 0.1);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
 
