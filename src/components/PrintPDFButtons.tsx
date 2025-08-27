@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Student } from "@/data/studentsData";
@@ -68,6 +68,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         description: "Please wait while we create your result document...",
       });
 
+      // Wait for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -76,6 +79,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         logging: false,
         width: element.scrollWidth,
         height: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
 
       const imgData = canvas.toDataURL("image/png", 1.0);
@@ -86,38 +93,51 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       
-      // Calculate optimal scaling
-      const ratio = Math.min(
-        (pdfWidth - 20) / imgWidth, 
-        (pdfHeight - 40) / imgHeight
-      );
+      // Calculate optimal scaling with better margins
+      const marginLeft = 15; // Left margin in mm
+      const marginRight = 15; // Right margin in mm
+      const marginTop = 40; // Top margin in mm
+      const marginBottom = 20; // Bottom margin in mm
       
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 35;
+      const availableWidth = pdfWidth - marginLeft - marginRight;
+      const availableHeight = pdfHeight - marginTop - marginBottom;
+      
+      // Calculate scaling ratio to fit content within available space
+      const scaleX = availableWidth / imgWidth;
+      const scaleY = availableHeight / imgHeight;
+      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+      
+      // Calculate final dimensions
+      const finalWidth = imgWidth * scale;
+      const finalHeight = imgHeight * scale;
+      
+      // Center the image horizontally and position vertically
+      const imgX = marginLeft + (availableWidth - finalWidth) / 2;
+      const imgY = marginTop;
 
-      // Add professional header
-      pdf.setFontSize(20);
+      // Add professional header with better spacing
+      pdf.setFontSize(18);
       pdf.setTextColor(21, 92, 28); // Dark green color
       pdf.setFont("helvetica", "bold");
       pdf.text("KUG ORIENTAL ACADEMY", pdfWidth / 2, 15, { align: "center" });
       
-      pdf.setFontSize(16);
+      pdf.setFontSize(14);
       pdf.setTextColor(129, 57, 39); // Dark reddish-brown
       pdf.text("BATCH 15 RESULT", pdfWidth / 2, 25, { align: "center" });
       
-      // Add student info
-      pdf.setFontSize(12);
+      // Add student info with better positioning
+      pdf.setFontSize(11);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Student: ${student.Name}`, 20, 30);
-      pdf.text(`Registration: ${student.RegiNo}`, 20, 35);
+      pdf.text(`Student: ${student.Name}`, marginLeft, 32);
+      pdf.text(`Registration: ${student.RegiNo}`, marginLeft, 37);
       
       // Add the result table image
-      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.addImage(imgData, "PNG", imgX, imgY, finalWidth, finalHeight);
       
-      // Add footer
-      const footerY = pdfHeight - 10;
-      pdf.setFontSize(10);
+      // Add footer with better positioning
+      const footerY = pdfHeight - 15;
+      pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
       pdf.setFont("helvetica", "italic");
       pdf.text("Generated on: " + new Date().toLocaleDateString(), pdfWidth / 2, footerY, { align: "center" });
@@ -140,14 +160,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
     } finally {
       setIsGeneratingPDF(false);
     }
-  };
-
-  const handleViewPDF = async () => {
-    // This could open a preview modal or generate a temporary PDF for viewing
-    toast({
-      title: "PDF Preview",
-      description: "PDF preview feature coming soon!",
-    });
   };
 
   return (
@@ -198,19 +210,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             </>
           )}
         </Button>
-
-        {/* View PDF Button (Optional) */}
-        {!isMobile && (
-          <Button
-            onClick={handleViewPDF}
-            variant="ghost"
-            size="lg"
-            className="flex items-center gap-3 h-12 px-6 text-base font-medium hover:bg-accent/10 transition-all duration-300 rounded-xl"
-          >
-            <FileText className="h-5 w-5" />
-            Preview PDF
-          </Button>
-        )}
       </div>
 
       {/* Professional Info Section */}
@@ -219,7 +218,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           <h3 className="text-sm sm:text-base font-semibold text-foreground mb-2">
             Document Options
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
             <div className="flex items-center justify-center gap-2">
               <Printer className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Print for physical copy</span>
@@ -228,12 +227,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               <Download className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Download for digital storage</span>
             </div>
-            {!isMobile && (
-              <div className="flex items-center justify-center gap-2">
-                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Preview before downloading</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
