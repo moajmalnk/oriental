@@ -3,6 +3,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { ResultTable } from "@/components/ResultTable";
 import { PrintPDFButtons } from "@/components/PrintPDFButtons";
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { studentsData, type Student } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,17 +41,30 @@ const Index = () => {
       {/* Professional Header */}
       <header className="relative bg-gradient-primary text-academic-foreground">
         <div className="absolute inset-0 bg-black/10"></div>
+        
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle />
+        </div>
+        
         <div className="relative container mx-auto px-4 py-12 md:py-16 lg:py-20">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 md:mb-6">
-              BATCH 15 RESULT
+              KUG ORIENTAL ACADEMY
             </h1>
             <div className="w-32 h-1 bg-white/30 rounded mx-auto mb-6"></div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-semibold mb-4 md:mb-6">
+              BATCH 15 RESULT
+            </h2>
+            <div className="w-24 h-1 bg-white/20 rounded mx-auto mb-6"></div>
             <p className="text-lg md:text-xl lg:text-2xl opacity-90 font-medium">
               Result Publish Time – 28/08/2025 10:00 AM
             </p>
             <p className="text-base md:text-lg opacity-80 mt-3">
               Official Student Result Portal
+            </p>
+            <p className="text-sm md:text-base opacity-70 mt-2">
+              kugoriental.com
             </p>
           </div>
         </div>
@@ -111,7 +125,7 @@ const Index = () => {
                   How to Check Your Result
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card-hover hover:shadow-elegant transition-all duration-300">
+                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300">
                     <div className="w-12 h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <span className="text-academic font-bold text-xl">1</span>
                     </div>
@@ -121,7 +135,7 @@ const Index = () => {
                     </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card-hover hover:shadow-elegant transition-all duration-300">
+                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300">
                     <div className="w-12 h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <span className="text-academic font-bold text-xl">2</span>
                     </div>
@@ -131,7 +145,7 @@ const Index = () => {
                     </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card-hover hover:shadow-elegant transition-all duration-300">
+                  <div className="bg-gradient-card rounded-xl p-6 border border-border/50 shadow-card hover:shadow-elegant transition-all duration-300">
                     <div className="w-12 h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <span className="text-academic font-bold text-xl">3</span>
                     </div>
@@ -152,10 +166,13 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="text-center">
             <p className="text-muted-foreground text-sm md:text-base">
-              © 2025 Academic Institution. All rights reserved.
+              © 2025 KUG Oriental Academy. All rights reserved.
             </p>
             <p className="text-muted-foreground text-xs md:text-sm mt-2">
               For technical support, contact the examination department.
+            </p>
+            <p className="text-muted-foreground text-xs md:text-sm mt-1">
+              Visit us at kugoriental.com
             </p>
           </div>
         </div>
