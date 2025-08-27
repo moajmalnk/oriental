@@ -74,7 +74,7 @@ const Index = () => {
     if (!isResultAvailable) {
       toast({
         title: "Results Not Available Yet",
-        description: "Results will be available after 28/08/2025 09:55 AM",
+        description: "Results will be available after 28/08/2025 10:00 AM",
         variant: "destructive",
       });
       return;
@@ -211,7 +211,7 @@ const Index = () => {
                     </h3>
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground mb-3">
-                    The examination results will be published on <strong>28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong>09:55 AM</strong>.
+                    The examination results will be published on <strong>28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong>10:00 AM</strong>.
                   </p>
                   <div className="flex items-center justify-center gap-4 text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -220,7 +220,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      <span>09:55 AM</span>
+                      <span>10:00 AM</span>
                     </div>
                   </div>
                 </div>
