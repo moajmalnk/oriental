@@ -1,116 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prague:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system for KUG Oriental Academy. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 248 250 252;
-    --foreground: 15 23 42;
+    /* Light Mode Colors */
+    --background: 60 9% 98%; /* Light cream background */
+    --foreground: 15 58% 32%; /* Dark reddish-brown text */
 
-    --card: 255 255 255;
-    --card-foreground: 15 23 42;
+    --card: 0 0% 100%; /* Pure white cards */
+    --card-foreground: 15 58% 32%;
 
-    --popover: 255 255 255;
-    --popover-foreground: 15 23 42;
+    --popover: 0 0% 100%;
+    --popover-foreground: 15 58% 32%;
 
-    --primary: 37 99 235;
-    --primary-foreground: 248 250 252;
+    --primary: 32 58% 63%; /* Light tan/camel */
+    --primary-foreground: 15 58% 32%;
 
-    --secondary: 241 245 249;
-    --secondary-foreground: 51 65 85;
+    --secondary: 95 16% 48%; /* Sage green */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 248 250 252;
-    --muted-foreground: 100 116 139;
+    --muted: 60 9% 98%;
+    --muted-foreground: 15 58% 32%;
 
-    --accent: 239 246 255;
-    --accent-foreground: 30 64 175;
+    --accent: 95 55% 23%; /* Dark forest green */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 226 232 240;
-    --input: 226 232 240;
-    --ring: 37 99 235;
+    --border: 32 58% 63%; /* Light tan border */
+    --input: 32 58% 63%;
+    --ring: 95 55% 23%;
 
-    --success: 34 197 94;
-    --success-foreground: 255 255 255;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
 
-    --warning: 251 146 60;
-    --warning-foreground: 255 255 255;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --academic: 30 64 175;
-    --academic-foreground: 255 255 255;
+    --academic: 95 55% 23%; /* Dark forest green for academic elements */
+    --academic-foreground: 0 0% 100%;
     
-    --academic-light: 59 130 246;
-    --academic-dark: 29 78 216;
+    --academic-light: 95 16% 48%; /* Sage green */
+    --academic-dark: 95 55% 23%; /* Dark forest green */
     
     --gradient-primary: linear-gradient(135deg, hsl(var(--academic)), hsl(var(--academic-light)));
-    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(248 250 252));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(60 9% 98%));
     
     --shadow-elegant: 0 10px 25px -5px hsl(var(--academic) / 0.1), 0 8px 10px -6px hsl(var(--academic) / 0.1);
-    --shadow-card: 0 4px 6px -1px hsl(220 22% 25% / 0.1), 0 2px 4px -2px hsl(220 22% 25% / 0.1);
+    --shadow-card: 0 4px 6px -1px hsl(15 58% 32% / 0.1), 0 2px 4px -2px hsl(15 58% 32% / 0.1);
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 60 9% 98%;
+    --sidebar-foreground: 15 58% 32%;
+    --sidebar-primary: 95 55% 23%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 58% 63%;
+    --sidebar-accent-foreground: 15 58% 32%;
+    --sidebar-border: 32 58% 63%;
+    --sidebar-ring: 95 55% 23%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode Colors */
+    --background: 15 58% 12%; /* Very dark reddish-brown */
+    --foreground: 32 58% 63%; /* Light tan text */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 15 58% 15%; /* Slightly lighter dark reddish-brown */
+    --card-foreground: 32 58% 63%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 15 58% 15%;
+    --popover-foreground: 32 58% 63%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 32 58% 63%; /* Light tan/camel */
+    --primary-foreground: 15 58% 12%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 95 16% 48%; /* Sage green */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 15 58% 20%;
+    --muted-foreground: 32 58% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 95 55% 23%; /* Dark forest green */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 32 58% 40%; /* Darker tan border */
+    --input: 32 58% 40%;
+    --ring: 95 55% 23%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --academic: 95 55% 23%; /* Dark forest green for academic elements */
+    --academic-foreground: 0 0% 100%;
+    
+    --academic-light: 95 16% 48%; /* Sage green */
+    --academic-dark: 95 55% 23%; /* Dark forest green */
+    
+    --gradient-primary: linear-gradient(135deg, hsl(var(--academic)), hsl(var(--academic-light)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(15 58% 12%));
+    
+    --shadow-elegant: 0 10px 25px -5px hsl(var(--academic) / 0.3), 0 8px 10px -6px hsl(var(--academic) / 0.3);
+    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 15 58% 15%;
+    --sidebar-foreground: 32 58% 63%;
+    --sidebar-primary: 95 55% 23%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 32 58% 40%;
+    --sidebar-accent-foreground: 32 58% 63%;
+    --sidebar-border: 32 58% 40%;
+    --sidebar-ring: 95 55% 23%;
   }
 }
 
@@ -120,6 +141,19 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+/* Custom font classes */
+.font-display {
+  font-family: 'Prague', serif;
+}
+
+.font-body {
+  font-family: 'Poppins', sans-serif;
 }
