@@ -33,7 +33,8 @@ const Index = () => {
   // Check result availability
   useEffect(() => {
     const checkAvailability = () => {
-      const resultDate = new Date("2025-08-28T09:55:00");
+      // DCP results release schedule: 03/10/2025 at 10:00 AM (local time)
+      const resultDate = new Date("2025-10-03T10:00:00");
       const now = new Date();
       
       if (now >= resultDate) {
@@ -71,15 +72,6 @@ const Index = () => {
   }, []);
 
   const handleSearch = async (searchTerm: string) => {
-    if (!isResultAvailable) {
-      toast({
-        title: "Results Not Available Yet",
-        description: "Results will be available after 28/08/2025 10:00 AM",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     setHasSearched(false);
     
@@ -95,6 +87,17 @@ const Index = () => {
       student => student.RegiNo.toLowerCase() === searchTerm.toLowerCase()
     );
     
+    // Gate only DCP results by time; PDA always allowed
+    if (dcpStudent && !isResultAvailable) {
+      setIsLoading(false);
+      toast({
+        title: "DCP Results Not Available Yet",
+        description: "DCP results will be available after 03/10/2025 10:00 AM",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const found = pdaStudent || dcpStudent;
     
     setSearchResult(found || null);
@@ -196,7 +199,7 @@ const Index = () => {
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-emerald-400" aria-hidden="true" />
                     <span className="text-base font-semibold text-emerald-100 tracking-wide">
-                      Results Now Available
+                      DCP Results Now Available
                     </span>
                   </div>
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" aria-hidden="true"></div>
@@ -206,7 +209,7 @@ const Index = () => {
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-amber-400" aria-hidden="true" />
                     <span className="text-base font-semibold text-amber-100 tracking-wide">
-                      Available in {timeUntilAvailable}
+                      DCP available in {timeUntilAvailable}
                     </span>
                   </div>
                 </div>
@@ -227,7 +230,7 @@ const Index = () => {
           <section className="text-center" aria-label="Student Result Search">
             <SearchBox onSearch={handleSearch} isLoading={isLoading} />
             
-            {/* Result Availability Notice */}
+            {/* DCP Result Availability Notice */}
             {!isResultAvailable && (
               <div className="mt-8 max-w-3xl mx-auto">
                 <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-elegant backdrop-blur-sm">
@@ -236,16 +239,16 @@ const Index = () => {
                       <AlertCircle className="h-6 w-6 text-warning" />
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">
-                      Results Not Yet Available
+                      DCP Results Not Yet Available
                     </h3>
                   </div>
                   <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
-                    The examination results will be published on <strong className="text-foreground">28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong className="text-foreground">10:00 AM</strong>.
+                    DCP examination results will be published on <strong className="text-foreground">03/10/2025 at 10:00 AM</strong> and will be available for viewing after <strong className="text-foreground">10:00 AM</strong>. DIPLOMA IN COUNSELLING PSYCHOLOGY results are available now.
                   </p>
                   <div className="flex items-center justify-center gap-6 text-sm sm:text-base text-muted-foreground">
                     <div className="flex items-center gap-2 bg-accent/5 rounded-lg px-4 py-2">
                       <Calendar className="h-4 w-4 text-accent" />
-                      <span className="font-medium">28/08/2025</span>
+                      <span className="font-medium">03/10/2025</span>
                     </div>
                     <div className="flex items-center gap-2 bg-accent/5 rounded-lg px-4 py-2">
                       <Clock className="h-4 w-4 text-accent" />
