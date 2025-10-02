@@ -139,7 +139,7 @@ export const ResultTable = ({ student }: ResultTableProps) => {
               <div className="w-16 sm:w-24 h-1 bg-white/30 rounded mx-auto"></div>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               <div className="space-y-2">
                 <p className="text-academic-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wide">
                   Register Number
@@ -148,7 +148,7 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                   {student.RegiNo}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-right">
                 <p className="text-academic-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wide">
                   Student Name
                 </p>

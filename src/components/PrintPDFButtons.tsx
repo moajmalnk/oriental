@@ -107,7 +107,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Add MARK LIST title
       pdf.setFontSize(24);
       pdf.setTextColor(0, 0, 0);
-      pdf.setFont("helvetica", "bold");
+      pdf.setFont("times", "bold");
       pdf.text("MARK LIST", pdfWidth / 2, 85, { align: "center" });
 
       // Add student information section
@@ -143,7 +143,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], tableStartY - 5, colWidths[2], 8, 1.5, 1.5);
       pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], tableStartY - 5, colWidths[3], 8, 1.5, 1.5);
       
-      pdf.text("SUBJECT-THEORY", tableStartX + 1, tableStartY);
+      pdf.text("SUBJECT-THEORY", tableStartX + 3, tableStartY);
       pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, tableStartY, { align: "center" });
       pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, tableStartY, { align: "center" });
       pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, tableStartY, { align: "center" });
@@ -172,7 +172,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.name, tableStartX + 3, rowY);
           pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
           pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
           pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
@@ -187,7 +187,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
         pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
         pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
         pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
@@ -225,7 +225,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.name, tableStartX + 3, rowY);
           pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
           pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
           pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
@@ -240,7 +240,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
         pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
         pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
         pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
@@ -286,7 +286,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
       pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
       
-      pdf.text("SUBJECT-THEORY", tableStartX + 1, currentY);
+      pdf.text("SUBJECT-THEORY", tableStartX + 3, currentY);
       pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
       pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
       pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
@@ -314,7 +314,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.name, tableStartX + 3, rowY);
           pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
           pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
           pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
@@ -329,7 +329,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
         pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
         pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
         pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
@@ -366,7 +366,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.name, tableStartX + 3, rowY);
           pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
           pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
           pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
@@ -381,7 +381,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
         pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
         pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
         pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
         pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
@@ -400,23 +400,27 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         pdf.text("60", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" }); // Total
       }
 
-      // Add footer fields with proper alignment
+      // Add footer fields centered within two equal halves of the page
       currentY += 10;
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      
-      // Display certificate number if available
+
+      // Calculate centers for left and right halves
+      const leftCenterX = pdfWidth / 4;
+      const rightCenterX = (pdfWidth * 3) / 4;
+
+      // Display certificate number centered in left half
       const certificateNo = student.CertificateNo || "Not Assigned";
-      pdf.text(`CERTIFICATE NO: ${certificateNo}`, 20, currentY);
-      
-      // Display date based on course type
+      pdf.text(`CERTIFICATE NO: ${certificateNo}`, leftCenterX, currentY, { align: "center" });
+
+      // Display date centered in right half
       let displayDate;
       if (isDCPStudent(student)) {
-        displayDate = "18/10/2025"; // Default date for DCP
+        displayDate = "03/10/2025"; // Default date for DCP
       } else {
         displayDate = "01/09/2025"; // Default date for PDA
       }
-      pdf.text(`DATE: ${displayDate}`, pdfWidth - 60, currentY);
+      pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, { align: "center" });
 
       // Add KUG seal at the right bottom corner without stretching
       try {
@@ -432,7 +436,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
             
             // Position at right bottom corner with 10mm margins
-            const sealX = pdfWidth - sealWidth - 110; // 10mm from right edge
+            const sealX = pdfWidth - sealWidth - 100; // 10mm from right edge
             const sealY = pdfHeight - sealHeight - -1; // 4mm from bottom edge
             
             // Add the seal image with original aspect ratio
@@ -486,8 +490,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           ) : (
             <>
               <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Download PDF</span>
-              <span className="sm:hidden">PDF</span>
+              <span className="hidden sm:inline">Download Mark List</span>
+              <span className="sm:hidden">Mark List</span>
             </>
           )}
         </Button>
