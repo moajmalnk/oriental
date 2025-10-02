@@ -398,7 +398,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Add footer fields with proper alignment
-      currentY += 30;
+      currentY += 10;
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       
@@ -406,13 +406,14 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const certificateNo = student.CertificateNo || "Not Assigned";
       pdf.text(`CERTIFICATE NO: ${certificateNo}`, 20, currentY);
       
-      // Display current date
-      const currentDate = new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-      pdf.text(`DATE: ${currentDate}`, pdfWidth - 60, currentY);
+      // Display date based on course type
+      let displayDate;
+      if (isDCPStudent(student)) {
+        displayDate = "18/10/2025"; // Default date for DCP
+      } else {
+        displayDate = "01/09/2025"; // Default date for PDA
+      }
+      pdf.text(`DATE: ${displayDate}`, pdfWidth - 60, currentY);
 
       // Add KUG seal at the right bottom corner without stretching
       try {
