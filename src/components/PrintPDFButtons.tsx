@@ -124,19 +124,26 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Add marks table
       const tableStartY = startY + 40;
       const colWidths = [80, 25, 25, 25]; // SUBJECT, TE, CE, TOTAL
+      const totalTableWidth = colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]; // Total table width
+      const tableStartX = (pdfWidth - totalTableWidth) / 2; // Center the table
       
       // Table header
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.rect(20, tableStartY - 5, colWidths[0], 8);
-      pdf.rect(20 + colWidths[0], tableStartY - 5, colWidths[1], 8);
-      pdf.rect(20 + colWidths[0] + colWidths[1], tableStartY - 5, colWidths[2], 8);
-      pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], tableStartY - 5, colWidths[3], 8);
       
-      pdf.text("SUBJECT-THEORY", 21, tableStartY);
-      pdf.text("TE", 21 + colWidths[0], tableStartY);
-      pdf.text("CE", 21 + colWidths[0] + colWidths[1], tableStartY);
-      pdf.text("TOTAL", 21 + colWidths[0] + colWidths[1] + colWidths[2], tableStartY);
+      // Set border color to #a16a2b
+      pdf.setDrawColor(161, 106, 43);
+      
+      // Draw rounded rectangles for table header
+      pdf.roundedRect(tableStartX, tableStartY - 5, colWidths[0], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0], tableStartY - 5, colWidths[1], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], tableStartY - 5, colWidths[2], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], tableStartY - 5, colWidths[3], 8, 1.5, 1.5);
+      
+      pdf.text("SUBJECT-THEORY", tableStartX + 1, tableStartY);
+      pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, tableStartY, { align: "center" });
+      pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, tableStartY, { align: "center" });
+      pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, tableStartY, { align: "center" });
 
       let currentY = tableStartY + 8;
 
@@ -155,31 +162,45 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
           
-          // Draw cell borders
-          pdf.rect(20, rowY - 5, colWidths[0], 8);
-          pdf.rect(20 + colWidths[0], rowY - 5, colWidths[1], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8);
+          // Draw cell borders with rounded corners
+          pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, 21, rowY);
-          pdf.text(subject.te?.toString() || "-", 21 + colWidths[0], rowY);
-          pdf.text(subject.ce?.toString() || "-", 21 + colWidths[0] + colWidths[1], rowY);
-          pdf.text(subject.total?.toString() || "-", 21 + colWidths[0] + colWidths[1] + colWidths[2], rowY);
+          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
+          pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
+          pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
         });
 
         currentY += (subjects.length * 8) + 5;
 
-        // Practical section
-        pdf.rect(20, currentY - 5, colWidths[0], 8);
-        pdf.rect(20 + colWidths[0], currentY - 5, colWidths[1], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8);
+        // Practical section with merged first column
+        // Draw the merged PRACTICAL cell spanning 2 rows
+        pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", 21, currentY);
-        pdf.text(student.DCP004_PE?.toString() || "-", 21 + colWidths[0], currentY);
-        pdf.text(student.DCP004_PW?.toString() || "-", 21 + colWidths[0] + colWidths[1], currentY);
-        pdf.text(student.DCP004_Total?.toString() || "-", 21 + colWidths[0] + colWidths[1] + colWidths[2], currentY);
+        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+        
+        currentY += 8;
+        
+        // Practical data row
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.text(student.DCP004_PE?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text(student.DCP004_PW?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text(student.DCP004_Total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
 
       } else {
         // Regular PDA Subjects
@@ -194,31 +215,45 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
           
-          // Draw cell borders
-          pdf.rect(20, rowY - 5, colWidths[0], 8);
-          pdf.rect(20 + colWidths[0], rowY - 5, colWidths[1], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8);
+          // Draw cell borders with rounded corners
+          pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, 21, rowY);
-          pdf.text(subject.te?.toString() || "-", 21 + colWidths[0], rowY);
-          pdf.text(subject.ce?.toString() || "-", 21 + colWidths[0] + colWidths[1], rowY);
-          pdf.text(subject.total?.toString() || "-", 21 + colWidths[0] + colWidths[1] + colWidths[2], rowY);
+          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
+          pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
+          pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
         });
 
         currentY += (subjects.length * 8) + 5;
 
-        // Practical section
-        pdf.rect(20, currentY - 5, colWidths[0], 8);
-        pdf.rect(20 + colWidths[0], currentY - 5, colWidths[1], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8);
+        // Practical section with merged first column
+        // Draw the merged PRACTICAL cell spanning 2 rows
+        pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", 21, currentY);
-        pdf.text(student.Practical_Viva?.toString() || "-", 21 + colWidths[0], currentY);
-        pdf.text(student.Practical_Project?.toString() || "-", 21 + colWidths[0] + colWidths[1], currentY);
-        pdf.text(student.Practical_Total?.toString() || "-", 21 + colWidths[0] + colWidths[1] + colWidths[2], currentY);
+        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+        
+        currentY += 8;
+        
+        // Practical data row
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.text(student.Practical_Viva?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text(student.Practical_Project?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text(student.Practical_Total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
       }
 
       // Add abbreviation
@@ -226,7 +261,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(8);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
-      pdf.text("Abbreviation: CE-Continuous Evaluation ,TE- Terminal Evaluation", pdfWidth / 2, currentY, { align: "center" });
+      pdf.text("Abbreviation: CE-Continuous Evaluation, TE-Terminal Evaluation, P.E-Practical Evaluation, P.W-Practical Work", pdfWidth / 2, currentY, { align: "center" });
 
       // Add maximum scores section
       currentY += 15;
@@ -239,15 +274,19 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Maximum scores table header
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.rect(20, currentY - 5, colWidths[0], 8);
-      pdf.rect(20 + colWidths[0], currentY - 5, colWidths[1], 8);
-      pdf.rect(20 + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8);
-      pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8);
       
-      pdf.text("SUBJECT-THEORY", 21, currentY);
-      pdf.text("TE", 21 + colWidths[0], currentY);
-      pdf.text("CE", 21 + colWidths[0] + colWidths[1], currentY);
-      pdf.text("TOTAL", 21 + colWidths[0] + colWidths[1] + colWidths[2], currentY);
+      // Ensure border color is set for maximum scores table
+      pdf.setDrawColor(161, 106, 43);
+      
+      pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
+      
+      pdf.text("SUBJECT-THEORY", tableStartX + 1, currentY);
+      pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+      pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+      pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
 
       currentY += 8;
 
@@ -265,31 +304,45 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
           
-          // Draw cell borders
-          pdf.rect(20, rowY - 5, colWidths[0], 8);
-          pdf.rect(20 + colWidths[0], rowY - 5, colWidths[1], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8);
+          // Draw cell borders with rounded corners
+          pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, 21, rowY);
-          pdf.text(subject.te.toString(), 21 + colWidths[0], rowY);
-          pdf.text(subject.ce.toString(), 21 + colWidths[0] + colWidths[1], rowY);
-          pdf.text(subject.total.toString(), 21 + colWidths[0] + colWidths[1] + colWidths[2], rowY);
+          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
+          pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
+          pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
         });
 
         currentY += (maxSubjects.length * 8) + 5;
 
-        // Practical maximum scores
-        pdf.rect(20, currentY - 5, colWidths[0], 8);
-        pdf.rect(20 + colWidths[0], currentY - 5, colWidths[1], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8);
+        // Practical maximum scores with merged first column
+        // Draw the merged PRACTICAL cell spanning 2 rows
+        pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", 21, currentY);
-        pdf.text("40", 21 + colWidths[0], currentY); // PE
-        pdf.text("20", 21 + colWidths[0] + colWidths[1], currentY); // PW
-        pdf.text("60", 21 + colWidths[0] + colWidths[1] + colWidths[2], currentY); // Total
+        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+        
+        currentY += 8;
+        
+        // Practical maximum scores data row
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.text("40", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" }); // PE
+        pdf.text("20", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" }); // PW
+        pdf.text("60", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" }); // Total
 
       } else {
         const maxSubjects = [
@@ -303,39 +356,90 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
           
-          // Draw cell borders
-          pdf.rect(20, rowY - 5, colWidths[0], 8);
-          pdf.rect(20 + colWidths[0], rowY - 5, colWidths[1], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8);
-          pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8);
+          // Draw cell borders with rounded corners
+          pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
+          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
           
           // Add text
-          pdf.text(subject.name, 21, rowY);
-          pdf.text(subject.te.toString(), 21 + colWidths[0], rowY);
-          pdf.text(subject.ce.toString(), 21 + colWidths[0] + colWidths[1], rowY);
-          pdf.text(subject.total.toString(), 21 + colWidths[0] + colWidths[1] + colWidths[2], rowY);
+          pdf.text(subject.name, tableStartX + 1, rowY);
+          pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
+          pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
+          pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
         });
 
         currentY += (maxSubjects.length * 8) + 5;
 
-        // Practical maximum scores
-        pdf.rect(20, currentY - 5, colWidths[0], 8);
-        pdf.rect(20 + colWidths[0], currentY - 5, colWidths[1], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8);
-        pdf.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8);
+        // Practical maximum scores with merged first column
+        // Draw the merged PRACTICAL cell spanning 2 rows
+        pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
         
-        pdf.text("PRACTICAL", 21, currentY);
-        pdf.text("30", 21 + colWidths[0], currentY); // Viva
-        pdf.text("30", 21 + colWidths[0] + colWidths[1], currentY); // Project
-        pdf.text("60", 21 + colWidths[0] + colWidths[1] + colWidths[2], currentY); // Total
+        pdf.text("PRACTICAL", tableStartX + 1, currentY + 4); // Center vertically in merged cell
+        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
+        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
+        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+        
+        currentY += 8;
+        
+        // Practical maximum scores data row
+        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
+        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.text("30", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" }); // Viva
+        pdf.text("30", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" }); // Project
+        pdf.text("60", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" }); // Total
       }
 
-      // Add footer fields
-      currentY += 20;
+      // Add footer fields with proper alignment
+      currentY += 30;
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text("CERTIFICATE NO:", 20, currentY);
-      pdf.text("DATE:", pdfWidth - 40, currentY);
+      
+      // Display certificate number if available
+      const certificateNo = student.CertificateNo || "Not Assigned";
+      pdf.text(`CERTIFICATE NO: ${certificateNo}`, 20, currentY);
+      
+      // Display current date
+      const currentDate = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      pdf.text(`DATE: ${currentDate}`, pdfWidth - 60, currentY);
+
+      // Add KUG seal at the right bottom corner without stretching
+      try {
+        const sealImg = new Image();
+        sealImg.crossOrigin = "anonymous";
+        sealImg.src = "/kug seal.png";
+        
+        await new Promise((resolve, reject) => {
+          sealImg.onload = () => {
+            // Calculate seal size maintaining aspect ratio
+            const sealWidth = 35; // 35mm width
+            const aspectRatio = sealImg.height / sealImg.width;
+            const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
+            
+            // Position at right bottom corner with 10mm margins
+            const sealX = pdfWidth - sealWidth - 110; // 10mm from right edge
+            const sealY = pdfHeight - sealHeight - -1; // 4mm from bottom edge
+            
+            // Add the seal image with original aspect ratio
+            pdf.addImage(sealImg, "PNG", sealX, sealY, sealWidth, sealHeight);
+            resolve(true);
+          };
+          sealImg.onerror = reject;
+        });
+      } catch (error) {
+        console.warn("Could not load KUG seal image:", error);
+      }
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_MarkList.pdf`);
