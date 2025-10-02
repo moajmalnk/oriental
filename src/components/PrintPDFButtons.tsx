@@ -119,7 +119,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.text(`Register Number : ${student.RegiNo}`, 20, startY);
       pdf.text(`Name of Candidate : ${student.Name}`, 20, startY + 8);
       pdf.text(`Course Name : ${isDCPStudent(student) ? 'DIPLOMA IN COUNSELLING PSYCHOLOGY' : 'PRACTICAL DIPLOMA IN ACUPUNCTURE'}`, 20, startY + 16);
-      pdf.text(`Result : ${student.Result}`, 20, startY + 24);
+      
+      // Convert result to Qualified/Not Qualified
+      const displayResult = student.Result === 'PASS' ? 'Qualified' : 'Not Qualified';
+      pdf.text(`Result : ${displayResult}`, 20, startY + 24);
 
       // Add marks table
       const tableStartY = startY + 40;
