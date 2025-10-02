@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Student } from "@/data/studentsData";
+import { Student, DCPStudent } from "@/data/studentsData";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useToast } from "@/hooks/use-toast";
 
 interface PrintPDFButtonsProps {
-  student: Student;
+  student: Student | DCPStudent;
 }
 
 export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
@@ -123,7 +123,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       
       pdf.setFontSize(14);
       pdf.setTextColor(129, 57, 39); // Dark reddish-brown
-      pdf.text("BATCH 15 RESULT", pdfWidth / 2, 25, { align: "center" });
       
       // Add student info with better positioning
       pdf.setFontSize(11);
@@ -131,6 +130,11 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFont("helvetica", "normal");
       pdf.text(`Student: ${student.Name}`, marginLeft, 32);
       pdf.text(`Registration: ${student.RegiNo}`, marginLeft, 37);
+      
+      // Add generation date and time
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, pdfWidth - marginRight, 32, { align: "right" });
       
       // Add the result table image
       pdf.addImage(imgData, "PNG", imgX, imgY, finalWidth, finalHeight);
@@ -140,8 +144,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
       pdf.setFont("helvetica", "italic");
-      pdf.text("Generated on: " + new Date().toLocaleDateString(), pdfWidth / 2, footerY, { align: "center" });
-      pdf.text("kugoriental.com", pdfWidth / 2, footerY - 5, { align: "center" });
+      pdf.text("Official Result Document", pdfWidth / 2, footerY, { align: "center" });
+      pdf.text("kugoriental.com | For verification, contact examination department", pdfWidth / 2, footerY - 5, { align: "center" });
       
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Result.pdf`);

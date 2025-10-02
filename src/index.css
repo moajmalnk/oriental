@@ -309,6 +309,26 @@ All colors MUST be HSL.
     margin: 1em 0;
   }
   
+  /* Ensure all tables in result are included */
+  #result-table table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  #result-table th,
+  #result-table td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  #result-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  
   /* Ensure proper spacing */
   .container {
     max-width: none !important;
@@ -335,9 +355,30 @@ All colors MUST be HSL.
     color: black !important;
   }
   
+  /* Ensure maximum scores table is visible in print */
+  .bg-gradient-card {
+    background: white !important;
+    border: 1px solid #000 !important;
+  }
+  
+  /* Print-specific table styling */
+  @media print {
+    .space-y-4 > * + * {
+      margin-top: 1rem !important;
+    }
+    
+    .space-y-6 > * + * {
+      margin-top: 1.5rem !important;
+    }
+    
+    .space-y-8 > * + * {
+      margin-top: 2rem !important;
+    }
+  }
+  
   /* Add print header */
   body::before {
-    content: "KUG Oriental Academy - Batch 15 Result";
+    content: "KUG Oriental Academy";
     display: block;
     text-align: center;
     font-size: 18pt;
@@ -374,6 +415,90 @@ All colors MUST be HSL.
   .gap-3 {
     gap: 0.75rem;
   }
+  
+  /* Mobile-specific typography adjustments */
+  .text-3xl {
+    font-size: 1.75rem;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  
+  .text-xl {
+    font-size: 1.25rem;
+  }
+  
+  /* Mobile spacing optimizations */
+  .py-8 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .py-12 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .py-16 {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* Enhanced mobile responsiveness */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Mobile header adjustments */
+  .text-7xl {
+    font-size: 2.5rem;
+  }
+  
+  .text-6xl {
+    font-size: 2.25rem;
+  }
+  
+  .text-5xl {
+    font-size: 2rem;
+  }
+  
+  /* Mobile card spacing */
+  .p-6 {
+    padding: 1rem;
+  }
+  
+  .p-8 {
+    padding: 1.25rem;
+  }
+  
+  .p-10 {
+    padding: 1.5rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  /* Tablet typography */
+  .text-7xl {
+    font-size: 3.5rem;
+  }
+  
+  .text-6xl {
+    font-size: 3rem;
+  }
+  
+  .text-5xl {
+    font-size: 2.5rem;
+  }
 }
 
 @media (min-width: 1920px) {
@@ -401,6 +526,84 @@ All colors MUST be HSL.
 .hover\:scale-105:hover {
   transform: scale(1.05);
   transition: transform 0.2s ease-in-out;
+}
+
+/* Enhanced professional animations */
+@keyframes professional-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes professional-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes professional-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes professional-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Professional animation classes */
+.animate-professional-fade-in {
+  animation: professional-fade-in 0.6s ease-out;
+}
+
+.animate-professional-slide-up {
+  animation: professional-slide-up 0.7s ease-out;
+}
+
+.animate-professional-scale-in {
+  animation: professional-scale-in 0.5s ease-out;
+}
+
+.animate-professional-pulse {
+  animation: professional-pulse 2s ease-in-out infinite;
+}
+
+/* Professional gradient animations */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
 }
 
 /* Professional focus states */

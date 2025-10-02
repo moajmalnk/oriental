@@ -15,6 +15,31 @@ export interface Student {
   Result: string;
 }
 
+// DCP (Diploma in Counselling Psychology) Student Interface
+// DCP 001: Psychology Pathology
+// DCP 002: Counselling Stages, Steps and Skills
+// DCP 003: Introduction to Life Skill Education and Family Therapy
+// DCP 004: Practical (PW: Practical Workshop, PE: Practical Examination)
+// CE: Continuous Evaluation, TE: Theory Examination
+export interface DCPStudent {
+  RegiNo: string;
+  Name: string;
+  DCP001_CE: number | null;
+  DCP001_TE: number | null;
+  DCP001_Total: number | string;
+  DCP002_CE: number | null;
+  DCP002_TE: number | null;
+  DCP002_Total: number | string;
+  DCP003_CE: number | null;
+  DCP003_TE: number | null;
+  DCP003_Total: number | string;
+  DCP004_PW: number | null;
+  DCP004_PE: number | null;
+  DCP004_Total: number | string;
+  Total: number;
+  Result: string;
+}
+
 export const studentsData: Student[] = [
   {
     "RegiNo": "PDA2024065",
@@ -382,6 +407,261 @@ export const studentsData: Student[] = [
     "Practical_Viva": 32,
     "Practical_Total": 75,
     "Total": 245,
+    "Result": "PASS"
+  }
+];
+
+export const dcpStudentsData: DCPStudent[] = [
+  {
+    "RegiNo": "DCP2024106",
+    "Name": "Noorul Hisana",
+    "DCP001_CE": 10,
+    "DCP001_TE": 44,
+    "DCP001_Total": 54,
+    "DCP002_CE": 16,
+    "DCP002_TE": 26,
+    "DCP002_Total": 42,
+    "DCP003_CE": 16,
+    "DCP003_TE": 28,
+    "DCP003_Total": 44,
+    "DCP004_PW": 18,
+    "DCP004_PE": 40,
+    "DCP004_Total": 58,
+    "Total": 198,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024107",
+    "Name": "Jasmin S.R",
+    "DCP001_CE": 14,
+    "DCP001_TE": 31,
+    "DCP001_Total": 45,
+    "DCP002_CE": 18,
+    "DCP002_TE": 43,
+    "DCP002_Total": 61,
+    "DCP003_CE": 18,
+    "DCP003_TE": 40,
+    "DCP003_Total": 58,
+    "DCP004_PW": 20,
+    "DCP004_PE": 39,
+    "DCP004_Total": 59,
+    "Total": 223,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024108",
+    "Name": "Shahina N.K",
+    "DCP001_CE": 14,
+    "DCP001_TE": 49,
+    "DCP001_Total": 63,
+    "DCP002_CE": 18,
+    "DCP002_TE": 49,
+    "DCP002_Total": 67,
+    "DCP003_CE": 18,
+    "DCP003_TE": 51,
+    "DCP003_Total": 69,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 259,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024110",
+    "Name": "Haseena. c.v",
+    "DCP001_CE": 13,
+    "DCP001_TE": 45,
+    "DCP001_Total": 58,
+    "DCP002_CE": 18,
+    "DCP002_TE": 38,
+    "DCP002_Total": 56,
+    "DCP003_CE": 19,
+    "DCP003_TE": 38,
+    "DCP003_Total": 57,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 231,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024112",
+    "Name": "Shahanas. m",
+    "DCP001_CE": 14,
+    "DCP001_TE": 34,
+    "DCP001_Total": 48,
+    "DCP002_CE": 17,
+    "DCP002_TE": 33,
+    "DCP002_Total": 50,
+    "DCP003_CE": 19,
+    "DCP003_TE": 30,
+    "DCP003_Total": 49,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 207,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024113",
+    "Name": "Nadhiya. K",
+    "DCP001_CE": 16,
+    "DCP001_TE": 24,
+    "DCP001_Total": 40,
+    "DCP002_CE": 18,
+    "DCP002_TE": 37,
+    "DCP002_Total": 55,
+    "DCP003_CE": 20,
+    "DCP003_TE": 34,
+    "DCP003_Total": 54,
+    "DCP004_PW": 16,
+    "DCP004_PE": 40,
+    "DCP004_Total": 56,
+    "Total": 205,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024114",
+    "Name": "Ebrahim. T.M",
+    "DCP001_CE": 0,
+    "DCP001_TE": 0,
+    "DCP001_Total": 0,
+    "DCP002_CE": 0,
+    "DCP002_TE": 0,
+    "DCP002_Total": 0,
+    "DCP003_CE": 0,
+    "DCP003_TE": null,
+    "DCP003_Total": 0,
+    "DCP004_PW": 20,
+    "DCP004_PE": null,
+    "DCP004_Total": 0,
+    "Total": 0,
+    "Result": "ABSENT"
+  },
+  {
+    "RegiNo": "DCP2024115",
+    "Name": "Fathima Hiba",
+    "DCP001_CE": 17,
+    "DCP001_TE": 29,
+    "DCP001_Total": 46,
+    "DCP002_CE": 18,
+    "DCP002_TE": 41,
+    "DCP002_Total": 59,
+    "DCP003_CE": 20,
+    "DCP003_TE": 36,
+    "DCP003_Total": 56,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 221,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024116",
+    "Name": "Fayiza. P",
+    "DCP001_CE": 16,
+    "DCP001_TE": 44,
+    "DCP001_Total": 60,
+    "DCP002_CE": 18,
+    "DCP002_TE": 47,
+    "DCP002_Total": 65,
+    "DCP003_CE": 20,
+    "DCP003_TE": 47,
+    "DCP003_Total": 67,
+    "DCP004_PW": 20,
+    "DCP004_PE": 39,
+    "DCP004_Total": 59,
+    "Total": 251,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024117",
+    "Name": "Jaseela. P.P",
+    "DCP001_CE": 16,
+    "DCP001_TE": 37,
+    "DCP001_Total": 53,
+    "DCP002_CE": 17,
+    "DCP002_TE": 45,
+    "DCP002_Total": 62,
+    "DCP003_CE": 20,
+    "DCP003_TE": 40,
+    "DCP003_Total": 60,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 235,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024118",
+    "Name": "Kabeer. c",
+    "DCP001_CE": 16,
+    "DCP001_TE": 33,
+    "DCP001_Total": 49,
+    "DCP002_CE": 16,
+    "DCP002_TE": 39,
+    "DCP002_Total": 55,
+    "DCP003_CE": 18,
+    "DCP003_TE": 26,
+    "DCP003_Total": 44,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 208,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024119",
+    "Name": "Alen shah Rafi",
+    "DCP001_CE": 10,
+    "DCP001_TE": 30,
+    "DCP001_Total": 40,
+    "DCP002_CE": 14,
+    "DCP002_TE": 38,
+    "DCP002_Total": 52,
+    "DCP003_CE": 18,
+    "DCP003_TE": 34,
+    "DCP003_Total": 52,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 204,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024121",
+    "Name": "K. Ambika",
+    "DCP001_CE": 14,
+    "DCP001_TE": 31,
+    "DCP001_Total": 45,
+    "DCP002_CE": 16,
+    "DCP002_TE": 31,
+    "DCP002_Total": 47,
+    "DCP003_CE": 19,
+    "DCP003_TE": 35,
+    "DCP003_Total": 54,
+    "DCP004_PW": 20,
+    "DCP004_PE": 40,
+    "DCP004_Total": 60,
+    "Total": 206,
+    "Result": "PASS"
+  },
+  {
+    "RegiNo": "DCP2024123",
+    "Name": "Asma Yahya",
+    "DCP001_CE": 15,
+    "DCP001_TE": 37,
+    "DCP001_Total": 52,
+    "DCP002_CE": 18,
+    "DCP002_TE": 45,
+    "DCP002_Total": 63,
+    "DCP003_CE": 19,
+    "DCP003_TE": 34,
+    "DCP003_Total": 53,
+    "DCP004_PW": 16,
+    "DCP004_PE": 39,
+    "DCP004_Total": 55,
+    "Total": 223,
     "Result": "PASS"
   }
 ];
