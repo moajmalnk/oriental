@@ -148,50 +148,53 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Professional Header */}
-      <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden" role="banner" aria-label="KUG Oriental Academy Header">
-        <div className="absolute inset-0 bg-black/10"></div>
-        
-        {/* Decorative Background Elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-white/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+      <header className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white overflow-hidden" role="banner" aria-label="KUG Oriental Academy Header">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}></div>
         </div>
         
         {/* Theme Toggle */}
-        <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
+        <div className="absolute top-4 right-4 z-10">
           <ThemeToggle />
         </div>
         
-        <div className="relative container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Academy Badge */}
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold mb-4 sm:mb-6 md:mb-8 leading-tight tracking-tight" id="main-heading">
-              KUG ORIENTAL ACADEMY
-            </h1>
-            <div className="space-y-4 sm:space-y-6">
-              <a href="https://kugoriental.com" target="_blank" rel="noopener noreferrer">
-              <p className="text-xs sm:text-sm md:text-base opacity-75 font-mono tracking-wider">
-                kugoriental.com
-              </p>
-                </a>
+        <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
+          <div className="text-center max-w-6xl mx-auto">
+            {/* Academy Title */}
+            <div className="mb-8">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-display font-bold mb-6 leading-tight tracking-tight text-white" id="main-heading">
+                KUG ORIENTAL ACADEMY
+              </h1>
+              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 mx-auto mb-6"></div>
+              <a 
+                href="https://kugoriental.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block text-blue-300 hover:text-blue-200 transition-colors duration-300"
+              >
+                <p className="text-sm sm:text-base font-mono tracking-wider opacity-90">
+                  kugoriental.com
+                </p>
+              </a>
             </div>
             
             {/* Result Availability Status */}
-            <div className="mt-8 sm:mt-10" role="status" aria-live="polite">
+            <div className="mt-12" role="status" aria-live="polite">
               {isResultAvailable ? (
-                <div className="inline-flex items-center gap-3 bg-green-500/20 backdrop-blur-sm rounded-full px-6 py-3 border border-green-500/30 shadow-lg" aria-label="Results are now available">
-                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-300" aria-hidden="true" />
-                  <span className="text-sm sm:text-base font-semibold text-green-100 tracking-wide">
+                <div className="inline-flex items-center gap-4 bg-emerald-500/15 backdrop-blur-sm rounded-lg px-8 py-4 border border-emerald-400/30" aria-label="Results are now available">
+                  <CheckCircle className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+                  <span className="text-base font-semibold text-emerald-100 tracking-wide">
                     Results Now Available
                   </span>
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" aria-hidden="true"></div>
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" aria-hidden="true"></div>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-3 bg-yellow-500/20 backdrop-blur-sm rounded-full px-6 py-3 border border-yellow-500/30 shadow-lg" aria-label={`Results will be available in ${timeUntilAvailable}`}>
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" aria-hidden="true" />
-                  <span className="text-sm sm:text-base font-semibold text-yellow-100 tracking-wide">
+                <div className="inline-flex items-center gap-4 bg-amber-500/15 backdrop-blur-sm rounded-lg px-8 py-4 border border-amber-400/30" aria-label={`Results will be available in ${timeUntilAvailable}`}>
+                  <Clock className="h-5 w-5 text-amber-300" aria-hidden="true" />
+                  <span className="text-base font-semibold text-amber-100 tracking-wide">
                     Available in {timeUntilAvailable}
                   </span>
                 </div>
