@@ -1,14 +1,19 @@
-import { Student } from "@/data/studentsData";
+import { Student, DCPStudent } from "@/data/studentsData";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useResponsive } from "@/hooks/use-responsive";
 
 interface ResultTableProps {
-  student: Student;
+  student: Student | DCPStudent;
 }
 
 export const ResultTable = ({ student }: ResultTableProps) => {
   const { isMobile, isTablet } = useResponsive();
+
+  // Type guard to check if student is DCP student
+  const isDCPStudent = (student: Student | DCPStudent): student is DCPStudent => {
+    return 'DCP001_CE' in student;
+  };
 
   const getResultBadgeVariant = (result: string) => {
     switch (result) {
@@ -20,6 +25,8 @@ export const ResultTable = ({ student }: ResultTableProps) => {
         return "secondary";
       case "RW":
         return "outline";
+      case "ABSENT":
+        return "destructive";
       default:
         return "secondary";
     }
@@ -78,6 +85,47 @@ export const ResultTable = ({ student }: ResultTableProps) => {
     </div>
   );
 
+  // DCP Mobile Components
+  const MobileDCPTheoryRow = ({ subject, ce, te, total }: { subject: string; ce: number | string | null; te: number | string | null; total: number | string | null }) => (
+    <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+      <h4 className="font-semibold text-foreground text-sm">{subject}</h4>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="text-center">
+          <span className="text-muted-foreground block">CE</span>
+          <span className="font-mono font-medium">{formatScore(ce)}</span>
+        </div>
+        <div className="text-center">
+          <span className="text-muted-foreground block">TE</span>
+          <span className="font-mono font-medium">{formatScore(te)}</span>
+        </div>
+        <div className="text-center">
+          <span className="text-muted-foreground block">Total</span>
+          <span className="font-mono font-bold text-academic">{formatScore(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const MobileDCPPracticalRow = ({ pw, pe, total }: { pw: number | string | null; pe: number | string | null; total: number | string | null }) => (
+    <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+      <h4 className="font-semibold text-foreground text-sm">DCP 004 - Practical</h4>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="text-center">
+          <span className="text-muted-foreground block">P.W</span>
+          <span className="font-mono font-medium">{formatScore(pw)}</span>
+        </div>
+        <div className="text-center">
+          <span className="text-muted-foreground block">P.E</span>
+          <span className="font-mono font-medium">{formatScore(pe)}</span>
+        </div>
+        <div className="text-center">
+          <span className="text-muted-foreground block">Total</span>
+          <span className="font-mono font-bold text-success">{formatScore(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-6xl mx-auto animate-slide-up" id="result-table">
       <Card className="shadow-elegant border-0 overflow-hidden bg-gradient-card">
@@ -122,18 +170,43 @@ export const ResultTable = ({ student }: ResultTableProps) => {
               
               {isMobile ? (
                 <div className="space-y-3">
-                  <MobileTheoryRow 
-                    subject="Anatomy" 
-                    ce={student.Anatomy_CE} 
-                    te={student.Anatomy_TE} 
-                    total={student.Anatomy_Total} 
-                  />
-                  <MobileTheoryRow 
-                    subject="Acupuncture" 
-                    ce={student.Acupuncture_CE} 
-                    te={student.Acupuncture_TE} 
-                    total={student.Acupuncture_Total} 
-                  />
+                  {isDCPStudent(student) ? (
+                    <>
+                      <MobileDCPTheoryRow 
+                        subject="DCP 001 - Psychology Pathology" 
+                        ce={student.DCP001_CE} 
+                        te={student.DCP001_TE} 
+                        total={student.DCP001_Total} 
+                      />
+                      <MobileDCPTheoryRow 
+                        subject="DCP 002 - Counselling Skills" 
+                        ce={student.DCP002_CE} 
+                        te={student.DCP002_TE} 
+                        total={student.DCP002_Total} 
+                      />
+                      <MobileDCPTheoryRow 
+                        subject="DCP 003 - Life Skills Education" 
+                        ce={student.DCP003_CE} 
+                        te={student.DCP003_TE} 
+                        total={student.DCP003_Total} 
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <MobileTheoryRow 
+                        subject="Anatomy" 
+                        ce={student.Anatomy_CE} 
+                        te={student.Anatomy_TE} 
+                        total={student.Anatomy_Total} 
+                      />
+                      <MobileTheoryRow 
+                        subject="Acupuncture" 
+                        ce={student.Acupuncture_CE} 
+                        te={student.Acupuncture_TE} 
+                        total={student.Acupuncture_Total} 
+                      />
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-border/50">
@@ -156,22 +229,53 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
-                          <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Anatomy</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Anatomy_CE)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Anatomy_TE)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
-                            {formatScore(student.Anatomy_Total)}
-                          </td>
-                        </tr>
-                        <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
-                          <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Acupuncture</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Acupuncture_CE)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Acupuncture_TE)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
-                            {formatScore(student.Acupuncture_Total)}
-                          </td>
-                        </tr>
+                        {isDCPStudent(student) ? (
+                          <>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 001 - Psychology Pathology</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP001_CE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP001_TE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                                {formatScore(student.DCP001_Total)}
+                              </td>
+                            </tr>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 002 - Counselling Skills</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP002_CE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP002_TE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                                {formatScore(student.DCP002_Total)}
+                              </td>
+                            </tr>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 003 - Life Skills Education</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP003_CE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP003_TE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                                {formatScore(student.DCP003_Total)}
+                              </td>
+                            </tr>
+                          </>
+                        ) : (
+                          <>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Anatomy</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Anatomy_CE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Anatomy_TE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                                {formatScore(student.Anatomy_Total)}
+                              </td>
+                            </tr>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Acupuncture</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Acupuncture_CE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Acupuncture_TE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                                {formatScore(student.Acupuncture_Total)}
+                              </td>
+                            </tr>
+                          </>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -183,47 +287,335 @@ export const ResultTable = ({ student }: ResultTableProps) => {
             <div className="space-y-4">
               <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
                 <div className="w-1 h-4 sm:h-6 bg-success rounded"></div>
-                Acupuncture Practical
+                {isDCPStudent(student) ? "DCP 004 - Practical" : "Acupuncture Practical"}
               </h3>
               
               {isMobile ? (
-                <MobilePracticalRow 
-                  pr={student.Practical_PR}
-                  project={student.Practical_Project}
-                  viva={student.Practical_Viva}
-                  total={student.Practical_Total}
-                />
+                isDCPStudent(student) ? (
+                  <MobileDCPPracticalRow 
+                    pw={student.DCP004_PW}
+                    pe={student.DCP004_PE}
+                    total={student.DCP004_Total}
+                  />
+                ) : (
+                  <MobilePracticalRow 
+                    pr={student.Practical_PR}
+                    project={student.Practical_Project}
+                    viva={student.Practical_Viva}
+                    total={student.Practical_Total}
+                  />
+                )
               ) : (
                 <div className="overflow-hidden rounded-xl border border-border/50">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-muted border-b border-border">
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
-                            P.R
-                          </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
-                            Project
-                          </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
-                            Viva & PL
-                          </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
-                            Total
-                          </th>
+                          {isDCPStudent(student) ? (
+                            <>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                                P.W
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                                P.E
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                                Total
+                              </th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                                P.R
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                                Project
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
+                                Viva & PL
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                                Total
+                              </th>
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_PR)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_Project)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_Viva)}</td>
-                          <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-success font-mono text-base sm:text-lg">
-                            {formatScore(student.Practical_Total)}
-                          </td>
+                          {isDCPStudent(student) ? (
+                            <>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP004_PW)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.DCP004_PE)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-success font-mono text-base sm:text-lg">
+                                {formatScore(student.DCP004_Total)}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_PR)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_Project)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">{formatScore(student.Practical_Viva)}</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-success font-mono text-base sm:text-lg">
+                                {formatScore(student.Practical_Total)}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Maximum Scores Tables */}
+            <div className="space-y-6">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
+                <div className="w-1 h-4 sm:h-6 bg-warning rounded"></div>
+                Maximum Scores
+              </h3>
+              
+              {isMobile ? (
+                <div className="space-y-4">
+                  {/* Theory Subjects */}
+                  <div className="space-y-3">
+                    <h4 className="text-base font-semibold text-foreground">SUBJECT-THEORY</h4>
+                    {isDCPStudent(student) ? (
+                      <>
+                        <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+                          <h5 className="font-semibold text-foreground text-sm">DCP 001 - Psychology Pathology</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">TE:</span>
+                                <span className="font-mono font-medium">60</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CE:</span>
+                                <span className="font-mono font-medium">20</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-mono font-bold text-academic">80</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+                          <h5 className="font-semibold text-foreground text-sm">DCP 002 - Counselling Skills</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">TE:</span>
+                                <span className="font-mono font-medium">60</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CE:</span>
+                                <span className="font-mono font-medium">20</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-mono font-bold text-academic">80</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+                          <h5 className="font-semibold text-foreground text-sm">DCP 003 - Life Skills Education</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">TE:</span>
+                                <span className="font-mono font-medium">60</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CE:</span>
+                                <span className="font-mono font-medium">20</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-mono font-bold text-academic">80</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+                          <h5 className="font-semibold text-foreground text-sm">Anatomy & Physiology</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">TE:</span>
+                                <span className="font-mono font-medium">80</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CE:</span>
+                                <span className="font-mono font-medium">20</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-mono font-bold text-academic">100</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
+                          <h5 className="font-semibold text-foreground text-sm">Acupuncture Science</h5>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">TE:</span>
+                                <span className="font-mono font-medium">80</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CE:</span>
+                                <span className="font-mono font-medium">20</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-mono font-bold text-academic">100</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Practical Section */}
+                  <div className="space-y-3">
+                    <h4 className="text-base font-semibold text-foreground">PRACTICAL</h4>
+                    <div className="bg-gradient-card rounded-lg p-4 border border-border/50">
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="text-center">
+                          <span className="text-muted-foreground block font-semibold">PRACTICAL WORK SHOP</span>
+                          <span className="font-mono font-bold text-lg">20</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-muted-foreground block font-semibold">PRACTICAL EXAMINATION</span>
+                          <span className="font-mono font-bold text-lg">40</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-muted-foreground block font-semibold">TOTAL</span>
+                          <span className="font-mono font-bold text-lg text-success">60</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Theory Subjects Table */}
+                  <div className="space-y-4">
+                    <h4 className="text-base font-semibold text-foreground">SUBJECT-THEORY</h4>
+                    <div className="overflow-hidden rounded-xl border border-border/50">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-muted border-b border-border">
+                              <th className="text-left p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[180px] text-sm sm:text-base">
+                                Subject
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                                TE
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                                CE
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                                Total
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {isDCPStudent(student) ? (
+                              <>
+                                <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                                  <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 001 - Psychology Pathology</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">60</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">80</td>
+                                </tr>
+                                <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                                  <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 002 - Counselling Skills</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">60</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">80</td>
+                                </tr>
+                                <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                                  <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">DCP 003 - Life Skills Education</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">60</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">80</td>
+                                </tr>
+                              </>
+                            ) : (
+                              <>
+                                <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                                  <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Anatomy & Physiology</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">80</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">100</td>
+                                </tr>
+                                <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                                  <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">Acupuncture Science</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">80</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                                  <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">100</td>
+                                </tr>
+                              </>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Practical Table */}
+                  <div className="space-y-4">
+                    <h4 className="text-base font-semibold text-foreground">PRACTICAL</h4>
+                    <div className="overflow-hidden rounded-xl border border-border/50">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-muted border-b border-border">
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
+                                PRACTICAL WORK SHOP
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
+                                PRACTICAL EXAMINATION
+                              </th>
+                              <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                                TOTAL
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-border hover:bg-accent/30 transition-colors duration-200">
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">20</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">40</td>
+                              <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-success font-mono text-base sm:text-lg">60</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

@@ -6,13 +6,13 @@ import { ErrorMessage } from "@/components/ErrorMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton, SkeletonHeader, SkeletonCard } from "@/components/Skeleton";
 import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoader";
-import { studentsData, type Student } from "@/data/studentsData";
+import { studentsData, dcpStudentsData, type Student, type DCPStudent } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
-import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { Clock, Calendar, AlertCircle, Award, BookOpen, Users, Shield, CheckCircle } from "lucide-react";
 
 const Index = () => {
-  const [searchResult, setSearchResult] = useState<Student | null>(null);
+  const [searchResult, setSearchResult] = useState<Student | DCPStudent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -86,9 +86,16 @@ const Index = () => {
     // Simulate search delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const found = studentsData.find(
+    // Search in both PDA and DCP students data
+    const pdaStudent = studentsData.find(
       student => student.RegiNo.toLowerCase() === searchTerm.toLowerCase()
     );
+    
+    const dcpStudent = dcpStudentsData.find(
+      student => student.RegiNo.toLowerCase() === searchTerm.toLowerCase()
+    );
+    
+    const found = pdaStudent || dcpStudent;
     
     setSearchResult(found || null);
     setHasSearched(true);
@@ -105,23 +112,30 @@ const Index = () => {
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="relative bg-gradient-primary text-academic-foreground">
+        <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden">
           <div className="absolute inset-0 bg-black/10"></div>
           
+          {/* Decorative Background Elements */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-white/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          </div>
+          
           {/* Theme Toggle */}
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
             <ThemeToggle />
           </div>
           
-          <div className="relative container mx-auto px-4 py-12 md:py-16 lg:py-20">
+          <div className="relative container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20">
             <SkeletonHeader />
           </div>
           
-          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-background to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-t from-background to-transparent"></div>
         </header>
 
-        <main className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-          <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
+        <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-16">
+          <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12 md:space-y-16">
             <section className="text-center">
               <SkeletonCard />
             </section>
@@ -134,7 +148,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Professional Header */}
-      <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden">
+      <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden" role="banner" aria-label="KUG Oriental Academy Header">
         <div className="absolute inset-0 bg-black/10"></div>
         
         {/* Decorative Background Elements */}
@@ -150,36 +164,34 @@ const Index = () => {
         </div>
         
         <div className="relative container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-display font-bold mb-3 sm:mb-4 md:mb-6 leading-tight">
+          <div className="text-center max-w-5xl mx-auto">
+            {/* Academy Badge */}
+            
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold mb-4 sm:mb-6 md:mb-8 leading-tight tracking-tight" id="main-heading">
               KUG ORIENTAL ACADEMY
             </h1>
-            <div className="w-20 sm:w-24 md:w-32 h-1 bg-white/30 rounded mx-auto mb-4 sm:mb-6"></div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-display font-semibold mb-3 sm:mb-4 md:mb-6 leading-tight">
-              BATCH 15 RESULT
-            </h2>
-            <div className="w-16 sm:w-20 md:w-24 h-1 bg-white/20 rounded mx-auto mb-4 sm:mb-6"></div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl opacity-90 font-medium">
-              Result Publish Time – 28/08/2025 10:00 AM
-            </p>
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg opacity-80 mt-2 sm:mt-3">
-              Official Student Result Portal
-            </p>
-            <p className="text-xs sm:text-sm md:text-base opacity-70 mt-1 sm:mt-2">
-              kugoriental.com
-            </p>
+            <div className="space-y-4 sm:space-y-6">
+              <a href="https://kugoriental.com" target="_blank" rel="noopener noreferrer">
+              <p className="text-xs sm:text-sm md:text-base opacity-75 font-mono tracking-wider">
+                kugoriental.com
+              </p>
+                </a>
+            </div>
             
             {/* Result Availability Status */}
-            <div className="mt-6 sm:mt-8">
+            <div className="mt-8 sm:mt-10" role="status" aria-live="polite">
               {isResultAvailable ? (
-                <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-green-500/30">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-green-100">Results Now Available</span>
+                <div className="inline-flex items-center gap-3 bg-green-500/20 backdrop-blur-sm rounded-full px-6 py-3 border border-green-500/30 shadow-lg" aria-label="Results are now available">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-300" aria-hidden="true" />
+                  <span className="text-sm sm:text-base font-semibold text-green-100 tracking-wide">
+                    Results Now Available
+                  </span>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" aria-hidden="true"></div>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-yellow-500/30">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-300" />
-                  <span className="text-xs sm:text-sm font-medium text-yellow-100">
+                <div className="inline-flex items-center gap-3 bg-yellow-500/20 backdrop-blur-sm rounded-full px-6 py-3 border border-yellow-500/30 shadow-lg" aria-label={`Results will be available in ${timeUntilAvailable}`}>
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300" aria-hidden="true" />
+                  <span className="text-sm sm:text-base font-semibold text-yellow-100 tracking-wide">
                     Available in {timeUntilAvailable}
                   </span>
                 </div>
@@ -193,34 +205,36 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-16">
+      <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-16" role="main" aria-label="Student Result Portal Main Content">
         <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12 md:space-y-16">
           
           {/* Search Section */}
-          <section className="text-center">
+          <section className="text-center" aria-label="Student Result Search">
             <SearchBox onSearch={handleSearch} isLoading={isLoading} />
             
             {/* Result Availability Notice */}
             {!isResultAvailable && (
-              <div className="mt-6 max-w-2xl mx-auto">
-                <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card">
-                  <div className="flex items-center gap-3 mb-3">
-                    <AlertCircle className="h-5 w-5 text-warning" />
-                    <h3 className="text-sm sm:text-base font-semibold text-foreground">
+              <div className="mt-8 max-w-3xl mx-auto">
+                <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-elegant backdrop-blur-sm">
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="p-2 bg-warning/10 rounded-full">
+                      <AlertCircle className="h-6 w-6 text-warning" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">
                       Results Not Yet Available
                     </h3>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-3">
-                    The examination results will be published on <strong>28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong>10:00 AM</strong>.
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
+                    The examination results will be published on <strong className="text-foreground">28/08/2025 at 10:00 AM</strong> and will be available for viewing after <strong className="text-foreground">10:00 AM</strong>.
                   </p>
-                  <div className="flex items-center justify-center gap-4 text-xs sm:text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>28/08/2025</span>
+                  <div className="flex items-center justify-center gap-6 text-sm sm:text-base text-muted-foreground">
+                    <div className="flex items-center gap-2 bg-accent/5 rounded-lg px-4 py-2">
+                      <Calendar className="h-4 w-4 text-accent" />
+                      <span className="font-medium">28/08/2025</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>10:00 AM</span>
+                    <div className="flex items-center gap-2 bg-accent/5 rounded-lg px-4 py-2">
+                      <Clock className="h-4 w-4 text-accent" />
+                      <span className="font-medium">10:00 AM</span>
                     </div>
                   </div>
                 </div>
@@ -230,16 +244,25 @@ const Index = () => {
 
           {/* Loading State */}
           {isLoading && (
-            <section className="text-center py-8 sm:py-12 md:py-16">
+            <section className="text-center py-12 sm:py-16 md:py-20" aria-label="Loading search results" role="status" aria-live="polite">
               <div className="inline-flex items-center justify-center">
-                <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 md:p-12 shadow-elegant border border-border/50 animate-scale-in">
-                  <AcademicLoader 
-                    message="Searching for Result" 
-                    size="lg" 
-                  />
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-4">
-                    Please wait while we fetch your examination results...
-                  </p>
+                <div className="bg-gradient-card rounded-3xl p-8 sm:p-10 md:p-12 shadow-elegant border border-border/50 animate-scale-in backdrop-blur-sm">
+                  <div className="space-y-6">
+                    <AcademicLoader 
+                      message="Searching for Result" 
+                      size="lg" 
+                    />
+                    <div className="space-y-2">
+                      <p className="text-sm sm:text-base text-muted-foreground font-medium">
+                        Please wait while we fetch your examination results...
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground" aria-hidden="true">
+                        <div className="w-1 h-1 bg-accent rounded-full animate-pulse"></div>
+                        <div className="w-1 h-1 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-1 h-1 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -247,7 +270,7 @@ const Index = () => {
 
           {/* Results Section */}
           {hasSearched && !isLoading && (
-            <section className="space-y-6 sm:space-y-8 md:space-y-12">
+            <section className="space-y-6 sm:space-y-8 md:space-y-12" aria-label="Search Results" role="region">
               {searchResult ? (
                 <div className="space-y-6 sm:space-y-8">
                   <ResultTable student={searchResult} />
@@ -261,88 +284,132 @@ const Index = () => {
 
           {/* Information Section */}
           {!hasSearched && !isLoading && (
-            <section className="text-center py-8 sm:py-12 md:py-16">
-              <div className="max-w-2xl mx-auto animate-fade-in">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-semibold text-foreground mb-4 sm:mb-6">
-                  How to Check Your Result
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
-                      <span className="text-academic font-bold text-lg sm:text-xl">1</span>
+            <section className="text-center py-12 sm:py-16 md:py-20" aria-label="How to use the portal">
+              <div className="max-w-4xl mx-auto animate-fade-in">
+                <div className="text-center mb-12 sm:mb-16">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-4 sm:mb-6">
+                    How to Check Your Result
+                  </h2>
+                  <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                    Follow these simple steps to access your examination results quickly and securely
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
+                  <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-academic/5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-academic/10 to-academic/20 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:from-academic/20 group-hover:to-academic/30 transition-all duration-300">
+                        <BookOpen className="h-6 w-6 sm:h-7 sm:w-7 text-academic" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-3 text-base sm:text-lg">Enter Details</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                        Type your Register Number in the search box above
+                      </p>
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Enter Details</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Type your Register Number in the search box above
-                    </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
-                      <span className="text-academic font-bold text-lg sm:text-xl">2</span>
+                  <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-academic/5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-academic/10 to-academic/20 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:from-academic/20 group-hover:to-academic/30 transition-all duration-300">
+                        <Shield className="h-6 w-6 sm:h-7 sm:w-7 text-academic" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-3 text-base sm:text-lg">Search Result</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                        Click the search button to fetch your results securely
+                      </p>
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Search Result</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Click the search button to fetch your results
-                    </p>
                   </div>
                   
-                  <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 sm:col-span-2 lg:col-span-1 group">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-academic/10 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-academic/20 transition-colors duration-300">
-                      <span className="text-academic font-bold text-lg sm:text-xl">3</span>
+                  <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-card hover:shadow-elegant hover:scale-105 transition-all duration-300 sm:col-span-2 lg:col-span-1 group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-academic/5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-academic/10 to-academic/20 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:from-academic/20 group-hover:to-academic/30 transition-all duration-300">
+                        <Users className="h-6 w-6 sm:h-7 sm:w-7 text-academic" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-3 text-base sm:text-lg">View & Download</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                        View your detailed result and download PDF copy
+                      </p>
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">View & Download</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      View your detailed result and download PDF copy
-                    </p>
                   </div>
                 </div>
                 
                 {/* Professional Features Highlight */}
-                {isDesktop && (
-                  <div className="mt-8 sm:mt-12 bg-gradient-to-r from-accent/10 to-secondary/10 rounded-xl p-6 border border-border/50">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Professional Features</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-academic rounded-full"></div>
-                        <span>High-quality PDF generation</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-academic rounded-full"></div>
-                        <span>Print-optimized layouts</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-academic rounded-full"></div>
-                        <span>Responsive design for all devices</span>
-                      </div>
+                <div className="mt-12 sm:mt-16 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-2xl p-8 sm:p-10 border border-border/30 shadow-card backdrop-blur-sm">
+                  <div className="text-center mb-8">
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-3">Professional Features</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+                      Built with modern technology and professional standards for the best user experience
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border/20">
+                      <div className="w-2 h-2 bg-academic rounded-full flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground">High-quality PDF generation</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border/20">
+                      <div className="w-2 h-2 bg-academic rounded-full flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground">Print-optimized layouts</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border/20">
+                      <div className="w-2 h-2 bg-academic rounded-full flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground">Responsive design</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border/20">
+                      <div className="w-2 h-2 bg-academic rounded-full flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground">Secure & fast</span>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </section>
           )}
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-muted border-t border-border mt-12 sm:mt-16 md:mt-20">
-        <div className="container mx-auto px-4 py-6 sm:py-8 md:py-12">
-          <div className="text-center">
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
-              © 2025 KUG Oriental Academy. All rights reserved.
-            </p>
-            <p className="text-muted-foreground text-xs md:text-sm mt-1 sm:mt-2">
-              For technical support, contact the examination department.
-            </p>
-            <p className="text-muted-foreground text-xs md:text-sm mt-1">
-              Visit us at kugoriental.com
-            </p>
-            
-            {/* Professional Footer Badge */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <div className="w-1 h-1 bg-academic rounded-full"></div>
-              <span>Professional Academic Portal</span>
-              <div className="w-1 h-1 bg-academic rounded-full"></div>
+      {/* Professional Footer */}
+      <footer className="bg-gradient-to-r from-muted to-muted/80 border-t border-border/50 mt-16 sm:mt-20 md:mt-24" role="contentinfo" aria-label="KUG Oriental Academy Footer">
+        <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center space-y-6">
+              <div className="space-y-3">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
+                  KUG Oriental Academy
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Premier educational institution committed to excellence in oriental medicine and holistic healthcare education.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-6 border-t border-b border-border/30">
+                <div className="text-center sm:text-left">
+                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-2">Contact</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    For technical support, contact the examination department
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-2">Website</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-mono">
+                    kugoriental.com
+                  </p>
+                </div>
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm font-semibold text-foreground mb-2">Copyright</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    © 2025 All rights reserved
+                  </p>
+                </div>
+              </div>
+              
+              {/* Professional Footer Badge */}
+              <div className="flex items-center justify-center gap-3 text-xs sm:text-sm text-muted-foreground">
+                <div className="w-1.5 h-1.5 bg-academic rounded-full"></div>
+                <span className="font-medium">Professional Academic Portal</span>
+                <div className="w-1.5 h-1.5 bg-academic rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>
