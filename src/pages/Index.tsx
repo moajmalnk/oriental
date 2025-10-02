@@ -112,26 +112,25 @@ const Index = () => {
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="relative bg-gradient-primary text-academic-foreground overflow-hidden">
-          <div className="absolute inset-0 bg-black/10"></div>
-          
-          {/* Decorative Background Elements */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-32 h-32 bg-white/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <header className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+          {/* Subtle Pattern Overlay */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}></div>
           </div>
           
           {/* Theme Toggle */}
-          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
+          <div className="absolute top-4 right-4 z-10">
             <ThemeToggle />
           </div>
           
-          <div className="relative container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20">
+          <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
             <SkeletonHeader />
           </div>
           
-          <div className="absolute bottom-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-t from-background to-transparent"></div>
+          {/* Elegant Bottom Border */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
         </header>
 
         <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-16">
@@ -148,11 +147,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Professional Header */}
-      <header className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white overflow-hidden" role="banner" aria-label="KUG Oriental Academy Header">
-        {/* Subtle Background Pattern */}
+      <header className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden" role="banner" aria-label="KUG Oriental Academy Header">
+        {/* Subtle Pattern Overlay */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}></div>
         </div>
         
@@ -163,48 +162,61 @@ const Index = () => {
         
         <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
           <div className="text-center max-w-6xl mx-auto">
-            {/* Academy Title */}
+            {/* Academy Name */}
             <div className="mb-8">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-display font-bold mb-6 leading-tight tracking-tight text-white" id="main-heading">
-                KUG ORIENTAL ACADEMY
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-display font-bold leading-none tracking-tight" id="main-heading">
+                KUG ORIENTAL
+                <br />
+                <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-light tracking-wider text-slate-300">
+                  ACADEMY
+                </span>
               </h1>
-              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 mx-auto mb-6"></div>
+            </div>
+            
+            {/* Website Link */}
+            <div className="mb-12">
               <a 
                 href="https://kugoriental.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-block text-blue-300 hover:text-blue-200 transition-colors duration-300"
+                className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors duration-300 group"
               >
-                <p className="text-sm sm:text-base font-mono tracking-wider opacity-90">
+                <div className="w-1 h-1 bg-slate-400 rounded-full group-hover:bg-white transition-colors duration-300"></div>
+                <span className="text-sm sm:text-base font-mono tracking-widest uppercase">
                   kugoriental.com
-                </p>
+                </span>
+                <div className="w-1 h-1 bg-slate-400 rounded-full group-hover:bg-white transition-colors duration-300"></div>
               </a>
             </div>
             
             {/* Result Availability Status */}
             <div className="mt-12" role="status" aria-live="polite">
               {isResultAvailable ? (
-                <div className="inline-flex items-center gap-4 bg-emerald-500/15 backdrop-blur-sm rounded-lg px-8 py-4 border border-emerald-400/30" aria-label="Results are now available">
-                  <CheckCircle className="h-5 w-5 text-emerald-300" aria-hidden="true" />
-                  <span className="text-base font-semibold text-emerald-100 tracking-wide">
-                    Results Now Available
-                  </span>
+                <div className="inline-flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-8 py-4 backdrop-blur-sm" aria-label="Results are now available">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+                    <span className="text-base font-semibold text-emerald-100 tracking-wide">
+                      Results Now Available
+                    </span>
+                  </div>
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" aria-hidden="true"></div>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-4 bg-amber-500/15 backdrop-blur-sm rounded-lg px-8 py-4 border border-amber-400/30" aria-label={`Results will be available in ${timeUntilAvailable}`}>
-                  <Clock className="h-5 w-5 text-amber-300" aria-hidden="true" />
-                  <span className="text-base font-semibold text-amber-100 tracking-wide">
-                    Available in {timeUntilAvailable}
-                  </span>
+                <div className="inline-flex items-center gap-4 bg-amber-500/10 border border-amber-500/20 rounded-full px-8 py-4 backdrop-blur-sm" aria-label={`Results will be available in ${timeUntilAvailable}`}>
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                    <span className="text-base font-semibold text-amber-100 tracking-wide">
+                      Available in {timeUntilAvailable}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
         
-        {/* Decorative Elements */}
-        <div className="absolute bottom-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-t from-background to-transparent"></div>
+        {/* Elegant Bottom Border */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
       </header>
 
       {/* Main Content */}
