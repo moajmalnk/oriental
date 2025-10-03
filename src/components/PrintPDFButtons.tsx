@@ -70,7 +70,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Add letterhead background
+      // Add letterhead background with compression
       try {
         const letterheadImg = new Image();
         letterheadImg.crossOrigin = "anonymous";
@@ -78,20 +78,55 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         
         await new Promise((resolve, reject) => {
           letterheadImg.onload = () => {
-            // Scale letterhead to fit the page
+            // Create a canvas to compress the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to a reasonable resolution (max 1200px width)
+            const maxWidth = 1200;
+            const maxHeight = 1600;
             const imgWidth = letterheadImg.width;
             const imgHeight = letterheadImg.height;
-            const scale = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
             
-            const finalWidth = imgWidth * scale;
-            const finalHeight = imgHeight * scale;
+            // Calculate new dimensions maintaining aspect ratio
+            let newWidth = imgWidth;
+            let newHeight = imgHeight;
             
-            // Center the letterhead
-            const x = (pdfWidth - finalWidth) / 2;
-            const y = (pdfHeight - finalHeight) / 2;
+            if (imgWidth > maxWidth) {
+              newWidth = maxWidth;
+              newHeight = (imgHeight * maxWidth) / imgWidth;
+            }
             
-            pdf.addImage(letterheadImg, "JPEG", x, y, finalWidth, finalHeight);
-            resolve(true);
+            if (newHeight > maxHeight) {
+              newHeight = maxHeight;
+              newWidth = (imgWidth * maxHeight) / imgHeight;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Draw and compress the image
+            ctx?.drawImage(letterheadImg, 0, 0, newWidth, newHeight);
+            
+            // Convert to compressed data URL with optimized quality
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality for better compression
+            
+            // Create new image from compressed data
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Scale to fit the page
+              const scale = Math.min(pdfWidth / compressedImg.width, pdfHeight / compressedImg.height);
+              const finalWidth = compressedImg.width * scale;
+              const finalHeight = compressedImg.height * scale;
+              
+              // Center the letterhead
+              const x = (pdfWidth - finalWidth) / 2;
+              const y = (pdfHeight - finalHeight) / 2;
+              
+              pdf.addImage(compressedImg, "JPEG", x, y, finalWidth, finalHeight);
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
           };
           letterheadImg.onerror = reject;
         });
@@ -422,7 +457,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
       pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, { align: "center" });
 
-      // Add KUG seal at the right bottom corner without stretching
+      // Add KUG seal at the right bottom corner with compression
       try {
         const sealImg = new Image();
         sealImg.crossOrigin = "anonymous";
@@ -430,18 +465,50 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         
         await new Promise((resolve, reject) => {
           sealImg.onload = () => {
-            // Calculate seal size maintaining aspect ratio
-            const sealWidth = 35; // 35mm width
-            const aspectRatio = sealImg.height / sealImg.width;
-            const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
+            // Create a canvas to compress the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             
-            // Position at right bottom corner with 10mm margins
-            const sealX = pdfWidth - sealWidth - 100; // 10mm from right edge
-            const sealY = pdfHeight - sealHeight - -1; // 4mm from bottom edge
+            // Set canvas size to a reasonable resolution (max 300px width for seal)
+            const maxWidth = 300;
+            const imgWidth = sealImg.width;
+            const imgHeight = sealImg.height;
             
-            // Add the seal image with original aspect ratio
-            pdf.addImage(sealImg, "PNG", sealX, sealY, sealWidth, sealHeight);
-            resolve(true);
+            // Calculate new dimensions maintaining aspect ratio
+            let newWidth = imgWidth;
+            let newHeight = imgHeight;
+            
+            if (imgWidth > maxWidth) {
+              newWidth = maxWidth;
+              newHeight = (imgHeight * maxWidth) / imgWidth;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Draw and compress the image
+            ctx?.drawImage(sealImg, 0, 0, newWidth, newHeight);
+            
+            // Convert to compressed data URL (PNG for seal to maintain transparency)
+            const compressedDataUrl = canvas.toDataURL('image/png', 0.7); // 70% quality for better compression
+            
+            // Create new image from compressed data
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Calculate seal size maintaining aspect ratio
+              const sealWidth = 35; // 35mm width
+              const aspectRatio = compressedImg.height / compressedImg.width;
+              const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
+              
+              // Position at center bottom with 10mm margin
+              const sealX = (pdfWidth - sealWidth) / 2.2; // Center horizontally
+              const sealY = pdfHeight - sealHeight - 1; // 2mm from bottom edge
+              
+              // Add the seal image with original aspect ratio
+              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealWidth, sealHeight);
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
           };
           sealImg.onerror = reject;
         });
