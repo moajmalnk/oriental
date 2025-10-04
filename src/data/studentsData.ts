@@ -77,6 +77,7 @@ export const studentsData: Student[] = [
     "Total": 259,
     "Result": "PASS"
   },
+  
   {
     "RegiNo": "PDA2024067",
     "Name": "SALHA BEEGUM K",
