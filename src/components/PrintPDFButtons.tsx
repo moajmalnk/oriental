@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Award } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Student, DCPStudent } from "@/data/studentsData";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PrintPDFButtonsProps {
   student: Student | DCPStudent;
@@ -14,8 +15,10 @@ interface PrintPDFButtonsProps {
 export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
   const { isMobile, isTablet } = useResponsive();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const handlePrint = async () => {
     setIsPrinting(true);
@@ -535,12 +538,180 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
     }
   };
 
+  const handleGenerateCertificate = async () => {
+    setIsGeneratingCertificate(true);
+    
+    try {
+      // Show loading toast
+      toast({
+        title: "Generating Certificate",
+        description: "Please wait while we create your certificate...",
+      });
+
+      // Wait for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // Type guard to check if student is DCP student
+      const isDCPStudent = (student: Student | DCPStudent): student is DCPStudent => {
+        return 'DCP001_CE' in student;
+      };
+
+      // Load and add certificate template as background
+      try {
+        const templateImg = new Image();
+        templateImg.crossOrigin = "anonymous";
+        templateImg.src = "/Course Certificate Model  FOR ALL CERTIFICATE.jpg";
+        
+        await new Promise((resolve, reject) => {
+          templateImg.onload = () => {
+            // Create a canvas to compress the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to a reasonable resolution (max 1200px width)
+            const maxWidth = 1200;
+            const maxHeight = 1600;
+            const imgWidth = templateImg.width;
+            const imgHeight = templateImg.height;
+            
+            // Calculate new dimensions maintaining aspect ratio
+            let newWidth = imgWidth;
+            let newHeight = imgHeight;
+            
+            if (imgWidth > maxWidth) {
+              newWidth = maxWidth;
+              newHeight = (imgHeight * maxWidth) / imgWidth;
+            }
+            
+            if (newHeight > maxHeight) {
+              newHeight = maxHeight;
+              newWidth = (imgWidth * maxHeight) / imgHeight;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Draw and compress the image
+            ctx?.drawImage(templateImg, 0, 0, newWidth, newHeight);
+            
+            // Convert to compressed data URL with optimized quality
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8); // Higher quality for certificate
+            
+            // Create new image from compressed data
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Scale to fit the page
+              const scale = Math.min(pdfWidth / compressedImg.width, pdfHeight / compressedImg.height);
+              const finalWidth = compressedImg.width * scale;
+              const finalHeight = compressedImg.height * scale;
+              
+              // Center the template
+              const x = (pdfWidth - finalWidth) / 2;
+              const y = (pdfHeight - finalHeight) / 2;
+              
+              pdf.addImage(compressedImg, "JPEG", x, y, finalWidth, finalHeight);
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          templateImg.onerror = reject;
+        });
+      } catch (error) {
+        console.warn("Could not load certificate template image, continuing without it:", error);
+      }
+
+      // Add dynamic content over the template
+      // Set text color to dark brown/black for visibility
+      pdf.setTextColor(101, 67, 33); // Dark brown color similar to template text
+
+      // Add Register Number (positioned on the left side)
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`Register No. : ${student.RegiNo}`, 25, 140);
+
+      // Add Certificate Number (if available)
+      const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
+      pdf.text(`Certificate No. : ${certificateNo}`, 25, 148);
+
+      // Add course description text
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(101, 67, 33);
+      
+      const courseName = isDCPStudent(student) ? 'Professional Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
+      const courseText = `The certificate of ${courseName} has been conferred upon`;
+      
+      // Split long text into multiple lines if needed
+      const lines = pdf.splitTextToSize(courseText, 160);
+      let yPos = 165;
+      lines.forEach((line: string) => {
+        pdf.text(line, pdfWidth / 2, yPos, { align: "center" });
+        yPos += 4;
+      });
+
+      // Add student name (larger and bold, positioned prominently)
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(139, 69, 19); // Darker brown for name
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, yPos + 8, { align: "center" });
+
+      // Add course completion details
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(101, 67, 33);
+      
+      const completionText = `who successfully completed the course at the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation from July 2024 to July 2025, and passed the final examination administered by the Central Board of Examinations of the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation.`;
+      
+      const completionLines = pdf.splitTextToSize(completionText, 160);
+      let completionY = yPos + 18;
+      completionLines.forEach((line: string) => {
+        pdf.text(line, pdfWidth / 2, completionY, { align: "center" });
+        completionY += 4;
+      });
+
+      // Add date (positioned on the left)
+      const displayDate = isDCPStudent(student) ? "03/10/2025" : "01/09/2025";
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Date: ${displayDate}`, 25, 240);
+
+      // Add signature placeholders (these would typically be added as images in a real implementation)
+      pdf.setFontSize(8);
+      pdf.setTextColor(101, 67, 33);
+      
+      // Chairman signature placeholder
+      pdf.text("Chairman", 75, 240);
+      
+      // Controller of Examination signature placeholder
+      pdf.text("Controller of Examination", 130, 240);
+
+      // Save the PDF
+      pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
+      
+      toast({
+        title: "Certificate Downloaded",
+        description: "Your certificate has been generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      toast({
+        title: "Certificate Generation Failed",
+        description: "There was an error creating your certificate. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCertificate(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in">
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-6 sm:mt-8">
-     
-
         {/* Download PDF Button */}
         <Button
           onClick={handleDownloadPDF}
@@ -562,6 +733,30 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             </>
           )}
         </Button>
+
+        {/* Certificate Button - Only for authenticated users */}
+        {isAuthenticated && (
+          <Button
+            onClick={handleGenerateCertificate}
+            size={isMobile ? "default" : "lg"}
+            disabled={isGeneratingCertificate}
+            className="flex items-center gap-2 sm:gap-3 h-11 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-medium bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 hover:shadow-elegant transition-all duration-300 rounded-xl text-white"
+          >
+            {isGeneratingCertificate ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="hidden sm:inline">Generating Certificate...</span>
+                <span className="sm:hidden">Certificate...</span>
+              </>
+            ) : (
+              <>
+                <Award className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Generate Certificate</span>
+                <span className="sm:hidden">Certificate</span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
