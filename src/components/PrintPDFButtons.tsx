@@ -564,7 +564,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       try {
         const templateImg = new Image();
         templateImg.crossOrigin = "anonymous";
-        templateImg.src = "/Course Certificate Model  FOR ALL CERTIFICATE.jpg";
+        templateImg.src = "/Course Certificate Model WEB .jpg";
         
         await new Promise((resolve, reject) => {
           templateImg.onload = () => {
