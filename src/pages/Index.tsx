@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SearchBox } from "@/components/SearchBox";
 import { ResultTable } from "@/components/ResultTable";
 import { PrintPDFButtons } from "@/components/PrintPDFButtons";
@@ -9,7 +10,9 @@ import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoa
 import { studentsData, dcpStudentsData, type Student, type DCPStudent } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
-import { Clock, Calendar, AlertCircle, Award, BookOpen, Users, Shield, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Clock, Calendar, AlertCircle, Award, BookOpen, Users, Shield, CheckCircle, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [searchResult, setSearchResult] = useState<Student | DCPStudent | null>(null);
@@ -20,6 +23,8 @@ const Index = () => {
   const [timeUntilAvailable, setTimeUntilAvailable] = useState<string>("");
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
+  const { logout, userEmail, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Set default theme to light mode
   useEffect(() => {
@@ -112,6 +117,15 @@ const Index = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -123,8 +137,33 @@ const Index = () => {
             }}></div>
           </div>
           
-          {/* Theme Toggle */}
-          <div className="absolute top-4 right-4 z-10">
+          {/* Theme Toggle and Login/Logout */}
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                <div className="hidden sm:block text-sm text-slate-300">
+                  {userEmail}
+                </div>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => navigate("/login")}
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                Login
+              </Button>
+            )}
             <ThemeToggle />
           </div>
           
@@ -158,8 +197,33 @@ const Index = () => {
           }}></div>
         </div>
         
-        {/* Theme Toggle */}
-        <div className="absolute top-4 right-4 z-10">
+        {/* Theme Toggle and Login/Logout */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              <div className="hidden sm:block text-sm text-slate-300">
+                {userEmail}
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => navigate("/login")}
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+            >
+              Login
+            </Button>
+          )}
           <ThemeToggle />
         </div>
         
