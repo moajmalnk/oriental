@@ -628,16 +628,16 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Set text color to dark brown/black for visibility
       pdf.setTextColor(101, 67, 33); // Dark brown color similar to template text
 
-      // Add Register Number (positioned on the left side)
+      // Add Register Number (positioned on the left side, matching template layout)
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       pdf.text(`Register No. : ${student.RegiNo}`, 25, 140);
 
-      // Add Certificate Number (if available)
+      // Add Certificate Number (positioned below Register No.)
       const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
       pdf.text(`Certificate No. : ${certificateNo}`, 25, 148);
 
-      // Add course description text
+      // Add course description text (centered, matching template)
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(101, 67, 33);
@@ -645,49 +645,45 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const courseName = isDCPStudent(student) ? 'Professional Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
       const courseText = `The certificate of ${courseName} has been conferred upon`;
       
-      // Split long text into multiple lines if needed
-      const lines = pdf.splitTextToSize(courseText, 160);
-      let yPos = 165;
-      lines.forEach((line: string) => {
-        pdf.text(line, pdfWidth / 2, yPos, { align: "center" });
-        yPos += 4;
-      });
+      // Position course text to match template (single line)
+      pdf.text(courseText, pdfWidth / 2, 175, { align: "center" });
 
-      // Add student name (larger and bold, positioned prominently)
-      pdf.setFontSize(14);
+      // Add student name (larger and bold, positioned prominently to match template)
+      pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(139, 69, 19); // Darker brown for name
-      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, yPos + 8, { align: "center" });
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 200, { align: "center" });
 
-      // Add course completion details
-      pdf.setFontSize(8);
+      // Add course completion details (centered, matching template layout)
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(101, 67, 33);
       
       const completionText = `who successfully completed the course at the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation from July 2024 to July 2025, and passed the final examination administered by the Central Board of Examinations of the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation.`;
       
-      const completionLines = pdf.splitTextToSize(completionText, 160);
-      let completionY = yPos + 18;
+      // Split text to fit template width and position with tighter spacing
+      const completionLines = pdf.splitTextToSize(completionText, 140);
+      let completionY = 215;
       completionLines.forEach((line: string) => {
         pdf.text(line, pdfWidth / 2, completionY, { align: "center" });
-        completionY += 4;
+        completionY += 4; // Tighter line spacing
       });
 
-      // Add date (positioned on the left)
+      // Add date (positioned on the left bottom, matching template)
       const displayDate = isDCPStudent(student) ? "03/10/2025" : "01/09/2025";
-      pdf.setFontSize(9);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Date: ${displayDate}`, 25, 240);
+      pdf.text(`Date: ${displayDate}`, 30, 250);
 
-      // Add signature placeholders (these would typically be added as images in a real implementation)
-      pdf.setFontSize(8);
+      // Add signature placeholders (positioned to match template layout)
+      pdf.setFontSize(10);
       pdf.setTextColor(101, 67, 33);
       
-      // Chairman signature placeholder
-      pdf.text("Chairman", 75, 240);
+      // Chairman signature placeholder (center)
+      pdf.text("Chairman", 80, 250);
       
-      // Controller of Examination signature placeholder
-      pdf.text("Controller of Examination", 130, 240);
+      // Controller of Examination signature placeholder (right side, right-aligned)
+      pdf.text("Controller of Examination", 140, 250, { align: "right" });
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
