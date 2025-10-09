@@ -4,6 +4,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { ResultTable } from "@/components/ResultTable";
 import { PrintPDFButtons } from "@/components/PrintPDFButtons";
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { Certificate } from "@/components/Certificate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton, SkeletonHeader, SkeletonCard } from "@/components/Skeleton";
 import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoader";
@@ -357,6 +358,18 @@ const Index = () => {
                 <div className="space-y-6 sm:space-y-8">
                   <ResultTable student={searchResult} />
                   <PrintPDFButtons student={searchResult} />
+                  
+                  {/* Certificate Preview - Only for authenticated users */}
+                  {isAuthenticated && (
+                    <div className="mt-12">
+                      <h2 className="text-2xl font-bold text-center mb-6 text-foreground">
+                        Certificate Preview
+                      </h2>
+                      <div className="flex justify-center">
+                        <Certificate student={searchResult} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <ErrorMessage />

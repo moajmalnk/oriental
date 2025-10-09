@@ -629,61 +629,121 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setTextColor(101, 67, 33); // Dark brown color similar to template text
 
       // Add Register Number (positioned on the left side, matching template layout)
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "bold");
-      pdf.text(`Register No. : ${student.RegiNo}`, 25, 140);
+      pdf.text(`Register No. : ${student.RegiNo}`, 20, 120);
 
       // Add Certificate Number (positioned below Register No.)
       const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
-      pdf.text(`Certificate No. : ${certificateNo}`, 25, 148);
+      pdf.text(`Certificate No. : ${certificateNo}`, 20, 128);
 
       // Add course description text (centered, matching template)
-      pdf.setFontSize(9);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(101, 67, 33);
+      pdf.setTextColor(0, 0, 0); // Black color
       
-      const courseName = isDCPStudent(student) ? 'Professional Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
-      const courseText = `The certificate of ${courseName} has been conferred upon`;
-      
-      // Position course text to match template (single line)
-      pdf.text(courseText, pdfWidth / 2, 175, { align: "center" });
+      // "The certificate of"
+      pdf.text("The certificate of", pdfWidth / 2, 150, { align: "center" });
+
+      // Course name
+      const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(courseName, pdfWidth / 2, 160, { align: "center" });
+
+      // "has been conferred upon"
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("has been conferred upon", pdfWidth / 2, 170, { align: "center" });
 
       // Add student name (larger and bold, positioned prominently to match template)
-      pdf.setFontSize(16);
+      pdf.setFontSize(20);
       pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(139, 69, 19); // Darker brown for name
-      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 200, { align: "center" });
+      pdf.setTextColor(0, 0, 0); // Black color
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 185, { align: "center" });
 
       // Add course completion details (centered, matching template layout)
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(101, 67, 33);
+      pdf.setTextColor(0, 0, 0); // Black color
       
-      const completionText = `who successfully completed the course at the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation from July 2024 to July 2025, and passed the final examination administered by the Central Board of Examinations of the Kug Oriental Academy of Alternative Medicines Allied Sciences Foundation.`;
+      const courseDuration = isDCPStudent(student) ? 'July 2024 to July 2025' : 'October 2024 to September 2025';
       
-      // Split text to fit template width and position with tighter spacing
-      const completionLines = pdf.splitTextToSize(completionText, 140);
-      let completionY = 215;
-      completionLines.forEach((line: string) => {
-        pdf.text(line, pdfWidth / 2, completionY, { align: "center" });
-        completionY += 4; // Tighter line spacing
-      });
+      // Split completion text into 4 lines to match screenshot
+      const completionLine1 = "who successfully completed the course at the Kug Oriental Academy of";
+      const completionLine2 = `Alternative Medicines Allied Sciences Foundation from ${courseDuration}, and passed the`;
+      const completionLine3 = "final examination administered by the Central Board of Examinations of the Kug";
+      const completionLine4 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
+      
+      let completionY = 200;
+      pdf.text(completionLine1, pdfWidth / 2, completionY, { align: "center" });
+      completionY += 4;
+      pdf.text(completionLine2, pdfWidth / 2, completionY, { align: "center" });
+      completionY += 4;
+      pdf.text(completionLine3, pdfWidth / 2, completionY, { align: "center" });
+      completionY += 4;
+      pdf.text(completionLine4, pdfWidth / 2, completionY, { align: "center" });
 
-      // Add date (positioned on the left bottom, matching template)
-      const displayDate = isDCPStudent(student) ? "03/10/2025" : "01/09/2025";
-      pdf.setFontSize(10);
+      // Add student photo
+      try {
+        const photoImg = new Image();
+        photoImg.crossOrigin = "anonymous";
+        photoImg.src = `/DCP STUDENTS PHOTOS/${student.RegiNo}.png`;
+        
+        await new Promise((resolve, reject) => {
+          photoImg.onload = () => {
+            // Create a canvas to compress the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size for photo (square format)
+            const photoSize = 200; // 200px for good quality
+            canvas.width = photoSize;
+            canvas.height = photoSize;
+            
+            // Draw and compress the image
+            ctx?.drawImage(photoImg, 0, 0, photoSize, photoSize);
+            
+            // Convert to compressed data URL
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Create new image from compressed data
+            const compressedPhotoImg = new Image();
+            compressedPhotoImg.onload = () => {
+            // Position photo on the right side (matching template layout)
+            const photoWidth = 20; // 20mm width
+            const photoHeight = 20; // 20mm height (square)
+            const photoX = pdfWidth - photoWidth - 25; // 25mm from right edge
+            const photoY = 115; // Position vertically
+              
+              // Add the photo image
+              pdf.addImage(compressedPhotoImg, "JPEG", photoX, photoY, photoWidth, photoHeight);
+              resolve(true);
+            };
+            compressedPhotoImg.src = compressedDataUrl;
+          };
+          photoImg.onerror = () => {
+            console.warn(`Could not load photo for ${student.RegiNo}`);
+            resolve(true); // Continue without photo
+          };
+        });
+      } catch (error) {
+        console.warn("Could not load student photo:", error);
+      }
+
+      // Add date (positioned on the left side)
+      const displayDate = isDCPStudent(student) ? "03/10/2025" : "06/10/2025";
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Date: ${displayDate}`, 30, 250);
+      pdf.text(`Date: ${displayDate}`, 20, 220);
 
-      // Add signature placeholders (positioned to match template layout)
-      pdf.setFontSize(10);
+      // Add Chairman signature placeholder (center)
+      pdf.setFontSize(9);
       pdf.setTextColor(101, 67, 33);
+      pdf.text("Chairman", pdfWidth / 2, 220, { align: "center" });
       
-      // Chairman signature placeholder (center)
-      pdf.text("Chairman", 80, 250);
-      
-      // Controller of Examination signature placeholder (right side, right-aligned)
-      pdf.text("Controller of Examination", 140, 250, { align: "right" });
+      // Add Controller of Examination signature placeholder (right side)
+      pdf.text("Controller of Examination", pdfWidth - 20, 220, { align: "right" });
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
