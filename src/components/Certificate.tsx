@@ -100,7 +100,7 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
           <div className="chairman-section">
             <div className="chairman-line">
               <div className="chairman-title">Chairman</div>
-              <img src="/UMMER SIR SIGN.png" alt="Chairman Signature" className="chairman-sign" />
+              <img src="/Nargees teacher Sign.png" alt="Chairman Signature" className="chairman-sign" />
             </div>
           </div>
 
