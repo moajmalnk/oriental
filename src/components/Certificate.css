@@ -53,8 +53,16 @@
   font-size: 11px;
   color: #8b4513;
   margin-bottom: 6px;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   font-weight: bold;
+}
+
+.ref-line .reg-value {
+  color: #c62828; /* deep red like screenshot */
+}
+
+.ref-line .cert-value {
+  color: #111;
 }
 
 /* Student Photo - positioned on right side based on template */
@@ -111,30 +119,30 @@
 
 .conferral-text {
   font-size: 14px;
-  color: black;
+  color: #000;
   margin-bottom: 8px;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
 .course-name {
   font-size: 20px;
   font-weight: bold;
-  color: black;
+  color: #000;
   margin-bottom: 8px;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
 /* Student Name - positioned in center based on template */
 .student-name {
   position: absolute;
   left: 50%;
-  top: 56%;
+  top: 57.5%;
   transform: translateX(-50%);
   font-size: 30px;
   font-weight: bold;
-  color: black;
+  color: #000;
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   letter-spacing: 1px;
   z-index: 3;
 }
@@ -143,13 +151,13 @@
 .completion-statement {
   position: absolute;
   left: 50%;
-  top: 62%;
+  top: 64.5%;
   transform: translateX(-50%);
   font-size: 12px;
-  color: black;
+  color: #000;
   text-align: center;
   line-height: 1.4;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   max-width: 80%;
   z-index: 3;
 }
@@ -158,28 +166,37 @@
 .date-section {
   position: absolute;
   left: 8%;
-  bottom: 20%;
+  bottom: 12%;
   z-index: 3;
 }
 
 .date-text {
-  font-size: 11px;
+  font-size: 12px;
   color: #8b4513;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   font-weight: bold;
+  line-height: 1;
 }
 
 /* Chairman - positioned in center */
 .chairman-section {
   position: absolute;
   left: 50%;
-  bottom: 20%;
+  bottom: 12%;
   transform: translateX(-50%);
   z-index: 3;
 }
 
 .chairman-line {
   text-align: center;
+}
+
+.chairman-sign {
+  width: 120px;
+  height: auto;
+  margin: 4px auto 0 auto;
+  display: block;
+  filter: drop-shadow(0 0 0 rgba(0,0,0,0));
 }
 
 .chairman-placeholder {
@@ -192,7 +209,7 @@
 .chairman-title {
   font-size: 9px;
   color: #8b4513;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   font-weight: bold;
 }
 
@@ -200,12 +217,20 @@
 .controller-section {
   position: absolute;
   right: 8%;
-  bottom: 20%;
+  bottom: 12%;
   z-index: 3;
 }
 
 .controller-line {
   text-align: center;
+}
+
+.controller-sign {
+  width: 140px;
+  height: auto;
+  margin: 4px auto 0 auto;
+  display: block;
+  filter: drop-shadow(0 0 0 rgba(0,0,0,0));
 }
 
 .controller-placeholder {
@@ -218,7 +243,7 @@
 .controller-title {
   font-size: 9px;
   color: #8b4513;
-  font-family: Arial, sans-serif;
+  font-family: "Times New Roman", Times, serif;
   font-weight: bold;
 }
 

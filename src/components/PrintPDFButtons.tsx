@@ -630,17 +630,25 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
       // Add Register Number (positioned on the left side, matching template layout)
       pdf.setFontSize(9);
-      pdf.setFont("helvetica", "bold");
-      // Shift down slightly from top per request
-      pdf.text(`Register No. : ${student.RegiNo}`, 20, 135);
+      pdf.setFont("times", "bold");
+      // Draw label and value separately to color the value red
+      const regLabel = "Register No. : ";
+      const regY = 135;
+      const regX = 20;
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(regLabel, regX, regY);
+      const regLabelWidth = pdf.getTextWidth(regLabel);
+      pdf.setTextColor(198, 40, 40); // deep red
+      pdf.text(String(student.RegiNo), regX + regLabelWidth, regY);
 
       // Add Certificate Number (positioned below Register No.)
       const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
+      pdf.setTextColor(0, 0, 0);
       pdf.text(`Certificate No. : ${certificateNo}`, 20, 143);
 
       // Add course description text (centered, matching template)
       pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFont("times", "normal");
       pdf.setTextColor(0, 0, 0); // Black color
       
       // "The certificate of"
@@ -650,17 +658,22 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Course name
       const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
       pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
+      pdf.setFont("times", "bold");
       pdf.text(courseName, pdfWidth / 2, 165, { align: "center" });
 
       // "has been conferred upon"
       pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFont("times", "normal");
       pdf.text("has been conferred upon", pdfWidth / 2, 173, { align: "center" });
+
+      // Candidate Name - centered and prominent
+      pdf.setFontSize(18);
+      pdf.setFont("times", "bold");
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 184, { align: "center" });
 
       // Add course completion details (centered, matching template layout)
       pdf.setFontSize(9);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFont("times", "normal");
       pdf.setTextColor(0, 0, 0); // Black color
       
       // Build 5-line paragraph per screenshot; bold the date range line
@@ -675,14 +688,14 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const cLine5 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
 
       // Completion paragraph aligned to ~62% of page height
-      let completionY = 196;
+      let completionY = 200;
       pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
       pdf.text(cLine2, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('times', 'bold');
       pdf.text(cLine3, pdfWidth / 2, completionY, { align: "center" });
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('times', 'normal');
       completionY += 4;
       pdf.text(cLine4, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
@@ -743,21 +756,61 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         console.warn("Could not load student photo:", error);
       }
 
-      // Add date (positioned on the left side)
+      // Prepare date text for footer row
       const displayDate = isDCPStudent(student) ? "03/10/2025" : "06/10/2025";
       pdf.setFontSize(9);
-      pdf.setFont("helvetica", "normal");
-      // Footer row at ~80% height
-      pdf.text(`Date: ${displayDate}`, 20, 238);
+      pdf.setFont("times", "normal");
 
-      // Add Chairman signature placeholder (center)
+      // Add signatures images and titles
       pdf.setFontSize(9);
       pdf.setTextColor(101, 67, 33);
-      pdf.text("Chairman", pdfWidth / 2, 238, { align: "center" });
-      
-      // Add Controller of Examination signature placeholder (right side, two lines)
-      pdf.text("Controller", pdfWidth - 20, 236, { align: "right" });
-      pdf.text("of Examination", pdfWidth - 20, 240, { align: "right" });
+
+      // Titles first (above signatures) moved lower near bottom; date on same row (left)
+      const titleY = 246; // lower placement
+      pdf.text(`Date: ${displayDate}`, 20, titleY, { align: "left" });
+      pdf.text("Chairman", pdfWidth / 2, titleY, { align: "center" });
+      pdf.text("Controller", pdfWidth - 20, titleY, { align: "right" });
+      pdf.text("of Examination", pdfWidth - 20, titleY + 4, { align: "right" });
+
+      try {
+        // Chairman signature (center) below title
+        const chairmanImg = new Image();
+        chairmanImg.crossOrigin = "anonymous";
+        chairmanImg.src = "/UMMER SIR SIGN.png";
+
+        await new Promise((resolve) => {
+          chairmanImg.onload = () => {
+            const width = 28; // ~28mm
+            const aspect = chairmanImg.height / chairmanImg.width;
+            const height = width * aspect;
+            const x = pdfWidth / 2 - width / 2;
+            const y = titleY + 2; // below title
+            pdf.addImage(chairmanImg, "PNG", x, y, width, height);
+            resolve(true);
+          };
+          chairmanImg.onerror = () => resolve(true);
+        });
+      } catch {}
+
+      try {
+        // Controller signature (right) below title
+        const controllerImg = new Image();
+        controllerImg.crossOrigin = "anonymous";
+        controllerImg.src = "/Nargees teacher Sign.png";
+
+        await new Promise((resolve) => {
+          controllerImg.onload = () => {
+            const width = 32; // ~32mm
+            const aspect = controllerImg.height / controllerImg.width;
+            const height = width * aspect;
+            const x = pdfWidth - 20 - width;
+            const y = titleY + 2;
+            pdf.addImage(controllerImg, "PNG", x, y, width, height);
+            resolve(true);
+          };
+          controllerImg.onerror = () => resolve(true);
+        });
+      } catch {}
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);

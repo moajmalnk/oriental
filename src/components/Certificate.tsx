@@ -40,8 +40,14 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
         <div className="certificate-content">
           {/* Reference Numbers - Positioned over template */}
           <div className="reference-numbers">
-            <div className="ref-line">Register No. : {student.RegiNo}</div>
-            <div className="ref-line">Certificate No. : {student.CertificateNo || '2025' + student.RegiNo.slice(-4)}</div>
+            <div className="ref-line">
+              <span>Register No. :</span>
+              <span className="reg-value"> {student.RegiNo}</span>
+            </div>
+            <div className="ref-line">
+              <span>Certificate No. :</span>
+              <span className="cert-value"> {student.CertificateNo || '2025' + student.RegiNo.slice(-4)}</span>
+            </div>
           </div>
 
           {/* Student Photo - Positioned over template */}
@@ -72,6 +78,11 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
             <div className="conferral-text">has been conferred upon</div>
           </div>
 
+          {/* Student Name - Centered big like the template */}
+          <div className="student-name">
+            {student.Name}
+          </div>
+
           {/* Completion Statement - Positioned over template */}
           <div className="completion-statement">
             <div>who successfully completed the course at the Kug Oriental Academy of</div>
@@ -88,16 +99,16 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
           {/* Chairman - Positioned in center */}
           <div className="chairman-section">
             <div className="chairman-line">
-              <div className=""></div>
               <div className="chairman-title">Chairman</div>
+              <img src="/UMMER SIR SIGN.png" alt="Chairman Signature" className="chairman-sign" />
             </div>
           </div>
 
           {/* Controller of Examination - Positioned on right side */}
           <div className="controller-section">
             <div className="controller-line">
-              <div className=""></div>
               <div className="controller-title">Controller <br /> of Examination</div>
+              <img src="/Nargees teacher Sign.png" alt="Controller Signature" className="controller-sign" />
             </div>
           </div>
         </div>
