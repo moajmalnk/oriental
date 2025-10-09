@@ -8,6 +8,7 @@ import { Certificate } from "@/components/Certificate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton, SkeletonHeader, SkeletonCard } from "@/components/Skeleton";
 import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoader";
+import { BulkCertificateDialog } from "@/components/BulkCertificateDialog";
 import { studentsData, dcpStudentsData, type Student, type DCPStudent } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -22,6 +23,8 @@ const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isResultAvailable, setIsResultAvailable] = useState(false);
   const [timeUntilAvailable, setTimeUntilAvailable] = useState<string>("");
+  const [pdaDialogOpen, setPdaDialogOpen] = useState(false);
+  const [dcpDialogOpen, setDcpDialogOpen] = useState(false);
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
   const { logout, userEmail, isAuthenticated } = useAuth();
@@ -142,6 +145,24 @@ const Index = () => {
           <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                <Button
+                  onClick={() => setPdaDialogOpen(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700/50 font-semibold"
+                >
+                  <Award className="h-4 w-4 mr-2" />
+                  PDA
+                </Button>
+                <Button
+                  onClick={() => setDcpDialogOpen(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700/50 font-semibold"
+                >
+                  <Award className="h-4 w-4 mr-2" />
+                  DCP
+                </Button>
                 <div className="hidden sm:block text-sm text-slate-300">
                   {userEmail}
                 </div>
@@ -202,6 +223,24 @@ const Index = () => {
         <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
           {isAuthenticated ? (
             <>
+              <Button
+                onClick={() => setPdaDialogOpen(true)}
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700/50 font-semibold"
+              >
+                <Award className="h-4 w-4 mr-2" />
+                PDA
+              </Button>
+              <Button
+                onClick={() => setDcpDialogOpen(true)}
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700/50 font-semibold"
+              >
+                <Award className="h-4 w-4 mr-2" />
+                DCP
+              </Button>
               <div className="hidden sm:block text-sm text-slate-300">
                 {userEmail}
               </div>
@@ -463,6 +502,20 @@ const Index = () => {
           )}
         </div>
       </main>
+
+      {/* Bulk Certificate Dialogs */}
+      <BulkCertificateDialog
+        open={pdaDialogOpen}
+        onOpenChange={setPdaDialogOpen}
+        students={studentsData}
+        courseType="PDA"
+      />
+      <BulkCertificateDialog
+        open={dcpDialogOpen}
+        onOpenChange={setDcpDialogOpen}
+        students={dcpStudentsData}
+        courseType="DCP"
+      />
 
       {/* Professional Footer */}
       <footer className="bg-gradient-to-r from-muted to-muted/80 border-t border-border/50 mt-16 sm:mt-20 md:mt-24" role="contentinfo" aria-label="KUG Oriental Academy Footer">

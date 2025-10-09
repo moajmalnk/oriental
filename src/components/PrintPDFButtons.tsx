@@ -644,19 +644,19 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setTextColor(0, 0, 0); // Black color
       
       // "The certificate of"
-      // Center block starts a bit above 50%
-      pdf.text("The certificate of", pdfWidth / 2, 145, { align: "center" });
+      // Drop center block a bit further from top
+      pdf.text("The certificate of", pdfWidth / 2, 157, { align: "center" });
 
       // Course name
       const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text(courseName, pdfWidth / 2, 153, { align: "center" });
+      pdf.text(courseName, pdfWidth / 2, 165, { align: "center" });
 
       // "has been conferred upon"
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text("has been conferred upon", pdfWidth / 2, 161, { align: "center" });
+      pdf.text("has been conferred upon", pdfWidth / 2, 173, { align: "center" });
 
       // Add course completion details (centered, matching template layout)
       pdf.setFontSize(9);
@@ -675,7 +675,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const cLine5 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
 
       // Completion paragraph aligned to ~62% of page height
-      let completionY = 184;
+      let completionY = 196;
       pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
       pdf.text(cLine2, pdfWidth / 2, completionY, { align: "center" });
@@ -704,9 +704,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const photoSize = 200; // 200px for good quality
             canvas.width = photoSize;
             canvas.height = photoSize;
+
+            // Crop a small margin to remove any borders present in source images
+            const minDim = Math.min(photoImg.width, photoImg.height);
+            const cropMargin = Math.floor(minDim * 0.08); // crop ~8% from each side
+            const sx = cropMargin;
+            const sy = cropMargin;
+            const sWidth = photoImg.width - cropMargin * 2;
+            const sHeight = photoImg.height - cropMargin * 2;
             
-            // Draw and compress the image
-            ctx?.drawImage(photoImg, 0, 0, photoSize, photoSize);
+            // Draw cropped image into square canvas (no border)
+            ctx?.drawImage(photoImg, sx, sy, sWidth, sHeight, 0, 0, photoSize, photoSize);
             
             // Convert to compressed data URL
             const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
