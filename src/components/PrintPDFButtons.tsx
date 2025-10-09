@@ -631,11 +631,12 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Add Register Number (positioned on the left side, matching template layout)
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "bold");
-      pdf.text(`Register No. : ${student.RegiNo}`, 20, 120);
+      // Shift down slightly from top per request
+      pdf.text(`Register No. : ${student.RegiNo}`, 20, 135);
 
       // Add Certificate Number (positioned below Register No.)
       const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
-      pdf.text(`Certificate No. : ${certificateNo}`, 20, 128);
+      pdf.text(`Certificate No. : ${certificateNo}`, 20, 143);
 
       // Add course description text (centered, matching template)
       pdf.setFontSize(10);
@@ -643,41 +644,49 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setTextColor(0, 0, 0); // Black color
       
       // "The certificate of"
-      pdf.text("The certificate of", pdfWidth / 2, 150, { align: "center" });
+      // Center block starts a bit above 50%
+      pdf.text("The certificate of", pdfWidth / 2, 145, { align: "center" });
 
       // Course name
       const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text(courseName, pdfWidth / 2, 160, { align: "center" });
+      pdf.text(courseName, pdfWidth / 2, 153, { align: "center" });
 
       // "has been conferred upon"
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text("has been conferred upon", pdfWidth / 2, 170, { align: "center" });
+      pdf.text("has been conferred upon", pdfWidth / 2, 161, { align: "center" });
 
       // Add course completion details (centered, matching template layout)
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(0, 0, 0); // Black color
       
-      const courseDuration = isDCPStudent(student) ? 'July 2024 to July 2025' : 'October 2024 to September 2025';
-      
-      // Split completion text into 4 lines to match screenshot
-      const completionLine1 = "who successfully completed the course at the Kug Oriental Academy of";
-      const completionLine2 = `Alternative Medicines Allied Sciences Foundation from ${courseDuration}, and passed the`;
-      const completionLine3 = "final examination administered by the Central Board of Examinations of the Kug";
-      const completionLine4 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
-      
-      // Start a bit higher since we removed the centered name line
-      let completionY = 185;
-      pdf.text(completionLine1, pdfWidth / 2, completionY, { align: "center" });
+      // Build 5-line paragraph per screenshot; bold the date range line
+      const dcpRange = 'October 2024 to September 2025';
+      const pdaRange = 'July 2024 to July 2025';
+      const rangeText = isDCPStudent(student) ? dcpRange : pdaRange;
+
+      const cLine1 = "who successfully completed the course at the Kug Oriental Academy of";
+      const cLine2 = "Alternative Medicines Allied Sciences Foundation from";
+      const cLine3 = `${rangeText},`;
+      const cLine4 = "and passed the final examination administered by the Central Board of Examinations of the Kug";
+      const cLine5 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
+
+      // Completion paragraph aligned to ~62% of page height
+      let completionY = 184;
+      pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
-      pdf.text(completionLine2, pdfWidth / 2, completionY, { align: "center" });
+      pdf.text(cLine2, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
-      pdf.text(completionLine3, pdfWidth / 2, completionY, { align: "center" });
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(cLine3, pdfWidth / 2, completionY, { align: "center" });
+      pdf.setFont('helvetica', 'normal');
       completionY += 4;
-      pdf.text(completionLine4, pdfWidth / 2, completionY, { align: "center" });
+      pdf.text(cLine4, pdfWidth / 2, completionY, { align: "center" });
+      completionY += 4;
+      pdf.text(cLine5, pdfWidth / 2, completionY, { align: "center" });
 
       // Add student photo
       try {
@@ -709,7 +718,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const photoWidth = 20; // 20mm width
             const photoHeight = 20; // 20mm height (square)
             const photoX = pdfWidth - photoWidth - 25; // 25mm from right edge
-            const photoY = 115; // Position vertically
+            const photoY = 135; // Dropped further from top for spacing
               
               // Add the photo image
               pdf.addImage(compressedPhotoImg, "JPEG", photoX, photoY, photoWidth, photoHeight);
@@ -730,16 +739,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const displayDate = isDCPStudent(student) ? "03/10/2025" : "06/10/2025";
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Date: ${displayDate}`, 20, 220);
+      // Footer row at ~80% height
+      pdf.text(`Date: ${displayDate}`, 20, 238);
 
       // Add Chairman signature placeholder (center)
       pdf.setFontSize(9);
       pdf.setTextColor(101, 67, 33);
-      pdf.text("Chairman", pdfWidth / 2, 220, { align: "center" });
+      pdf.text("Chairman", pdfWidth / 2, 238, { align: "center" });
       
       // Add Controller of Examination signature placeholder (right side, two lines)
-      pdf.text("Controller", pdfWidth - 20, 218, { align: "right" });
-      pdf.text("of Examination", pdfWidth - 20, 222, { align: "right" });
+      pdf.text("Controller", pdfWidth - 20, 236, { align: "right" });
+      pdf.text("of Examination", pdfWidth - 20, 240, { align: "right" });
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
