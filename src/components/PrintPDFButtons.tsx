@@ -656,12 +656,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFont("helvetica", "normal");
       pdf.text("has been conferred upon", pdfWidth / 2, 170, { align: "center" });
 
-      // Add student name (larger and bold, positioned prominently to match template)
-      pdf.setFontSize(20);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(0, 0, 0); // Black color
-      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 185, { align: "center" });
-
       // Add course completion details (centered, matching template layout)
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
@@ -675,7 +669,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const completionLine3 = "final examination administered by the Central Board of Examinations of the Kug";
       const completionLine4 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
       
-      let completionY = 200;
+      // Start a bit higher since we removed the centered name line
+      let completionY = 185;
       pdf.text(completionLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
       pdf.text(completionLine2, pdfWidth / 2, completionY, { align: "center" });
@@ -742,8 +737,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setTextColor(101, 67, 33);
       pdf.text("Chairman", pdfWidth / 2, 220, { align: "center" });
       
-      // Add Controller of Examination signature placeholder (right side)
-      pdf.text("Controller of Examination", pdfWidth - 20, 220, { align: "right" });
+      // Add Controller of Examination signature placeholder (right side, two lines)
+      pdf.text("Controller", pdfWidth - 20, 218, { align: "right" });
+      pdf.text("of Examination", pdfWidth - 20, 222, { align: "right" });
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
