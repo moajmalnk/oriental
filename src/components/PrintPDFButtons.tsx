@@ -460,7 +460,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
       pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, { align: "center" });
 
-      // Add KUG seal at the right bottom corner with compression
+      // Add KUG seal - positioned below signatures
+      // Based on CSS: .kug-seal left: 52%, bottom: 3% - 80px x 80px (90px on larger screens)
       try {
         const sealImg = new Image();
         sealImg.crossOrigin = "anonymous";
@@ -472,25 +473,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size to a reasonable resolution (max 300px width for seal)
-            const maxWidth = 300;
-            const imgWidth = sealImg.width;
-            const imgHeight = sealImg.height;
-            
-            // Calculate new dimensions maintaining aspect ratio
-            let newWidth = imgWidth;
-            let newHeight = imgHeight;
-            
-            if (imgWidth > maxWidth) {
-              newWidth = maxWidth;
-              newHeight = (imgHeight * maxWidth) / imgWidth;
-            }
-            
-            canvas.width = newWidth;
-            canvas.height = newHeight;
+            // Set canvas size to match CSS .seal-image (80px x 80px)
+            const sealSize = 80; // 80px to match CSS
+            canvas.width = sealSize;
+            canvas.height = sealSize;
             
             // Draw and compress the image
-            ctx?.drawImage(sealImg, 0, 0, newWidth, newHeight);
+            ctx?.drawImage(sealImg, 0, 0, sealSize, sealSize);
             
             // Convert to compressed data URL (PNG for seal to maintain transparency)
             const compressedDataUrl = canvas.toDataURL('image/png', 0.7); // 70% quality for better compression
@@ -499,13 +488,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Calculate seal size maintaining aspect ratio
-              const sealWidth = 35; // 35mm width
+              const sealWidth = 20; // Convert 80px to mm (approximately 20mm)
               const aspectRatio = compressedImg.height / compressedImg.width;
               const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
               
-              // Position at center bottom with 10mm margin
-              const sealX = (pdfWidth - sealWidth) / 2.2; // Center horizontally
-              const sealY = pdfHeight - sealHeight - 1; // 2mm from bottom edge
+              // Position at center bottom (matching CSS: left: 52%, bottom: 3%)
+              const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
+              const sealY = pdfHeight - sealHeight - 8; // 3% from bottom edge
               
               // Add the seal image with original aspect ratio
               pdf.addImage(compressedImg, "PNG", sealX, sealY, sealWidth, sealHeight);
@@ -624,106 +613,107 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         console.warn("Could not load certificate template image, continuing without it:", error);
       }
 
-      // Add dynamic content over the template
-      // Set text color to dark brown/black for visibility
-      pdf.setTextColor(101, 67, 33); // Dark brown color similar to template text
-
-      // Add Register Number (positioned on the left side, matching template layout)
-      pdf.setFontSize(9);
+      // Add dynamic content over the template - EXACTLY matching Certificate.tsx structure
+      
+      // Reference Numbers - positioned on left side (CSS: left: 8%, top: 45%)
+      pdf.setFontSize(11); // font-size: 11px from CSS .ref-line
       pdf.setFont("times", "bold");
-      // Draw label and value separately to color the value red
-      const regLabel = "Register No. : ";
-      const regY = 135;
-      const regX = 20;
-      pdf.setTextColor(0, 0, 0);
+      
+      // Register Number with red value (matching .reg-value color)
+      const regLabel = "Register No. :";
+      const regY = 120; // Convert CSS top: 45% to PDF coordinates
+      const regX = 20; // Convert CSS left: 8% to PDF coordinates
+      pdf.setTextColor(139, 69, 19); // #8b4513 from CSS .ref-line
       pdf.text(regLabel, regX, regY);
-      const regLabelWidth = pdf.getTextWidth(regLabel);
-      pdf.setTextColor(198, 40, 40); // deep red
+      const regLabelWidth = pdf.getTextWidth(regLabel + " ");
+      pdf.setTextColor(198, 40, 40); // #c62828 from CSS .reg-value
       pdf.text(String(student.RegiNo), regX + regLabelWidth, regY);
 
-      // Add Certificate Number (positioned below Register No.)
+      // Certificate Number (positioned below Register No.)
       const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`Certificate No. : ${certificateNo}`, 20, 143);
+      pdf.setTextColor(139, 69, 19); // #8b4513 from CSS .ref-line
+      pdf.text("Certificate No. :", regX, regY + 6); // 6px margin-bottom from CSS
+      const certLabelWidth = pdf.getTextWidth("Certificate No. : ");
+      pdf.setTextColor(17, 17, 17); // #111 from CSS .cert-value
+      pdf.text(String(certificateNo), regX + certLabelWidth, regY + 6);
 
-      // Add course description text (centered, matching template)
-      pdf.setFontSize(10);
+      // Course Conferred - positioned in center (CSS: left: 50%, top: 52%, transform: translateX(-50%))
+      pdf.setFontSize(14); // font-size: 14px from CSS .conferral-text
       pdf.setFont("times", "normal");
-      pdf.setTextColor(0, 0, 0); // Black color
+      pdf.setTextColor(0, 0, 0); // Black color from CSS
       
-      // "The certificate of"
-      // Drop center block a bit further from top
-      pdf.text("The certificate of", pdfWidth / 2, 157, { align: "center" });
+      // "The certificate of" - positioned at course-conferred top: 52%
+      pdf.text("The certificate of", pdfWidth / 2, 140, { align: "center" });
 
-      // Course name
+      // Course name - font-size: 20px from CSS .course-name
       const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
-      pdf.setFontSize(14);
+      pdf.setFontSize(20);
       pdf.setFont("times", "bold");
-      pdf.text(courseName, pdfWidth / 2, 165, { align: "center" });
+      pdf.text(courseName, pdfWidth / 2, 150, { align: "center" }); // 8px margin-bottom from CSS
 
       // "has been conferred upon"
-      pdf.setFontSize(10);
+      pdf.setFontSize(14);
       pdf.setFont("times", "normal");
-      pdf.text("has been conferred upon", pdfWidth / 2, 173, { align: "center" });
+      pdf.text("has been conferred upon", pdfWidth / 2, 160, { align: "center" });
 
-      // Candidate Name - centered and prominent
-      pdf.setFontSize(18);
+      // Student Name - positioned in center (CSS: left: 50%, top: 60%, transform: translateX(-50%))
+      // font-size: 32px, font-weight: bold, letter-spacing: 1px
+      pdf.setFontSize(32);
       pdf.setFont("times", "bold");
-      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 184, { align: "center" });
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 175, { align: "center" });
 
-      // Add course completion details (centered, matching template layout)
+      // Completion Statement - positioned in center (CSS: left: 50%, top: 67%, transform: translateX(-50%))
+      // font-size: 13px, line-height: 1.5, max-width: 85%
       pdf.setFontSize(13);
       pdf.setFont("times", "normal");
-      pdf.setTextColor(0, 0, 0); // Black color
+      pdf.setTextColor(0, 0, 0); // Black color from CSS
       
-      // Build 5-line paragraph per screenshot; bold the date range line
-      const dcpRange = 'October 2024 to September 2025';
-      const pdaRange = 'October 2024 to September 2025';
-      const rangeText = isDCPStudent(student) ? dcpRange : pdaRange;
-
+      // Build completion statement in exactly 5 lines format as shown in screenshot
       const cLine1 = "who successfully completed the course at the Kug Oriental Academy of";
-      const cLine2 = "Alternative Medicines Allied Sciences Foundation from June 2021";
-      const cLine3 = "to May 2022, and passed the final examination administered by";
-      const cLine4 = "the";
-      const cLine5 = "Central Board of Examinations of the Kug Oriental Academy of";
-      const cLine6 = "Alternative Medicines Allied Sciences Foundation.";
+      const cLine2 = "Alternative Medicines Allied Sciences Foundation from June 2021 to";
+      const cLine3 = "May 2022, and passed the final examination administered by the";
+      const cLine4 = "Central Board of Examinations of the Kug Oriental Academy of";
+      const cLine5 = "Alternative Medicines Allied Sciences Foundation.";
 
-      // Completion paragraph aligned to ~62% of page height
-      let completionY = 200;
+      // Completion paragraph positioned at top: 67% from CSS
+      let completionY = 190; // Convert CSS top: 67% to PDF coordinates
       pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
-      completionY += 4;
+      completionY += 6; // line-height: 1.5 from CSS (13px * 1.5 = ~19.5px, converted to 6mm)
       
-      // Line 2 with bold "June 2021"
+      // Line 2 with bold "June 2021" (matching the screenshot exactly)
       pdf.setFont("times", "normal");
       const line2Text = "Alternative Medicines Allied Sciences Foundation from ";
       const line2BoldText = "June 2021";
+      const line2NormalText2 = " to";
       const line2Width = pdf.getTextWidth(line2Text);
       const line2BoldWidth = pdf.getTextWidth(line2BoldText);
-      const line2StartX = (pdfWidth - (line2Width + line2BoldWidth)) / 2;
+      const line2NormalWidth2 = pdf.getTextWidth(line2NormalText2);
+      const line2StartX = (pdfWidth - (line2Width + line2BoldWidth + line2NormalWidth2)) / 2;
       pdf.text(line2Text, line2StartX, completionY);
       pdf.setFont("times", "bold");
       pdf.text(line2BoldText, line2StartX + line2Width, completionY);
-      completionY += 4;
+      pdf.setFont("times", "normal");
+      pdf.text(line2NormalText2, line2StartX + line2Width + line2BoldWidth, completionY);
+      completionY += 6;
       
-      // Line 3 with bold "to May 2022"
+      // Line 3 with bold "May 2022" (matching the screenshot exactly)
       pdf.setFont("times", "bold");
-      const line3BoldText = "to May 2022";
-      const line3NormalText = ", and passed the final examination administered by";
+      const line3BoldText = "May 2022";
+      const line3NormalText = ", and passed the final examination administered by the";
       const line3BoldWidth = pdf.getTextWidth(line3BoldText);
       const line3NormalWidth = pdf.getTextWidth(line3NormalText);
       const line3StartX = (pdfWidth - (line3BoldWidth + line3NormalWidth)) / 2;
       pdf.text(line3BoldText, line3StartX, completionY);
       pdf.setFont("times", "normal");
       pdf.text(line3NormalText, line3StartX + line3BoldWidth, completionY);
-      completionY += 4;
+      completionY += 6;
       
       pdf.text(cLine4, pdfWidth / 2, completionY, { align: "center" });
-      completionY += 4;
+      completionY += 6;
       pdf.text(cLine5, pdfWidth / 2, completionY, { align: "center" });
-      completionY += 4;
-      pdf.text(cLine6, pdfWidth / 2, completionY, { align: "center" });
 
-      // Add student photo
+      // Student Photo - positioned on right side (CSS: right: 8%, top: 45%)
+      // photo-container: 80px x 80px, student-photo-img: 80px x 80px
       try {
         const photoImg = new Image();
         photoImg.crossOrigin = "anonymous";
@@ -735,8 +725,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size for photo (square format)
-            const photoSize = 200; // 200px for good quality
+            // Set canvas size for photo (square format) - 80px from CSS .student-photo-img
+            const photoSize = 80; // 80px to match CSS exactly
             canvas.width = photoSize;
             canvas.height = photoSize;
 
@@ -774,11 +764,11 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             // Create new image from compressed data
             const compressedPhotoImg = new Image();
             compressedPhotoImg.onload = () => {
-            // Position photo on the right side (matching template layout)
-            const photoWidth = 25; // 25mm width (increased from 20mm)
-            const photoHeight = 25; // 25mm height (increased from 20mm)
-            const photoX = pdfWidth - photoWidth - 25; // 25mm from right edge
-            const photoY = 135; // Dropped further from top for spacing
+            // Position photo on the right side (matching CSS: right: 8%, top: 45%)
+            const photoWidth = 20; // Convert 80px to mm (approximately 20mm)
+            const photoHeight = 20; // Convert 80px to mm (approximately 20mm)
+            const photoX = pdfWidth - photoWidth - 20; // 8% from right edge
+            const photoY = 120; // Match CSS top: 45% positioning
               
               // Add the photo image
               pdf.addImage(compressedPhotoImg, "JPEG", photoX, photoY, photoWidth, photoHeight);
@@ -795,32 +785,34 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         console.warn("Could not load student photo:", error);
       }
 
-      // Prepare date text for footer row
+      // Bottom Row - Date, Chairman, and Controller in one row (CSS: .bottom-row)
+      // CSS: bottom: 12%, display: flex, justify-content: space-evenly, align-items: flex-end, padding: 0 5%
       const displayDate = isDCPStudent(student) ? "28/06/2021" : "28/06/2021";
-      pdf.setFontSize(9);
-      pdf.setFont("times", "normal");
-
-      // Add signatures images and titles
-      pdf.setFontSize(9);
-      pdf.setTextColor(101, 67, 33);
-
-      // Signatures first (above titles) - better responsive positioning
-      const signatureY = 250; // base signature position
-      const titleY = signatureY + 10; // titles below signatures with proper spacing
+      
+      // Calculate bottom row positioning (CSS: bottom: 12%)
+      const signatureY = 240; // Convert CSS bottom: 12% to PDF coordinates
+      const titleY = signatureY + 8; // titles below signatures with proper spacing
+      
+      // Date section - positioned on left side (CSS: .date-section)
+      // CSS: flex: 0 0 auto, min-width: 120px, text-align: center
+      pdf.setFontSize(10); // font-size: 10px from CSS .date-text
+      pdf.setFont("times", "bold");
+      pdf.setTextColor(0, 0, 0); // Black color from CSS
       pdf.text(`Date: ${displayDate}`, 20, signatureY, { align: "left" });
 
       try {
-        // Chairman signature (center) above title
+        // Chairman signature (center) above title (CSS: .chairman-section)
+        // CSS: .chairman-sign width: 80px, height: auto, margin: 0 auto 0px auto
         const chairmanImg = new Image();
         chairmanImg.crossOrigin = "anonymous";
         chairmanImg.src = "/UMMER SIR SIGN.png";
 
         await new Promise((resolve) => {
           chairmanImg.onload = () => {
-            const width = 25; // adjusted for better visibility
+            const width = 20; // Convert 80px to mm (approximately 20mm)
             const aspect = chairmanImg.height / chairmanImg.width;
             const height = width * aspect;
-            const x = pdfWidth / 2 - width / 2;
+            const x = pdfWidth / 2 - width / 2; // Center horizontally
             const y = signatureY - 5; // slightly higher for better spacing
             pdf.addImage(chairmanImg, "PNG", x, y, width, height);
             resolve(true);
@@ -830,17 +822,18 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       } catch {}
 
       try {
-        // Controller signature (right) above title
+        // Controller signature (right) above title (CSS: .controller-section)
+        // CSS: .controller-sign width: 100px, height: auto, margin: 0 auto 0px auto
         const controllerImg = new Image();
         controllerImg.crossOrigin = "anonymous";
         controllerImg.src = "/Nargees teacher Sign.png";
 
         await new Promise((resolve) => {
           controllerImg.onload = () => {
-            const width = 30; // adjusted for better visibility
+            const width = 25; // Convert 100px to mm (approximately 25mm)
             const aspect = controllerImg.height / controllerImg.width;
             const height = width * aspect;
-            const x = pdfWidth - 20 - width;
+            const x = pdfWidth - 20 - width; // Right side positioning
             const y = signatureY - 5; // slightly higher for better spacing
             pdf.addImage(controllerImg, "PNG", x, y, width, height);
             resolve(true);
@@ -850,12 +843,62 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       } catch {}
 
       // Add titles below signatures with proper spacing
-      pdf.setFontSize(9);
+      // CSS: .chairman-title and .controller-title font-size: 10px, font-weight: bold
+      pdf.setFontSize(10);
       pdf.setFont("times", "bold");
-      pdf.setTextColor(139, 69, 19); // Brown color to match CSS
+      pdf.setTextColor(0, 0, 0); // Black color from CSS
       pdf.text("Chairman", pdfWidth / 2, titleY, { align: "center" });
       pdf.text("Controller", pdfWidth - 20, titleY, { align: "right" });
-      pdf.text("of Examination", pdfWidth - 20, titleY + 4, { align: "right" });
+      pdf.text("of Examination", pdfWidth - 20, titleY + 4, { align: "right" }); // line-height: 1.2 from CSS
+
+      // KUG Seal - positioned below signatures (CSS: .kug-seal)
+      // CSS: left: 52%, bottom: 3%, transform: translateX(-50%), z-index: 3
+      // CSS: .seal-image width: 80px, height: 80px, object-fit: contain
+      try {
+        const sealImg = new Image();
+        sealImg.crossOrigin = "anonymous";
+        sealImg.src = "/kug seal.png";
+        
+        await new Promise((resolve, reject) => {
+          sealImg.onload = () => {
+            // Create a canvas to compress the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match CSS .seal-image (80px x 80px)
+            const sealSize = 80; // 80px to match CSS exactly
+            canvas.width = sealSize;
+            canvas.height = sealSize;
+            
+            // Draw and compress the image
+            ctx?.drawImage(sealImg, 0, 0, sealSize, sealSize);
+            
+            // Convert to compressed data URL (PNG for seal to maintain transparency)
+            const compressedDataUrl = canvas.toDataURL('image/png', 0.7); // 70% quality for better compression
+            
+            // Create new image from compressed data
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Calculate seal size maintaining aspect ratio
+              const sealWidth = 20; // Convert 80px to mm (approximately 20mm)
+              const aspectRatio = compressedImg.height / compressedImg.width;
+              const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
+              
+              // Position at center bottom (matching CSS: left: 52%, bottom: 3%, transform: translateX(-50%))
+              const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
+              const sealY = pdfHeight - sealHeight - 8; // 3% from bottom edge
+              
+              // Add the seal image with original aspect ratio
+              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealWidth, sealHeight);
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          sealImg.onerror = reject;
+        });
+      } catch (error) {
+        console.warn("Could not load KUG seal image:", error);
+      }
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
