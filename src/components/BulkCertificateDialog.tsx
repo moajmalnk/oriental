@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,35 +7,96 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Award, CheckCircle } from "lucide-react";
+import { Download, Award, CheckCircle, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import { Student, DCPStudent } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import DataService from "@/services/dataService";
 
 interface BulkCertificateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  students: (Student | DCPStudent)[];
   courseType: "PDA" | "DCP";
 }
 
 export const BulkCertificateDialog = ({
   open,
   onOpenChange,
-  students,
   courseType,
 }: BulkCertificateDialogProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const [selectedRegiNos, setSelectedRegiNos] = useState<Set<string>>(new Set());
+  const [students, setStudents] = useState<(Student | DCPStudent)[]>([]);
 
-  // Filter students who have passed (have certificate numbers)
+  // Fetch students data from API when dialog opens
+  useEffect(() => {
+    const fetchStudents = async () => {
+      if (!open) return;
+      
+      setIsLoading(true);
+      try {
+        let fetchedStudents: (Student | DCPStudent)[] = [];
+        
+        if (courseType === "PDA") {
+          fetchedStudents = await DataService.getStudents();
+        } else if (courseType === "DCP") {
+          fetchedStudents = await DataService.getDCPStudents();
+        }
+        
+        setStudents(fetchedStudents);
+        
+        // Debug logging
+        console.log(`Fetched ${courseType} students:`, fetchedStudents);
+        console.log(`Students with results:`, fetchedStudents.filter(s => s.Result));
+        console.log(`Students with certificates:`, fetchedStudents.filter(s => s.CertificateNo && s.CertificateNo.trim() !== ''));
+        // Note: is_published field is not available in the API response
+        console.log(`Sample student data:`, fetchedStudents[0]);
+        console.log(`Sample student keys:`, Object.keys(fetchedStudents[0] || {}));
+      } catch (error) {
+        console.error(`Failed to fetch ${courseType} students:`, error);
+        toast({
+          title: "Failed to Load Students",
+          description: `Unable to load ${courseType} students. Please try again.`,
+          variant: "destructive",
+        });
+        setStudents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, [open, courseType, toast]);
+
+  // Filter students who are eligible for certificates
+  // Since is_published field is not available, use certificate numbers as the criterion
   const passedStudents = students.filter(
-    (student) => student.Result === "PASS" && student.CertificateNo
+    (student) => {
+      const hasCertificate = student.CertificateNo && student.CertificateNo.trim() !== '';
+      
+      // Include students who have certificate numbers (they are eligible for certificates)
+      return hasCertificate;
+    }
   );
+  
+  // Debug logging for filtering
+  React.useEffect(() => {
+    if (students.length > 0) {
+      console.log(`Filtering ${courseType} students:`, {
+        total: students.length,
+        withResults: students.filter(s => s.Result).length,
+        withCertificates: students.filter(s => s.CertificateNo).length,
+        passedWithCertificates: passedStudents.length,
+        resultTypes: [...new Set(students.map(s => s.Result))],
+        sampleStudent: students[0]
+      });
+    }
+  }, [students, courseType, passedStudents.length]);
 
   // Initialize selection to all passed students when dialog opens or data changes
   // Ensures a sensible default: everything selected
@@ -173,7 +234,7 @@ export const BulkCertificateDialog = ({
     pdf.setTextColor(0, 0, 0);
 
     const courseDuration = isDCPStudent(student)
-      ? "July 2024 to July 2025"
+      ? "October 2024 to September 2025"
       : "October 2024 to September 2025";
 
     const completionLine1 =
@@ -193,66 +254,68 @@ export const BulkCertificateDialog = ({
     completionY += 4;
     pdf.text(completionLine4, pdfWidth / 2, completionY, { align: "center" });
 
-    // Add student photo
-    try {
-      const photoImg = new Image();
-      photoImg.crossOrigin = "anonymous";
-      photoImg.src = `/DCP STUDENTS PHOTOS/${student.RegiNo}.png`;
+    // Add student photo (only for DCP students as PDA photos are not available)
+    if (isDCPStudent(student)) {
+      try {
+        const photoImg = new Image();
+        photoImg.crossOrigin = "anonymous";
+        photoImg.src = `/DCP STUDENTS PHOTOS/${student.RegiNo}.png`;
 
-      await new Promise((resolve) => {
-        photoImg.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
+        await new Promise((resolve) => {
+          photoImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
 
-          const photoSize = 200;
-          canvas.width = photoSize;
-          canvas.height = photoSize;
+            const photoSize = 200;
+            canvas.width = photoSize;
+            canvas.height = photoSize;
 
-          ctx?.drawImage(photoImg, 0, 0, photoSize, photoSize);
+            ctx?.drawImage(photoImg, 0, 0, photoSize, photoSize);
 
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
 
-          const compressedPhotoImg = new Image();
-          compressedPhotoImg.onload = () => {
-            const photoWidth = 20;
-            const photoHeight = 20;
-            const photoX = pdfWidth - photoWidth - 25;
-            const photoY = 125;
+            const compressedPhotoImg = new Image();
+            compressedPhotoImg.onload = () => {
+              const photoWidth = 20;
+              const photoHeight = 20;
+              const photoX = pdfWidth - photoWidth - 25;
+              const photoY = 125;
 
-            pdf.addImage(
-              compressedPhotoImg,
-              "JPEG",
-              photoX,
-              photoY,
-              photoWidth,
-              photoHeight
-            );
+              pdf.addImage(
+                compressedPhotoImg,
+                "JPEG",
+                photoX,
+                photoY,
+                photoWidth,
+                photoHeight
+              );
+              resolve(true);
+            };
+            compressedPhotoImg.src = compressedDataUrl;
+          };
+          photoImg.onerror = () => {
+            console.warn(`Could not load photo for ${student.RegiNo}`);
             resolve(true);
           };
-          compressedPhotoImg.src = compressedDataUrl;
-        };
-        photoImg.onerror = () => {
-          console.warn(`Could not load photo for ${student.RegiNo}`);
-          resolve(true);
-        };
-      });
-    } catch (error) {
-      console.warn("Could not load student photo:", error);
+        });
+      } catch (error) {
+        console.warn("Could not load student photo:", error);
+      }
     }
 
     // Add date
-    const displayDate = isDCPStudent(student) ? "03/10/2025" : "06/10/2025";
+    const displayDate = isDCPStudent(student) ? "28/06/2021" : "28/06/2021";
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Date: ${displayDate}`, 20, 238);
+    pdf.text(`Date: ${displayDate}`, 20, 250);
 
     // Add signatures
     pdf.setFontSize(9);
     pdf.setTextColor(101, 67, 33);
-    pdf.text("Chairman", pdfWidth / 2, 238, { align: "center" });
+    pdf.text("Chairman", pdfWidth / 2, 260, { align: "center" });
 
-    pdf.text("Controller", pdfWidth - 20, 236, { align: "right" });
-    pdf.text("of Examination", pdfWidth - 20, 240, { align: "right" });
+    pdf.text("Controller", pdfWidth - 20, 258, { align: "right" });
+    pdf.text("of Examination", pdfWidth - 20, 262, { align: "right" });
   };
 
   const handleBulkDownload = async () => {
@@ -385,41 +448,51 @@ export const BulkCertificateDialog = ({
 
           {/* Student List */}
           <ScrollArea className="h-[400px] rounded-md border p-4">
-            <div className="space-y-2">
-              {passedStudents.map((student, index) => (
-                <div
-                  key={student.RegiNo}
-                  className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={selectedRegiNos.has(student.RegiNo)}
-                      onCheckedChange={() => toggleOne(student.RegiNo)}
-                    />
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{student.Name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {student.RegiNo} • Cert: {student.CertificateNo}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-2 py-1 rounded-full font-medium">
-                      PASS
-                    </span>
-                  </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading {courseType} students...</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {passedStudents.map((student, index) => (
+                  <div
+                    key={student.RegiNo}
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedRegiNos.has(student.RegiNo)}
+                        onCheckedChange={() => toggleOne(student.RegiNo)}
+                      />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{student.Name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {student.RegiNo} • Cert: {student.CertificateNo}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-2 py-1 rounded-full font-medium">
+                        PASS
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </ScrollArea>
 
-          {passedStudents.length === 0 && (
+          {!isLoading && passedStudents.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No passed students found for certificate generation.</p>
+              <p className="text-sm mt-2">Make sure students have PASS result and certificate numbers.</p>
             </div>
           )}
         </div>

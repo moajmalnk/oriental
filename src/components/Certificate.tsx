@@ -18,10 +18,10 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
     : 'Professional Diploma in Acupuncture';
 
   const courseDuration = isDCPStudent(student) 
-    ? 'July 2024 to July 2025' 
+    ? 'October 2024 to September 2025' 
     : 'October 2024 to September 2025';
 
-  const displayDate = isDCPStudent(student) ? '03/10/2025' : '06/10/2025';
+  const displayDate = isDCPStudent(student) ? '28/06/2021' : '28/06/2021';
 
   return (
     <div className={`certificate-container ${className}`}>
@@ -86,30 +86,39 @@ export const Certificate = ({ student, className = '' }: CertificateProps) => {
           {/* Completion Statement - Positioned over template */}
           <div className="completion-statement">
             <div>who successfully completed the course at the Kug Oriental Academy of</div>
-            <div>Alternative Medicines Allied Sciences Foundation from <strong>{courseDuration}</strong>, and passed the final examination administered by the </div>
-            <div>Central Board of Examinations of the Kug Oriental Academy of </div>
+            <div>Alternative Medicines Allied Sciences Foundation from <strong>June 2021 to</strong></div>
+            <div><strong>May 2022</strong>, and passed the final examination administered by the</div>
+            <div>Central Board of Examinations of the Kug Oriental Academy of</div>
             <div>Alternative Medicines Allied Sciences Foundation.</div>
           </div>
 
-          {/* Date - Positioned on left side */}
-          <div className="date-section">
-            <div className="date-text">Date: {displayDate}</div>
-          </div>
+          {/* Bottom Row - Date, Chairman, and Controller in one row */}
+          <div className="bottom-row">
+            {/* Date - Positioned on left side */}
+            <div className="date-section">
+              <div className="date-text">Date: {displayDate}</div>
+            </div>
 
-          {/* Chairman - Positioned in center */}
-          <div className="chairman-section">
-            <div className="chairman-line">
-              <div className="chairman-title">Chairman</div>
-              <img src="/UMMER SIR SIGN.png" alt="Chairman Signature" className="chairman-sign" />
+            {/* Chairman - Positioned in center */}
+            <div className="chairman-section">
+              <div className="chairman-line">
+                <img src="/UMMER SIR SIGN.png" alt="Chairman Signature" className="chairman-sign" />
+                <div className="chairman-title">Chairman</div>
+              </div>
+            </div>
+
+            {/* Controller of Examination - Positioned on right side */}
+            <div className="controller-section">
+              <div className="controller-line">
+                <img src="/Nargees teacher Sign.png" alt="Controller Signature" className="controller-sign" />
+                <div className="controller-title">Controller <br /> of Examination</div>
+              </div>
             </div>
           </div>
 
-          {/* Controller of Examination - Positioned on right side */}
-          <div className="controller-section">
-            <div className="controller-line">
-              <div className="controller-title">Controller <br /> of Examination</div>
-              <img src="/Nargees teacher Sign.png" alt="Controller Signature" className="controller-sign" />
-            </div>
+          {/* KUG Seal - Positioned below signatures */}
+          <div className="kug-seal">
+            <img src="/kug seal.png" alt="KUG Oriental Academy Seal" className="seal-image" />
           </div>
         </div>
       </div>

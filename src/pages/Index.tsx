@@ -9,10 +9,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton, SkeletonHeader, SkeletonCard } from "@/components/Skeleton";
 import { ProfessionalLoader, AcademicLoader } from "@/components/ProfessionalLoader";
 import { BulkCertificateDialog } from "@/components/BulkCertificateDialog";
-import { studentsData, dcpStudentsData, type Student, type DCPStudent } from "@/data/studentsData";
+import { type Student, type DCPStudent } from "@/data/studentsData";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/contexts/AuthContext";
+import DataService from "@/services/dataService";
 import { Clock, Calendar, AlertCircle, Award, BookOpen, Users, Shield, CheckCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,7 +28,7 @@ const Index = () => {
   const [dcpDialogOpen, setDcpDialogOpen] = useState(false);
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
-  const { logout, userEmail, isAuthenticated } = useAuth();
+  const { logout, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Set default theme to light mode
@@ -84,40 +85,50 @@ const Index = () => {
     setIsLoading(true);
     setHasSearched(false);
     
-    // Simulate search delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Search in both PDA and DCP students data
-    const pdaStudent = studentsData.find(
-      student => student.RegiNo.toLowerCase() === searchTerm.toLowerCase()
-    );
-    
-    const dcpStudent = dcpStudentsData.find(
-      student => student.RegiNo.toLowerCase() === searchTerm.toLowerCase()
-    );
-    
-    // Gate only DCP results by time; PDA always allowed
-    if (dcpStudent && !isResultAvailable) {
-      setIsLoading(false);
+    try {
+      // Search in both PDA and DCP students data using API
+      const pdaStudent = await DataService.getStudentByRegiNo(searchTerm);
+      const dcpStudent = await DataService.getDCPStudentByRegiNo(searchTerm);
+      
+      // Gate only DCP results by time; PDA always allowed
+      if (dcpStudent && !isResultAvailable) {
+        setIsLoading(false);
+        toast({
+          title: "DCP Results Not Available Yet",
+          description: "DCP results will be available after 03/10/2025 10:00 AM",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const found = pdaStudent || dcpStudent;
+      
+      setSearchResult(found || null);
+      setHasSearched(true);
+      
+      if (found) {
+        toast({
+          title: "Result Found",
+          description: `Record found for ${found.Name}`,
+        });
+      } else {
+        toast({
+          title: "No Results Found",
+          description: "Please check your registration number and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Search failed:', error);
       toast({
-        title: "DCP Results Not Available Yet",
-        description: "DCP results will be available after 03/10/2025 10:00 AM",
+        title: "Search Failed",
+        description: error.message || "Unable to search for results. Please try again.",
         variant: "destructive",
       });
-      return;
-    }
-
-    const found = pdaStudent || dcpStudent;
-    
-    setSearchResult(found || null);
-    setHasSearched(true);
-    setIsLoading(false);
-    
-    if (found) {
-      toast({
-        title: "Result Found",
-        description: `Record found for ${found.Name}`,
-      });
+      setSearchResult(null);
+      setHasSearched(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -163,9 +174,9 @@ const Index = () => {
                   <Award className="h-4 w-4 mr-2" />
                   DCP
                 </Button>
-                <div className="hidden sm:block text-sm text-slate-300">
-                  {userEmail}
-                </div>
+              <div className="hidden sm:block text-sm text-slate-300">
+                {user?.username}
+              </div>
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
@@ -242,7 +253,7 @@ const Index = () => {
                 DCP
               </Button>
               <div className="hidden sm:block text-sm text-slate-300">
-                {userEmail}
+                {user?.username}
               </div>
               <Button
                 onClick={handleLogout}
@@ -503,19 +514,23 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Bulk Certificate Dialogs */}
-      <BulkCertificateDialog
-        open={pdaDialogOpen}
-        onOpenChange={setPdaDialogOpen}
-        students={studentsData}
-        courseType="PDA"
-      />
-      <BulkCertificateDialog
-        open={dcpDialogOpen}
-        onOpenChange={setDcpDialogOpen}
-        students={dcpStudentsData}
-        courseType="DCP"
-      />
+      {/* Bulk Certificate Dialogs - Only for authenticated users */}
+      {isAuthenticated && (
+        <>
+          <BulkCertificateDialog
+            open={pdaDialogOpen}
+            onOpenChange={setPdaDialogOpen}
+            students={[]} // Will be loaded dynamically from API
+            courseType="PDA"
+          />
+          <BulkCertificateDialog
+            open={dcpDialogOpen}
+            onOpenChange={setDcpDialogOpen}
+            students={[]} // Will be loaded dynamically from API
+            courseType="DCP"
+          />
+        </>
+      )}
 
       {/* Professional Footer */}
       <footer className="bg-gradient-to-r from-muted to-muted/80 border-t border-border/50 mt-16 sm:mt-20 md:mt-24" role="contentinfo" aria-label="KUG Oriental Academy Footer">

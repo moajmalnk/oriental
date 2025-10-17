@@ -10,13 +10,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Lock, Mail, Eye, EyeOff, Shield, AlertCircle } from "lucide-react";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isLoading, error: authError } = useAuth();
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -28,13 +28,13 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    const success = await login(email, password);
+    const success = await login(username, password);
     
     if (success) {
       const from = (location.state as any)?.from?.pathname || "/";
       navigate(from, { replace: true });
     } else {
-      setError("Invalid email or password. Please check your credentials and try again.");
+      setError(authError || "Invalid username or password. Please check your credentials and try again.");
     }
   };
 
@@ -72,19 +72,19 @@ const Login = () => {
 
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email Field */}
+              {/* Username Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Email Address
+                <Label htmlFor="username" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Username
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your username"
                     className="pl-10 h-11 border-slate-200 dark:border-slate-700 focus:border-slate-900 dark:focus:border-slate-100"
                     required
                   />
@@ -130,9 +130,10 @@ const Login = () => {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 text-white font-medium transition-all duration-200"
+                disabled={isLoading}
+                className="w-full h-11 bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 text-white font-medium transition-all duration-200 disabled:opacity-50"
               >
-                Sign In
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

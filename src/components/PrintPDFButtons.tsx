@@ -672,34 +672,56 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 184, { align: "center" });
 
       // Add course completion details (centered, matching template layout)
-      pdf.setFontSize(9);
+      pdf.setFontSize(13);
       pdf.setFont("times", "normal");
       pdf.setTextColor(0, 0, 0); // Black color
       
       // Build 5-line paragraph per screenshot; bold the date range line
       const dcpRange = 'October 2024 to September 2025';
-      const pdaRange = 'July 2024 to July 2025';
+      const pdaRange = 'October 2024 to September 2025';
       const rangeText = isDCPStudent(student) ? dcpRange : pdaRange;
 
       const cLine1 = "who successfully completed the course at the Kug Oriental Academy of";
-      const cLine2 = "Alternative Medicines Allied Sciences Foundation from";
-      const cLine3 = `${rangeText},`;
-      const cLine4 = "and passed the final examination administered by the Central Board of Examinations of the Kug";
-      const cLine5 = "Oriental Academy of Alternative Medicines Allied Sciences Foundation.";
+      const cLine2 = "Alternative Medicines Allied Sciences Foundation from June 2021";
+      const cLine3 = "to May 2022, and passed the final examination administered by";
+      const cLine4 = "the";
+      const cLine5 = "Central Board of Examinations of the Kug Oriental Academy of";
+      const cLine6 = "Alternative Medicines Allied Sciences Foundation.";
 
       // Completion paragraph aligned to ~62% of page height
       let completionY = 200;
       pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
-      pdf.text(cLine2, pdfWidth / 2, completionY, { align: "center" });
+      
+      // Line 2 with bold "June 2021"
+      pdf.setFont("times", "normal");
+      const line2Text = "Alternative Medicines Allied Sciences Foundation from ";
+      const line2BoldText = "June 2021";
+      const line2Width = pdf.getTextWidth(line2Text);
+      const line2BoldWidth = pdf.getTextWidth(line2BoldText);
+      const line2StartX = (pdfWidth - (line2Width + line2BoldWidth)) / 2;
+      pdf.text(line2Text, line2StartX, completionY);
+      pdf.setFont("times", "bold");
+      pdf.text(line2BoldText, line2StartX + line2Width, completionY);
       completionY += 4;
-      pdf.setFont('times', 'bold');
-      pdf.text(cLine3, pdfWidth / 2, completionY, { align: "center" });
-      pdf.setFont('times', 'normal');
+      
+      // Line 3 with bold "to May 2022"
+      pdf.setFont("times", "bold");
+      const line3BoldText = "to May 2022";
+      const line3NormalText = ", and passed the final examination administered by";
+      const line3BoldWidth = pdf.getTextWidth(line3BoldText);
+      const line3NormalWidth = pdf.getTextWidth(line3NormalText);
+      const line3StartX = (pdfWidth - (line3BoldWidth + line3NormalWidth)) / 2;
+      pdf.text(line3BoldText, line3StartX, completionY);
+      pdf.setFont("times", "normal");
+      pdf.text(line3NormalText, line3StartX + line3BoldWidth, completionY);
       completionY += 4;
+      
       pdf.text(cLine4, pdfWidth / 2, completionY, { align: "center" });
       completionY += 4;
       pdf.text(cLine5, pdfWidth / 2, completionY, { align: "center" });
+      completionY += 4;
+      pdf.text(cLine6, pdfWidth / 2, completionY, { align: "center" });
 
       // Add student photo
       try {
@@ -718,6 +740,23 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             canvas.width = photoSize;
             canvas.height = photoSize;
 
+            // Calculate proper aspect ratio to avoid stretching
+            const aspectRatio = photoImg.width / photoImg.height;
+            let drawWidth = photoSize;
+            let drawHeight = photoSize;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            if (aspectRatio > 1) {
+              // Image is wider than tall
+              drawHeight = photoSize / aspectRatio;
+              offsetY = (photoSize - drawHeight) / 2;
+            } else if (aspectRatio < 1) {
+              // Image is taller than wide
+              drawWidth = photoSize * aspectRatio;
+              offsetX = (photoSize - drawWidth) / 2;
+            }
+
             // Crop a small margin to remove any borders present in source images
             const minDim = Math.min(photoImg.width, photoImg.height);
             const cropMargin = Math.floor(minDim * 0.08); // crop ~8% from each side
@@ -726,8 +765,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const sWidth = photoImg.width - cropMargin * 2;
             const sHeight = photoImg.height - cropMargin * 2;
             
-            // Draw cropped image into square canvas (no border)
-            ctx?.drawImage(photoImg, sx, sy, sWidth, sHeight, 0, 0, photoSize, photoSize);
+            // Draw cropped image into square canvas maintaining aspect ratio
+            ctx?.drawImage(photoImg, sx, sy, sWidth, sHeight, offsetX, offsetY, drawWidth, drawHeight);
             
             // Convert to compressed data URL
             const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -736,8 +775,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const compressedPhotoImg = new Image();
             compressedPhotoImg.onload = () => {
             // Position photo on the right side (matching template layout)
-            const photoWidth = 20; // 20mm width
-            const photoHeight = 20; // 20mm height (square)
+            const photoWidth = 25; // 25mm width (increased from 20mm)
+            const photoHeight = 25; // 25mm height (increased from 20mm)
             const photoX = pdfWidth - photoWidth - 25; // 25mm from right edge
             const photoY = 135; // Dropped further from top for spacing
               
@@ -757,7 +796,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Prepare date text for footer row
-      const displayDate = isDCPStudent(student) ? "03/10/2025" : "06/10/2025";
+      const displayDate = isDCPStudent(student) ? "28/06/2021" : "28/06/2021";
       pdf.setFontSize(9);
       pdf.setFont("times", "normal");
 
@@ -765,26 +804,24 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(9);
       pdf.setTextColor(101, 67, 33);
 
-      // Titles first (above signatures) moved lower near bottom; date on same row (left)
-      const titleY = 246; // lower placement
-      pdf.text(`Date: ${displayDate}`, 20, titleY, { align: "left" });
-      pdf.text("Chairman", pdfWidth / 2, titleY, { align: "center" });
-      pdf.text("Controller", pdfWidth - 20, titleY, { align: "right" });
-      pdf.text("of Examination", pdfWidth - 20, titleY + 4, { align: "right" });
+      // Signatures first (above titles) - better responsive positioning
+      const signatureY = 250; // base signature position
+      const titleY = signatureY + 10; // titles below signatures with proper spacing
+      pdf.text(`Date: ${displayDate}`, 20, signatureY, { align: "left" });
 
       try {
-        // Chairman signature (center) below title
+        // Chairman signature (center) above title
         const chairmanImg = new Image();
         chairmanImg.crossOrigin = "anonymous";
         chairmanImg.src = "/UMMER SIR SIGN.png";
 
         await new Promise((resolve) => {
           chairmanImg.onload = () => {
-            const width = 28; // ~28mm
+            const width = 25; // adjusted for better visibility
             const aspect = chairmanImg.height / chairmanImg.width;
             const height = width * aspect;
             const x = pdfWidth / 2 - width / 2;
-            const y = titleY + 2; // below title
+            const y = signatureY - 5; // slightly higher for better spacing
             pdf.addImage(chairmanImg, "PNG", x, y, width, height);
             resolve(true);
           };
@@ -793,24 +830,32 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       } catch {}
 
       try {
-        // Controller signature (right) below title
+        // Controller signature (right) above title
         const controllerImg = new Image();
         controllerImg.crossOrigin = "anonymous";
         controllerImg.src = "/Nargees teacher Sign.png";
 
         await new Promise((resolve) => {
           controllerImg.onload = () => {
-            const width = 32; // ~32mm
+            const width = 30; // adjusted for better visibility
             const aspect = controllerImg.height / controllerImg.width;
             const height = width * aspect;
             const x = pdfWidth - 20 - width;
-            const y = titleY + 2;
+            const y = signatureY - 5; // slightly higher for better spacing
             pdf.addImage(controllerImg, "PNG", x, y, width, height);
             resolve(true);
           };
           controllerImg.onerror = () => resolve(true);
         });
       } catch {}
+
+      // Add titles below signatures with proper spacing
+      pdf.setFontSize(9);
+      pdf.setFont("times", "bold");
+      pdf.setTextColor(139, 69, 19); // Brown color to match CSS
+      pdf.text("Chairman", pdfWidth / 2, titleY, { align: "center" });
+      pdf.text("Controller", pdfWidth - 20, titleY, { align: "right" });
+      pdf.text("of Examination", pdfWidth - 20, titleY + 4, { align: "right" });
 
       // Save the PDF
       pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);

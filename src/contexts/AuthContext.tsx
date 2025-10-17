@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Admin } from '../types';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  userEmail: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  user: Admin | null;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,57 +16,74 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Mock admin user for local development
+const MOCK_ADMIN: Admin = {
+  id: 1,
+  username: 'info@kugoriental.com',
+  email: 'info@kugoriental.com',
+  full_name: 'KUGOriental',
+  role: 'super_admin',
+  created_at: new Date().toISOString(),
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<Admin | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check authentication status on app load
   useEffect(() => {
     const checkAuthStatus = () => {
-      const authStatus = localStorage.getItem('isAuthenticated');
-      const email = localStorage.getItem('userEmail');
-      
-      if (authStatus === 'true' && email) {
+      const token = localStorage.getItem('oriental_auth_token');
+      if (token) {
+        setUser(MOCK_ADMIN);
         setIsAuthenticated(true);
-        setUserEmail(email);
       }
-      
       setIsLoading(false);
     };
 
     checkAuthStatus();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Check credentials
-    if (email === 'info@kugoriental.com' && password === 'KUGOriental@0066') {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', email);
-      setIsAuthenticated(true);
-      setUserEmail(email);
-      return true;
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Simple mock authentication - accept any username/password
+      if (username && password) {
+        localStorage.setItem('oriental_auth_token', 'mock_token');
+        setUser(MOCK_ADMIN);
+        setIsAuthenticated(true);
+        return true;
+      } else {
+        setError('Username and password are required');
+        return false;
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Login failed');
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    return false;
   };
 
   const logout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userEmail');
+    localStorage.removeItem('oriental_auth_token');
     setIsAuthenticated(false);
-    setUserEmail(null);
+    setUser(null);
+    setError(null);
   };
 
   const value: AuthContextType = {
     isAuthenticated,
-    userEmail,
+    user,
     login,
     logout,
     isLoading,
+    error,
   };
 
   return (
