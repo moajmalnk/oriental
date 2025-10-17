@@ -747,13 +747,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               offsetX = (photoSize - drawWidth) / 2;
             }
 
-            // Crop a small margin to remove any borders present in source images
+            // Crop a larger margin to remove black borders and background
             const minDim = Math.min(photoImg.width, photoImg.height);
-            const cropMargin = Math.floor(minDim * 0.08); // crop ~8% from each side
+            const cropMargin = Math.floor(minDim * 0.15); // crop ~15% from each side to remove borders
             const sx = cropMargin;
             const sy = cropMargin;
             const sWidth = photoImg.width - cropMargin * 2;
             const sHeight = photoImg.height - cropMargin * 2;
+            
+            // Set white background to replace black background
+            ctx!.fillStyle = '#ffffff';
+            ctx!.fillRect(0, 0, photoSize, photoSize);
             
             // Draw cropped image into square canvas maintaining aspect ratio
             ctx?.drawImage(photoImg, sx, sy, sWidth, sHeight, offsetX, offsetY, drawWidth, drawHeight);
@@ -790,15 +794,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       const displayDate = isDCPStudent(student) ? "28/06/2021" : "28/06/2021";
       
       // Calculate bottom row positioning (CSS: bottom: 12%)
-      const signatureY = 240; // Convert CSS bottom: 12% to PDF coordinates
-      const titleY = signatureY + 8; // titles below signatures with proper spacing
+      // Convert CSS bottom: 12% to PDF coordinates (A4 height is 297mm)
+      const bottomRowY = pdfHeight - (pdfHeight * 0.18); // 18% from bottom
+      const signatureY = bottomRowY - 5; // signatures slightly above the bottom row
+      const titleY = bottomRowY + 3; // titles below signatures with proper spacing
       
       // Date section - positioned on left side (CSS: .date-section)
       // CSS: flex: 0 0 auto, min-width: 120px, text-align: center
       pdf.setFontSize(10); // font-size: 10px from CSS .date-text
       pdf.setFont("times", "bold");
       pdf.setTextColor(0, 0, 0); // Black color from CSS
-      pdf.text(`Date: ${displayDate}`, 20, signatureY, { align: "left" });
+      pdf.text(`Date: ${displayDate}`, 20, bottomRowY, { align: "left" });
 
       try {
         // Chairman signature (center) above title (CSS: .chairman-section)
@@ -813,7 +819,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const aspect = chairmanImg.height / chairmanImg.width;
             const height = width * aspect;
             const x = pdfWidth / 2 - width / 2; // Center horizontally
-            const y = signatureY - 5; // slightly higher for better spacing
+            const y = signatureY - height; // signature above the title line
             pdf.addImage(chairmanImg, "PNG", x, y, width, height);
             resolve(true);
           };
@@ -834,7 +840,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const aspect = controllerImg.height / controllerImg.width;
             const height = width * aspect;
             const x = pdfWidth - 20 - width; // Right side positioning
-            const y = signatureY - 5; // slightly higher for better spacing
+            const y = signatureY - height; // signature above the title line
             pdf.addImage(controllerImg, "PNG", x, y, width, height);
             resolve(true);
           };
@@ -879,17 +885,16 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
-              // Calculate seal size maintaining aspect ratio
-              const sealWidth = 20; // Convert 80px to mm (approximately 20mm)
-              const aspectRatio = compressedImg.height / compressedImg.width;
-              const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
+              // Calculate seal size - keep it square to maintain perfect circle (matching CSS: width: 80px, height: 80px)
+              const sealSize = 20; // Convert 80px to mm (approximately 20mm) - keep square for perfect circle
               
               // Position at center bottom (matching CSS: left: 52%, bottom: 3%, transform: translateX(-50%))
-              const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
-              const sealY = pdfHeight - sealHeight - 8; // 3% from bottom edge
+              // CSS: left: 52% means 52% from left, then transform: translateX(-50%) centers it
+              const sealX = (pdfWidth * 0.52) - (sealSize / 2); // 52% from left, then center
+              const sealY = pdfHeight - (pdfHeight * 0.03) - sealSize; // 3% from bottom edge
               
-              // Add the seal image with original aspect ratio
-              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealWidth, sealHeight);
+              // Add the seal image as a perfect square to maintain circular appearance
+              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealSize, sealSize);
               resolve(true);
             };
             compressedImg.src = compressedDataUrl;
