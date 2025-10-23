@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, Award } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Student, DCPStudent } from "@/data/studentsData";
+import { Student, DCPStudent } from "@/types";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,19 +22,19 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
   const handlePrint = async () => {
     setIsPrinting(true);
-    
+
     try {
       // Add a small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       // Hide theme toggle and other UI elements during print
-      const themeToggle = document.querySelector('[data-print-hide]');
+      const themeToggle = document.querySelector("[data-print-hide]");
       if (themeToggle) {
-        themeToggle.classList.add('print:hidden');
+        themeToggle.classList.add("print:hidden");
       }
-      
+
       window.print();
-      
+
       toast({
         title: "Print Ready",
         description: "Print dialog opened successfully",
@@ -47,18 +47,18 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       });
     } finally {
       setIsPrinting(false);
-      
+
       // Restore theme toggle visibility
-      const themeToggle = document.querySelector('[data-print-hide]');
+      const themeToggle = document.querySelector("[data-print-hide]");
       if (themeToggle) {
-        themeToggle.classList.remove('print:hidden');
+        themeToggle.classList.remove("print:hidden");
       }
     }
   };
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
-    
+
     try {
       // Show loading toast
       toast({
@@ -67,7 +67,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       });
 
       // Wait for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -78,55 +78,65 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         const letterheadImg = new Image();
         letterheadImg.crossOrigin = "anonymous";
         letterheadImg.src = "/letterhead.jpg";
-        
+
         await new Promise((resolve, reject) => {
           letterheadImg.onload = () => {
             // Create a canvas to compress the image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
             // Set canvas size to a reasonable resolution (max 1200px width)
             const maxWidth = 1200;
             const maxHeight = 1600;
             const imgWidth = letterheadImg.width;
             const imgHeight = letterheadImg.height;
-            
+
             // Calculate new dimensions maintaining aspect ratio
             let newWidth = imgWidth;
             let newHeight = imgHeight;
-            
+
             if (imgWidth > maxWidth) {
               newWidth = maxWidth;
               newHeight = (imgHeight * maxWidth) / imgWidth;
             }
-            
+
             if (newHeight > maxHeight) {
               newHeight = maxHeight;
               newWidth = (imgWidth * maxHeight) / imgHeight;
             }
-            
+
             canvas.width = newWidth;
             canvas.height = newHeight;
-            
+
             // Draw and compress the image
             ctx?.drawImage(letterheadImg, 0, 0, newWidth, newHeight);
-            
+
             // Convert to compressed data URL with optimized quality
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality for better compression
-            
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6); // 60% quality for better compression
+
             // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Scale to fit the page
-              const scale = Math.min(pdfWidth / compressedImg.width, pdfHeight / compressedImg.height);
+              const scale = Math.min(
+                pdfWidth / compressedImg.width,
+                pdfHeight / compressedImg.height
+              );
               const finalWidth = compressedImg.width * scale;
               const finalHeight = compressedImg.height * scale;
-              
+
               // Center the letterhead
               const x = (pdfWidth - finalWidth) / 2;
               const y = (pdfHeight - finalHeight) / 2;
-              
-              pdf.addImage(compressedImg, "JPEG", x, y, finalWidth, finalHeight);
+
+              pdf.addImage(
+                compressedImg,
+                "JPEG",
+                x,
+                y,
+                finalWidth,
+                finalHeight
+              );
               resolve(true);
             };
             compressedImg.src = compressedDataUrl;
@@ -134,12 +144,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           letterheadImg.onerror = reject;
         });
       } catch (error) {
-        console.warn("Could not load letterhead image, continuing without it:", error);
+        console.warn(
+          "Could not load letterhead image, continuing without it:",
+          error
+        );
       }
 
       // Type guard to check if student is DCP student
-      const isDCPStudent = (student: Student | DCPStudent): student is DCPStudent => {
-        return 'DCP001_CE' in student;
+      const isDCPStudent = (
+        student: Student | DCPStudent
+      ): student is DCPStudent => {
+        return "DCP001_CE" in student;
       };
 
       // Add MARK LIST title
@@ -153,38 +168,88 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(12);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
-      
+
       pdf.text(`Register Number : ${student.RegiNo}`, 20, startY);
       pdf.text(`Name of Candidate : ${student.Name}`, 20, startY + 8);
-      pdf.text(`Course Name : ${isDCPStudent(student) ? 'DIPLOMA IN COUNSELLING PSYCHOLOGY' : 'PRACTICAL DIPLOMA IN ACUPUNCTURE'}`, 20, startY + 16);
-      
+      pdf.text(
+        `Course Name : ${
+          isDCPStudent(student)
+            ? "DIPLOMA IN COUNSELLING PSYCHOLOGY"
+            : "PRACTICAL DIPLOMA IN ACUPUNCTURE"
+        }`,
+        20,
+        startY + 16
+      );
+
       // Convert result to Qualified/Not Qualified
-      const displayResult = student.Result === 'PASS' ? 'Qualified' : 'Not Qualified';
+      const displayResult =
+        student.Result === "PASS" ? "Qualified" : "Not Qualified";
       pdf.text(`Result : ${displayResult}`, 20, startY + 24);
 
       // Add marks table
       const tableStartY = startY + 40;
       const colWidths = [80, 25, 25, 25]; // SUBJECT, TE, CE, TOTAL
-      const totalTableWidth = colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]; // Total table width
+      const totalTableWidth =
+        colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]; // Total table width
       const tableStartX = (pdfWidth - totalTableWidth) / 2; // Center the table
-      
+
       // Table header
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      
+
       // Set border color to #a16a2b
       pdf.setDrawColor(161, 106, 43);
-      
+
       // Draw rounded rectangles for table header
       pdf.roundedRect(tableStartX, tableStartY - 5, colWidths[0], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0], tableStartY - 5, colWidths[1], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], tableStartY - 5, colWidths[2], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], tableStartY - 5, colWidths[3], 8, 1.5, 1.5);
-      
+      pdf.roundedRect(
+        tableStartX + colWidths[0],
+        tableStartY - 5,
+        colWidths[1],
+        8,
+        1.5,
+        1.5
+      );
+      pdf.roundedRect(
+        tableStartX + colWidths[0] + colWidths[1],
+        tableStartY - 5,
+        colWidths[2],
+        8,
+        1.5,
+        1.5
+      );
+      pdf.roundedRect(
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+        tableStartY - 5,
+        colWidths[3],
+        8,
+        1.5,
+        1.5
+      );
+
       pdf.text("SUBJECT-THEORY", tableStartX + 3, tableStartY);
-      pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, tableStartY, { align: "center" });
-      pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, tableStartY, { align: "center" });
-      pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, tableStartY, { align: "center" });
+      pdf.text(
+        "TE",
+        tableStartX + colWidths[0] + colWidths[1] / 2,
+        tableStartY,
+        { align: "center" }
+      );
+      pdf.text(
+        "CE",
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+        tableStartY,
+        { align: "center" }
+      );
+      pdf.text(
+        "TOTAL",
+        tableStartX +
+          colWidths[0] +
+          colWidths[1] +
+          colWidths[2] +
+          colWidths[3] / 2,
+        tableStartY,
+        { align: "center" }
+      );
 
       let currentY = tableStartY + 8;
 
@@ -192,109 +257,373 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       if (isDCPStudent(student)) {
         // DCP Subjects
         const subjects = [
-          { name: "PSYCHOLOGY AND PSYCHOPATHOLOGY", ce: student.DCP001_CE, te: student.DCP001_TE, total: student.DCP001_Total },
-          { name: "COUNSELLING STAGES,STEPS AND SKILLS", ce: student.DCP002_CE, te: student.DCP002_TE, total: student.DCP002_Total },
-          { name: "LIFE SKILL EDUCATION AND FAMILY THERAPY", ce: student.DCP003_CE, te: student.DCP003_TE, total: student.DCP003_Total }
+          {
+            name: "PSYCHOLOGY AND PSYCHOPATHOLOGY",
+            ce: student.DCP001_CE,
+            te: student.DCP001_TE,
+            total: student.DCP001_Total,
+          },
+          {
+            name: "COUNSELLING STAGES,STEPS AND SKILLS",
+            ce: student.DCP002_CE,
+            te: student.DCP002_TE,
+            total: student.DCP002_Total,
+          },
+          {
+            name: "LIFE SKILL EDUCATION AND FAMILY THERAPY",
+            ce: student.DCP003_CE,
+            te: student.DCP003_TE,
+            total: student.DCP003_Total,
+          },
         ];
 
         subjects.forEach((subject, index) => {
-          const rowY = currentY + (index * 8);
-          
+          const rowY = currentY + index * 8;
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
-          
+
           // Draw cell borders with rounded corners
           pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
-          
+          pdf.roundedRect(
+            tableStartX + colWidths[0],
+            rowY - 5,
+            colWidths[1],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1],
+            rowY - 5,
+            colWidths[2],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+            rowY - 5,
+            colWidths[3],
+            8,
+            1.5,
+            1.5
+          );
+
           // Add text
           pdf.text(subject.name, tableStartX + 3, rowY);
-          pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
-          pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
-          pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
+          pdf.text(
+            subject.te?.toString() || "-",
+            tableStartX + colWidths[0] + colWidths[1] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.ce?.toString() || "-",
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.total?.toString() || "-",
+            tableStartX +
+              colWidths[0] +
+              colWidths[1] +
+              colWidths[2] +
+              colWidths[3] / 2,
+            rowY,
+            { align: "center" }
+          );
         });
 
-        currentY += (subjects.length * 8) + 5;
+        currentY += subjects.length * 8 + 5;
 
         // Practical section with merged first column
         // Draw the merged PRACTICAL cell spanning 2 rows
         pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
-        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
-        
+        pdf.text(
+          "P.E",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "P.W",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "TOTAL",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
+
         currentY += 8;
-        
+
         // Practical data row
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
-        pdf.text(student.DCP004_PE?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text(student.DCP004_PW?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text(student.DCP004_Total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
-
+        pdf.text(
+          student.DCP004_PE?.toString() || "-",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          student.DCP004_PW?.toString() || "-",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          student.DCP004_Total?.toString() || "-",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
       } else {
         // Regular PDA Subjects
         const subjects = [
-          { name: "ANATOMY", ce: student.Anatomy_CE, te: student.Anatomy_TE, total: student.Anatomy_Total },
-          { name: "ACUPUNCTURE", ce: student.Acupuncture_CE, te: student.Acupuncture_TE, total: student.Acupuncture_Total }
+          {
+            name: "ANATOMY",
+            ce: student.Anatomy_CE,
+            te: student.Anatomy_TE,
+            total: student.Anatomy_Total,
+          },
+          {
+            name: "ACUPUNCTURE",
+            ce: student.Acupuncture_CE,
+            te: student.Acupuncture_TE,
+            total: student.Acupuncture_Total,
+          },
         ];
 
         subjects.forEach((subject, index) => {
-          const rowY = currentY + (index * 8);
-          
+          const rowY = currentY + index * 8;
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
-          
+
           // Draw cell borders with rounded corners
           pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
-          
+          pdf.roundedRect(
+            tableStartX + colWidths[0],
+            rowY - 5,
+            colWidths[1],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1],
+            rowY - 5,
+            colWidths[2],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+            rowY - 5,
+            colWidths[3],
+            8,
+            1.5,
+            1.5
+          );
+
           // Add text
           pdf.text(subject.name, tableStartX + 3, rowY);
-          pdf.text(subject.te?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
-          pdf.text(subject.ce?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
-          pdf.text(subject.total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
+          pdf.text(
+            subject.te?.toString() || "-",
+            tableStartX + colWidths[0] + colWidths[1] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.ce?.toString() || "-",
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.total?.toString() || "-",
+            tableStartX +
+              colWidths[0] +
+              colWidths[1] +
+              colWidths[2] +
+              colWidths[3] / 2,
+            rowY,
+            { align: "center" }
+          );
         });
 
-        currentY += (subjects.length * 8) + 5;
+        currentY += subjects.length * 8 + 5;
 
         // Practical section with merged first column
         // Draw the merged PRACTICAL cell spanning 2 rows
         pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
-        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
-        
+        pdf.text(
+          "P.E",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "P.W",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "TOTAL",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
+
         currentY += 8;
-        
+
         // Practical data row
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
-        pdf.text(student.Practical_Viva?.toString() || "-", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text(student.Practical_Project?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text(student.Practical_Total?.toString() || "-", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+        pdf.text(
+          student.Practical_Viva?.toString() || "-",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          student.Practical_Project?.toString() || "-",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          student.Practical_Total?.toString() || "-",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
       }
 
       // Add abbreviation
@@ -302,7 +631,12 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(8);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
-      pdf.text("Abbreviation: CE-Continuous Evaluation, TE-Terminal Evaluation, P.E-Practical Evaluation, P.W-Practical Work", pdfWidth / 2, currentY, { align: "center" });
+      pdf.text(
+        "Abbreviation: CE-Continuous Evaluation, TE-Terminal Evaluation, P.E-Practical Evaluation, P.W-Practical Work",
+        pdfWidth / 2,
+        currentY,
+        { align: "center" }
+      );
 
       // Add maximum scores section
       currentY += 15;
@@ -311,23 +645,60 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.text("MAXIMUM SCORES", pdfWidth / 2, currentY, { align: "center" });
 
       currentY += 10;
-      
+
       // Maximum scores table header
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      
+
       // Ensure border color is set for maximum scores table
       pdf.setDrawColor(161, 106, 43);
-      
+
       pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-      pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-      
+      pdf.roundedRect(
+        tableStartX + colWidths[0],
+        currentY - 5,
+        colWidths[1],
+        8,
+        1.5,
+        1.5
+      );
+      pdf.roundedRect(
+        tableStartX + colWidths[0] + colWidths[1],
+        currentY - 5,
+        colWidths[2],
+        8,
+        1.5,
+        1.5
+      );
+      pdf.roundedRect(
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+        currentY - 5,
+        colWidths[3],
+        8,
+        1.5,
+        1.5
+      );
+
       pdf.text("SUBJECT-THEORY", tableStartX + 3, currentY);
-      pdf.text("TE", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-      pdf.text("CE", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-      pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
+      pdf.text("TE", tableStartX + colWidths[0] + colWidths[1] / 2, currentY, {
+        align: "center",
+      });
+      pdf.text(
+        "CE",
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+        currentY,
+        { align: "center" }
+      );
+      pdf.text(
+        "TOTAL",
+        tableStartX +
+          colWidths[0] +
+          colWidths[1] +
+          colWidths[2] +
+          colWidths[3] / 2,
+        currentY,
+        { align: "center" }
+      );
 
       currentY += 8;
 
@@ -335,107 +706,356 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       if (isDCPStudent(student)) {
         const maxSubjects = [
           { name: "PSYCHOLOGY AND PSYCHOPATHOLOGY", ce: 20, te: 60, total: 80 },
-          { name: "COUNSELLING STAGES,STEPS AND SKILLS", ce: 20, te: 60, total: 80 },
-          { name: "LIFE SKILL EDUCATION AND FAMILY THERAPY", ce: 20, te: 60, total: 80 }
+          {
+            name: "COUNSELLING STAGES,STEPS AND SKILLS",
+            ce: 20,
+            te: 60,
+            total: 80,
+          },
+          {
+            name: "LIFE SKILL EDUCATION AND FAMILY THERAPY",
+            ce: 20,
+            te: 60,
+            total: 80,
+          },
         ];
 
         maxSubjects.forEach((subject, index) => {
-          const rowY = currentY + (index * 8);
-          
+          const rowY = currentY + index * 8;
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
-          
+
           // Draw cell borders with rounded corners
           pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
-          
+          pdf.roundedRect(
+            tableStartX + colWidths[0],
+            rowY - 5,
+            colWidths[1],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1],
+            rowY - 5,
+            colWidths[2],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+            rowY - 5,
+            colWidths[3],
+            8,
+            1.5,
+            1.5
+          );
+
           // Add text
           pdf.text(subject.name, tableStartX + 3, rowY);
-          pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
-          pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
-          pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
+          pdf.text(
+            subject.te.toString(),
+            tableStartX + colWidths[0] + colWidths[1] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.ce.toString(),
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.total.toString(),
+            tableStartX +
+              colWidths[0] +
+              colWidths[1] +
+              colWidths[2] +
+              colWidths[3] / 2,
+            rowY,
+            { align: "center" }
+          );
         });
 
-        currentY += (maxSubjects.length * 8) + 5;
+        currentY += maxSubjects.length * 8 + 5;
 
         // Practical maximum scores with merged first column
         // Draw the merged PRACTICAL cell spanning 2 rows
         pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
-        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
-        
+        pdf.text(
+          "P.E",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "P.W",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "TOTAL",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
+
         currentY += 8;
-        
+
         // Practical maximum scores data row
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
-        pdf.text("40", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" }); // PE
-        pdf.text("20", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" }); // PW
-        pdf.text("60", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" }); // Total
-
+        pdf.text(
+          "40",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        ); // PE
+        pdf.text(
+          "20",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        ); // PW
+        pdf.text(
+          "60",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        ); // Total
       } else {
         const maxSubjects = [
           { name: "ANATOMY", ce: 20, te: 60, total: 80 },
-          { name: "ACUPUNCTURE", ce: 20, te: 60, total: 80 }
+          { name: "ACUPUNCTURE", ce: 20, te: 60, total: 80 },
         ];
 
         maxSubjects.forEach((subject, index) => {
-          const rowY = currentY + (index * 8);
-          
+          const rowY = currentY + index * 8;
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(9);
-          
+
           // Draw cell borders with rounded corners
           pdf.roundedRect(tableStartX, rowY - 5, colWidths[0], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0], rowY - 5, colWidths[1], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], rowY - 5, colWidths[2], 8, 1.5, 1.5);
-          pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], rowY - 5, colWidths[3], 8, 1.5, 1.5);
-          
+          pdf.roundedRect(
+            tableStartX + colWidths[0],
+            rowY - 5,
+            colWidths[1],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1],
+            rowY - 5,
+            colWidths[2],
+            8,
+            1.5,
+            1.5
+          );
+          pdf.roundedRect(
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+            rowY - 5,
+            colWidths[3],
+            8,
+            1.5,
+            1.5
+          );
+
           // Add text
           pdf.text(subject.name, tableStartX + 3, rowY);
-          pdf.text(subject.te.toString(), tableStartX + colWidths[0] + colWidths[1]/2, rowY, { align: "center" });
-          pdf.text(subject.ce.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, rowY, { align: "center" });
-          pdf.text(subject.total.toString(), tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, rowY, { align: "center" });
+          pdf.text(
+            subject.te.toString(),
+            tableStartX + colWidths[0] + colWidths[1] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.ce.toString(),
+            tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+            rowY,
+            { align: "center" }
+          );
+          pdf.text(
+            subject.total.toString(),
+            tableStartX +
+              colWidths[0] +
+              colWidths[1] +
+              colWidths[2] +
+              colWidths[3] / 2,
+            rowY,
+            { align: "center" }
+          );
         });
 
-        currentY += (maxSubjects.length * 8) + 5;
+        currentY += maxSubjects.length * 8 + 5;
 
         // Practical maximum scores with merged first column
         // Draw the merged PRACTICAL cell spanning 2 rows
         pdf.roundedRect(tableStartX, currentY - 5, colWidths[0], 16, 1.5, 1.5); // Height of 16 for 2 rows
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.text("PRACTICAL", tableStartX + 3, currentY + 4); // Center vertically in merged cell
-        pdf.text("P.E", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" });
-        pdf.text("P.W", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" });
-        pdf.text("TOTAL", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" });
-        
+        pdf.text(
+          "P.E",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "P.W",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        );
+        pdf.text(
+          "TOTAL",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        );
+
         currentY += 8;
-        
+
         // Practical maximum scores data row
-        pdf.roundedRect(tableStartX + colWidths[0], currentY - 5, colWidths[1], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1], currentY - 5, colWidths[2], 8, 1.5, 1.5);
-        pdf.roundedRect(tableStartX + colWidths[0] + colWidths[1] + colWidths[2], currentY - 5, colWidths[3], 8, 1.5, 1.5);
-        
+        pdf.roundedRect(
+          tableStartX + colWidths[0],
+          currentY - 5,
+          colWidths[1],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1],
+          currentY - 5,
+          colWidths[2],
+          8,
+          1.5,
+          1.5
+        );
+        pdf.roundedRect(
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+          currentY - 5,
+          colWidths[3],
+          8,
+          1.5,
+          1.5
+        );
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
-        pdf.text("30", tableStartX + colWidths[0] + colWidths[1]/2, currentY, { align: "center" }); // Viva
-        pdf.text("30", tableStartX + colWidths[0] + colWidths[1] + colWidths[2]/2, currentY, { align: "center" }); // Project
-        pdf.text("60", tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, currentY, { align: "center" }); // Total
+        pdf.text(
+          "30",
+          tableStartX + colWidths[0] + colWidths[1] / 2,
+          currentY,
+          { align: "center" }
+        ); // Viva
+        pdf.text(
+          "30",
+          tableStartX + colWidths[0] + colWidths[1] + colWidths[2] / 2,
+          currentY,
+          { align: "center" }
+        ); // Project
+        pdf.text(
+          "60",
+          tableStartX +
+            colWidths[0] +
+            colWidths[1] +
+            colWidths[2] +
+            colWidths[3] / 2,
+          currentY,
+          { align: "center" }
+        ); // Total
       }
 
       // Add footer fields centered within two equal halves of the page
@@ -449,7 +1069,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
       // Display certificate number centered in left half
       const certificateNo = student.CertificateNo || "Not Assigned";
-      pdf.text(`CERTIFICATE NO: ${certificateNo}`, leftCenterX, currentY, { align: "center" });
+      pdf.text(`CERTIFICATE NO: ${certificateNo}`, leftCenterX, currentY, {
+        align: "center",
+      });
 
       // Display date centered in right half
       let displayDate;
@@ -458,7 +1080,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       } else {
         displayDate = "01/09/2025"; // Default date for PDA
       }
-      pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, { align: "center" });
+      pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, {
+        align: "center",
+      });
 
       // Add KUG seal - positioned below signatures
       // Based on CSS: .kug-seal left: 52%, bottom: 3% - 80px x 80px (90px on larger screens)
@@ -466,24 +1090,24 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         const sealImg = new Image();
         sealImg.crossOrigin = "anonymous";
         sealImg.src = "/kug seal.png";
-        
+
         await new Promise((resolve, reject) => {
           sealImg.onload = () => {
             // Create a canvas to compress the image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
             // Set canvas size to match CSS .seal-image (80px x 80px)
             const sealSize = 80; // 80px to match CSS
             canvas.width = sealSize;
             canvas.height = sealSize;
-            
+
             // Draw and compress the image
             ctx?.drawImage(sealImg, 0, 0, sealSize, sealSize);
-            
+
             // Convert to compressed data URL (PNG for seal to maintain transparency)
-            const compressedDataUrl = canvas.toDataURL('image/png', 0.7); // 70% quality for better compression
-            
+            const compressedDataUrl = canvas.toDataURL("image/png", 0.7); // 70% quality for better compression
+
             // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
@@ -491,13 +1115,20 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               const sealWidth = 20; // Convert 80px to mm (approximately 20mm)
               const aspectRatio = compressedImg.height / compressedImg.width;
               const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
-              
+
               // Position at center bottom (matching CSS: left: 52%, bottom: 3%)
               const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
               const sealY = pdfHeight - sealHeight - 8; // 3% from bottom edge
-              
+
               // Add the seal image with original aspect ratio
-              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealWidth, sealHeight);
+              pdf.addImage(
+                compressedImg,
+                "PNG",
+                sealX,
+                sealY,
+                sealWidth,
+                sealHeight
+              );
               resolve(true);
             };
             compressedImg.src = compressedDataUrl;
@@ -509,8 +1140,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Save the PDF
-      pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_MarkList.pdf`);
-      
+      pdf.save(
+        `${student.RegiNo}_${student.Name.replace(/\s+/g, "_")}_MarkList.pdf`
+      );
+
       toast({
         title: "PDF Downloaded",
         description: "Your mark list document has been saved successfully",
@@ -529,7 +1162,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
   const handleGenerateCertificate = async () => {
     setIsGeneratingCertificate(true);
-    
+
     try {
       // Show loading toast
       toast({
@@ -538,15 +1171,17 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       });
 
       // Wait for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
       // Type guard to check if student is DCP student
-      const isDCPStudent = (student: Student | DCPStudent): student is DCPStudent => {
-        return 'DCP001_CE' in student;
+      const isDCPStudent = (
+        student: Student | DCPStudent
+      ): student is DCPStudent => {
+        return "DCP001_CE" in student;
       };
 
       // Load and add certificate template as background
@@ -554,55 +1189,65 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         const templateImg = new Image();
         templateImg.crossOrigin = "anonymous";
         templateImg.src = "/Course Certificate Model WEB .jpg";
-        
+
         await new Promise((resolve, reject) => {
           templateImg.onload = () => {
             // Create a canvas to compress the image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
             // Set canvas size to a reasonable resolution (max 1200px width)
             const maxWidth = 1200;
             const maxHeight = 1600;
             const imgWidth = templateImg.width;
             const imgHeight = templateImg.height;
-            
+
             // Calculate new dimensions maintaining aspect ratio
             let newWidth = imgWidth;
             let newHeight = imgHeight;
-            
+
             if (imgWidth > maxWidth) {
               newWidth = maxWidth;
               newHeight = (imgHeight * maxWidth) / imgWidth;
             }
-            
+
             if (newHeight > maxHeight) {
               newHeight = maxHeight;
               newWidth = (imgWidth * maxHeight) / imgHeight;
             }
-            
+
             canvas.width = newWidth;
             canvas.height = newHeight;
-            
+
             // Draw and compress the image
             ctx?.drawImage(templateImg, 0, 0, newWidth, newHeight);
-            
+
             // Convert to compressed data URL with optimized quality
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8); // Higher quality for certificate
-            
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8); // Higher quality for certificate
+
             // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Scale to fit the page
-              const scale = Math.min(pdfWidth / compressedImg.width, pdfHeight / compressedImg.height);
+              const scale = Math.min(
+                pdfWidth / compressedImg.width,
+                pdfHeight / compressedImg.height
+              );
               const finalWidth = compressedImg.width * scale;
               const finalHeight = compressedImg.height * scale;
-              
+
               // Center the template
               const x = (pdfWidth - finalWidth) / 2;
               const y = (pdfHeight - finalHeight) / 2;
-              
-              pdf.addImage(compressedImg, "JPEG", x, y, finalWidth, finalHeight);
+
+              pdf.addImage(
+                compressedImg,
+                "JPEG",
+                x,
+                y,
+                finalWidth,
+                finalHeight
+              );
               resolve(true);
             };
             compressedImg.src = compressedDataUrl;
@@ -610,15 +1255,18 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
           templateImg.onerror = reject;
         });
       } catch (error) {
-        console.warn("Could not load certificate template image, continuing without it:", error);
+        console.warn(
+          "Could not load certificate template image, continuing without it:",
+          error
+        );
       }
 
       // Add dynamic content over the template - EXACTLY matching Certificate.tsx structure
-      
+
       // Reference Numbers - positioned on left side (CSS: left: 8%, top: 45%)
       pdf.setFontSize(11); // font-size: 11px from CSS .ref-line
       pdf.setFont("times", "bold");
-      
+
       // Register Number with red value (matching .reg-value color)
       const regLabel = "Register No. :";
       const regY = 120; // Convert CSS top: 45% to PDF coordinates
@@ -630,7 +1278,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.text(String(student.RegiNo), regX + regLabelWidth, regY);
 
       // Certificate Number (positioned below Register No.)
-      const certificateNo = student.CertificateNo || "2025" + student.RegiNo.slice(-4);
+      const certificateNo =
+        student.CertificateNo || "2025" + student.RegiNo.slice(-4);
       pdf.setTextColor(139, 69, 19); // #8b4513 from CSS .ref-line
       pdf.text("Certificate No. :", regX, regY + 6); // 6px margin-bottom from CSS
       const certLabelWidth = pdf.getTextWidth("Certificate No. : ");
@@ -641,12 +1290,14 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFontSize(14); // font-size: 14px from CSS .conferral-text
       pdf.setFont("times", "normal");
       pdf.setTextColor(0, 0, 0); // Black color from CSS
-      
+
       // "The certificate of" - positioned at course-conferred top: 52%
       pdf.text("The certificate of", pdfWidth / 2, 140, { align: "center" });
 
       // Course name - font-size: 20px from CSS .course-name
-      const courseName = isDCPStudent(student) ? 'Diploma in Counselling Psychology' : 'Professional Diploma in Acupuncture';
+      const courseName = isDCPStudent(student)
+        ? "Diploma in Counselling Psychology"
+        : "Professional Diploma in Acupuncture";
       pdf.setFontSize(20);
       pdf.setFont("times", "bold");
       pdf.text(courseName, pdfWidth / 2, 150, { align: "center" }); // 8px margin-bottom from CSS
@@ -654,52 +1305,67 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // "has been conferred upon"
       pdf.setFontSize(14);
       pdf.setFont("times", "normal");
-      pdf.text("has been conferred upon", pdfWidth / 2, 160, { align: "center" });
+      pdf.text("has been conferred upon", pdfWidth / 2, 160, {
+        align: "center",
+      });
 
       // Student Name - positioned in center (CSS: left: 50%, top: 60%, transform: translateX(-50%))
       // font-size: 32px, font-weight: bold, letter-spacing: 1px
       pdf.setFontSize(32);
       pdf.setFont("times", "bold");
-      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 175, { align: "center" });
+      pdf.text(student.Name.toUpperCase(), pdfWidth / 2, 175, {
+        align: "center",
+      });
 
       // Completion Statement - positioned in center (CSS: left: 50%, top: 67%, transform: translateX(-50%))
       // font-size: 13px, line-height: 1.5, max-width: 85%
       pdf.setFontSize(13);
       pdf.setFont("times", "normal");
       pdf.setTextColor(0, 0, 0); // Black color from CSS
-      
+
       // Build completion statement in exactly 5 lines format as shown in screenshot
-      const cLine1 = "who successfully completed the course at the Kug Oriental Academy of";
-      const cLine2 = "Alternative Medicines Allied Sciences Foundation from June 2021 to";
-      const cLine3 = "May 2022, and passed the final examination administered by the";
-      const cLine4 = "Central Board of Examinations of the Kug Oriental Academy of";
+      const cLine1 =
+        "who successfully completed the course at the Kug Oriental Academy of";
+      const cLine2 =
+        "Alternative Medicines Allied Sciences Foundation from June 2021 to";
+      const cLine3 =
+        "May 2022, and passed the final examination administered by the";
+      const cLine4 =
+        "Central Board of Examinations of the Kug Oriental Academy of";
       const cLine5 = "Alternative Medicines Allied Sciences Foundation.";
 
       // Completion paragraph positioned at top: 67% from CSS
       let completionY = 190; // Convert CSS top: 67% to PDF coordinates
       pdf.text(cLine1, pdfWidth / 2, completionY, { align: "center" });
       completionY += 6; // line-height: 1.5 from CSS (13px * 1.5 = ~19.5px, converted to 6mm)
-      
+
       // Line 2 with bold "June 2021" (matching the screenshot exactly)
       pdf.setFont("times", "normal");
-      const line2Text = "Alternative Medicines Allied Sciences Foundation from ";
+      const line2Text =
+        "Alternative Medicines Allied Sciences Foundation from ";
       const line2BoldText = "June 2021";
       const line2NormalText2 = " to";
       const line2Width = pdf.getTextWidth(line2Text);
       const line2BoldWidth = pdf.getTextWidth(line2BoldText);
       const line2NormalWidth2 = pdf.getTextWidth(line2NormalText2);
-      const line2StartX = (pdfWidth - (line2Width + line2BoldWidth + line2NormalWidth2)) / 2;
+      const line2StartX =
+        (pdfWidth - (line2Width + line2BoldWidth + line2NormalWidth2)) / 2;
       pdf.text(line2Text, line2StartX, completionY);
       pdf.setFont("times", "bold");
       pdf.text(line2BoldText, line2StartX + line2Width, completionY);
       pdf.setFont("times", "normal");
-      pdf.text(line2NormalText2, line2StartX + line2Width + line2BoldWidth, completionY);
+      pdf.text(
+        line2NormalText2,
+        line2StartX + line2Width + line2BoldWidth,
+        completionY
+      );
       completionY += 6;
-      
+
       // Line 3 with bold "May 2022" (matching the screenshot exactly)
       pdf.setFont("times", "bold");
       const line3BoldText = "May 2022";
-      const line3NormalText = ", and passed the final examination administered by the";
+      const line3NormalText =
+        ", and passed the final examination administered by the";
       const line3BoldWidth = pdf.getTextWidth(line3BoldText);
       const line3NormalWidth = pdf.getTextWidth(line3NormalText);
       const line3StartX = (pdfWidth - (line3BoldWidth + line3NormalWidth)) / 2;
@@ -707,7 +1373,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.setFont("times", "normal");
       pdf.text(line3NormalText, line3StartX + line3BoldWidth, completionY);
       completionY += 6;
-      
+
       pdf.text(cLine4, pdfWidth / 2, completionY, { align: "center" });
       completionY += 6;
       pdf.text(cLine5, pdfWidth / 2, completionY, { align: "center" });
@@ -718,13 +1384,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         const photoImg = new Image();
         photoImg.crossOrigin = "anonymous";
         photoImg.src = `/DCP STUDENTS PHOTOS/${student.RegiNo}.png`;
-        
+
         await new Promise((resolve, reject) => {
           photoImg.onload = () => {
             // Create a canvas to compress the image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
             // Set canvas size for photo (square format) - 80px from CSS .student-photo-img
             const photoSize = 80; // 80px to match CSS exactly
             canvas.width = photoSize;
@@ -754,28 +1420,45 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const sy = cropMargin;
             const sWidth = photoImg.width - cropMargin * 2;
             const sHeight = photoImg.height - cropMargin * 2;
-            
+
             // Set white background to replace black background
-            ctx!.fillStyle = '#ffffff';
+            ctx!.fillStyle = "#ffffff";
             ctx!.fillRect(0, 0, photoSize, photoSize);
-            
+
             // Draw cropped image into square canvas maintaining aspect ratio
-            ctx?.drawImage(photoImg, sx, sy, sWidth, sHeight, offsetX, offsetY, drawWidth, drawHeight);
-            
+            ctx?.drawImage(
+              photoImg,
+              sx,
+              sy,
+              sWidth,
+              sHeight,
+              offsetX,
+              offsetY,
+              drawWidth,
+              drawHeight
+            );
+
             // Convert to compressed data URL
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
             // Create new image from compressed data
             const compressedPhotoImg = new Image();
             compressedPhotoImg.onload = () => {
-            // Position photo on the right side (matching CSS: right: 8%, top: 45%)
-            const photoWidth = 20; // Convert 80px to mm (approximately 20mm)
-            const photoHeight = 20; // Convert 80px to mm (approximately 20mm)
-            const photoX = pdfWidth - photoWidth - 20; // 8% from right edge
-            const photoY = 120; // Match CSS top: 45% positioning
-              
+              // Position photo on the right side (matching CSS: right: 8%, top: 45%)
+              const photoWidth = 20; // Convert 80px to mm (approximately 20mm)
+              const photoHeight = 20; // Convert 80px to mm (approximately 20mm)
+              const photoX = pdfWidth - photoWidth - 20; // 8% from right edge
+              const photoY = 120; // Match CSS top: 45% positioning
+
               // Add the photo image
-              pdf.addImage(compressedPhotoImg, "JPEG", photoX, photoY, photoWidth, photoHeight);
+              pdf.addImage(
+                compressedPhotoImg,
+                "JPEG",
+                photoX,
+                photoY,
+                photoWidth,
+                photoHeight
+              );
               resolve(true);
             };
             compressedPhotoImg.src = compressedDataUrl;
@@ -792,13 +1475,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Bottom Row - Date, Chairman, and Controller in one row (CSS: .bottom-row)
       // CSS: bottom: 12%, display: flex, justify-content: space-evenly, align-items: flex-end, padding: 0 5%
       const displayDate = isDCPStudent(student) ? "28/06/2021" : "28/06/2021";
-      
+
       // Calculate bottom row positioning (CSS: bottom: 12%)
       // Convert CSS bottom: 12% to PDF coordinates (A4 height is 297mm)
-      const bottomRowY = pdfHeight - (pdfHeight * 0.18); // 18% from bottom
+      const bottomRowY = pdfHeight - pdfHeight * 0.18; // 18% from bottom
       const signatureY = bottomRowY - 5; // signatures slightly above the bottom row
       const titleY = bottomRowY + 3; // titles below signatures with proper spacing
-      
+
       // Date section - positioned on left side (CSS: .date-section)
       // CSS: flex: 0 0 auto, min-width: 120px, text-align: center
       pdf.setFontSize(10); // font-size: 10px from CSS .date-text
@@ -864,37 +1547,44 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         const sealImg = new Image();
         sealImg.crossOrigin = "anonymous";
         sealImg.src = "/kug seal.png";
-        
+
         await new Promise((resolve, reject) => {
           sealImg.onload = () => {
             // Create a canvas to compress the image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
             // Set canvas size to match CSS .seal-image (80px x 80px)
             const sealSize = 80; // 80px to match CSS exactly
             canvas.width = sealSize;
             canvas.height = sealSize;
-            
+
             // Draw and compress the image
             ctx?.drawImage(sealImg, 0, 0, sealSize, sealSize);
-            
+
             // Convert to compressed data URL (PNG for seal to maintain transparency)
-            const compressedDataUrl = canvas.toDataURL('image/png', 0.7); // 70% quality for better compression
-            
+            const compressedDataUrl = canvas.toDataURL("image/png", 0.7); // 70% quality for better compression
+
             // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Calculate seal size - keep it square to maintain perfect circle (matching CSS: width: 80px, height: 80px)
               const sealSize = 20; // Convert 80px to mm (approximately 20mm) - keep square for perfect circle
-              
+
               // Position at center bottom (matching CSS: left: 52%, bottom: 3%, transform: translateX(-50%))
               // CSS: left: 52% means 52% from left, then transform: translateX(-50%) centers it
-              const sealX = (pdfWidth * 0.52) - (sealSize / 2); // 52% from left, then center
-              const sealY = pdfHeight - (pdfHeight * 0.03) - sealSize; // 3% from bottom edge
-              
+              const sealX = pdfWidth * 0.52 - sealSize / 2; // 52% from left, then center
+              const sealY = pdfHeight - pdfHeight * 0.03 - sealSize; // 3% from bottom edge
+
               // Add the seal image as a perfect square to maintain circular appearance
-              pdf.addImage(compressedImg, "PNG", sealX, sealY, sealSize, sealSize);
+              pdf.addImage(
+                compressedImg,
+                "PNG",
+                sealX,
+                sealY,
+                sealSize,
+                sealSize
+              );
               resolve(true);
             };
             compressedImg.src = compressedDataUrl;
@@ -906,8 +1596,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Save the PDF
-      pdf.save(`${student.RegiNo}_${student.Name.replace(/\s+/g, '_')}_Certificate.pdf`);
-      
+      pdf.save(
+        `${student.RegiNo}_${student.Name.replace(/\s+/g, "_")}_Certificate.pdf`
+      );
+
       toast({
         title: "Certificate Downloaded",
         description: "Your certificate has been generated successfully",
@@ -916,7 +1608,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       console.error("Error generating certificate:", error);
       toast({
         title: "Certificate Generation Failed",
-        description: "There was an error creating your certificate. Please try again.",
+        description:
+          "There was an error creating your certificate. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -961,7 +1654,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             {isGeneratingCertificate ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span className="hidden sm:inline">Generating Certificate...</span>
+                <span className="hidden sm:inline">
+                  Generating Certificate...
+                </span>
                 <span className="sm:hidden">Certificate...</span>
               </>
             ) : (

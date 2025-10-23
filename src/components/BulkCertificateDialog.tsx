@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Award, CheckCircle, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
-import { Student, DCPStudent } from "@/data/studentsData";
+import { Student, DCPStudent } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,33 +30,46 @@ export const BulkCertificateDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
-  const [selectedRegiNos, setSelectedRegiNos] = useState<Set<string>>(new Set());
+  const [selectedRegiNos, setSelectedRegiNos] = useState<Set<string>>(
+    new Set()
+  );
   const [students, setStudents] = useState<(Student | DCPStudent)[]>([]);
 
   // Fetch students data from API when dialog opens
   useEffect(() => {
     const fetchStudents = async () => {
       if (!open) return;
-      
+
       setIsLoading(true);
       try {
         let fetchedStudents: (Student | DCPStudent)[] = [];
-        
+
         if (courseType === "PDA") {
           fetchedStudents = await DataService.getStudents();
         } else if (courseType === "DCP") {
           fetchedStudents = await DataService.getDCPStudents();
         }
-        
+
         setStudents(fetchedStudents);
-        
+
         // Debug logging
         console.log(`Fetched ${courseType} students:`, fetchedStudents);
-        console.log(`Students with results:`, fetchedStudents.filter(s => s.Result));
-        console.log(`Students with certificates:`, fetchedStudents.filter(s => s.CertificateNo && s.CertificateNo.trim() !== ''));
+        console.log(
+          `Students with results:`,
+          fetchedStudents.filter((s) => s.Result)
+        );
+        console.log(
+          `Students with certificates:`,
+          fetchedStudents.filter(
+            (s) => s.CertificateNo && s.CertificateNo.trim() !== ""
+          )
+        );
         // Note: is_published field is not available in the API response
         console.log(`Sample student data:`, fetchedStudents[0]);
-        console.log(`Sample student keys:`, Object.keys(fetchedStudents[0] || {}));
+        console.log(
+          `Sample student keys:`,
+          Object.keys(fetchedStudents[0] || {})
+        );
       } catch (error) {
         console.error(`Failed to fetch ${courseType} students:`, error);
         toast({
@@ -75,25 +88,24 @@ export const BulkCertificateDialog = ({
 
   // Filter students who are eligible for certificates
   // Since is_published field is not available, use certificate numbers as the criterion
-  const passedStudents = students.filter(
-    (student) => {
-      const hasCertificate = student.CertificateNo && student.CertificateNo.trim() !== '';
-      
-      // Include students who have certificate numbers (they are eligible for certificates)
-      return hasCertificate;
-    }
-  );
-  
+  const passedStudents = students.filter((student) => {
+    const hasCertificate =
+      student.CertificateNo && student.CertificateNo.trim() !== "";
+
+    // Include students who have certificate numbers (they are eligible for certificates)
+    return hasCertificate;
+  });
+
   // Debug logging for filtering
   React.useEffect(() => {
     if (students.length > 0) {
       console.log(`Filtering ${courseType} students:`, {
         total: students.length,
-        withResults: students.filter(s => s.Result).length,
-        withCertificates: students.filter(s => s.CertificateNo).length,
+        withResults: students.filter((s) => s.Result).length,
+        withCertificates: students.filter((s) => s.CertificateNo).length,
         passedWithCertificates: passedStudents.length,
-        resultTypes: [...new Set(students.map(s => s.Result))],
-        sampleStudent: students[0]
+        resultTypes: [...new Set(students.map((s) => s.Result))],
+        sampleStudent: students[0],
       });
     }
   }, [students, courseType, passedStudents.length]);
@@ -106,7 +118,8 @@ export const BulkCertificateDialog = ({
     }
   }, [open, students]);
 
-  const allSelected = selectedRegiNos.size > 0 && selectedRegiNos.size === passedStudents.length;
+  const allSelected =
+    selectedRegiNos.size > 0 && selectedRegiNos.size === passedStudents.length;
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedRegiNos(new Set());
@@ -127,7 +140,9 @@ export const BulkCertificateDialog = ({
     });
   };
 
-  const isDCPStudent = (student: Student | DCPStudent): student is DCPStudent => {
+  const isDCPStudent = (
+    student: Student | DCPStudent
+  ): student is DCPStudent => {
     return "DCP001_CE" in student;
   };
 
@@ -328,7 +343,9 @@ export const BulkCertificateDialog = ({
       return;
     }
 
-    const selectedStudents = passedStudents.filter((s) => selectedRegiNos.has(s.RegiNo));
+    const selectedStudents = passedStudents.filter((s) =>
+      selectedRegiNos.has(s.RegiNo)
+    );
     if (selectedStudents.length === 0) {
       toast({
         title: "No Students Selected",
@@ -355,7 +372,10 @@ export const BulkCertificateDialog = ({
 
         // Save individual PDF
         pdf.save(
-          `${student.RegiNo}_${student.Name.replace(/\s+/g, "_")}_Certificate.pdf`
+          `${student.RegiNo}_${student.Name.replace(
+            /\s+/g,
+            "_"
+          )}_Certificate.pdf`
         );
 
         // Update progress
@@ -378,7 +398,8 @@ export const BulkCertificateDialog = ({
       console.error("Error generating certificates:", error);
       toast({
         title: "Generation Failed",
-        description: "There was an error generating certificates. Please try again.",
+        description:
+          "There was an error generating certificates. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -410,7 +431,10 @@ export const BulkCertificateDialog = ({
                   {passedStudents.length} Passed Students
                 </span>
                 <div className="flex items-center gap-2 pl-3 border-l border-emerald-300/50 dark:border-emerald-700/50">
-                  <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                  />
                   <span className="text-sm text-emerald-900 dark:text-emerald-200">
                     Select all ({selectedRegiNos.size}/{passedStudents.length})
                   </span>
@@ -418,7 +442,11 @@ export const BulkCertificateDialog = ({
               </div>
               <Button
                 onClick={handleBulkDownload}
-                disabled={isGenerating || passedStudents.length === 0 || selectedRegiNos.size === 0}
+                disabled={
+                  isGenerating ||
+                  passedStudents.length === 0 ||
+                  selectedRegiNos.size === 0
+                }
                 className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
               >
                 {isGenerating ? (
@@ -492,7 +520,9 @@ export const BulkCertificateDialog = ({
             <div className="text-center py-8 text-muted-foreground">
               <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No passed students found for certificate generation.</p>
-              <p className="text-sm mt-2">Make sure students have PASS result and certificate numbers.</p>
+              <p className="text-sm mt-2">
+                Make sure students have PASS result and certificate numbers.
+              </p>
             </div>
           )}
         </div>
@@ -500,4 +530,3 @@ export const BulkCertificateDialog = ({
     </Dialog>
   );
 };
-

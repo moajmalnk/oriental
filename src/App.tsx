@@ -7,7 +7,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
+import Courses from "./pages/Courses";
+import Batches from "./pages/Batches";
+import Students from "./pages/Students";
+import StudentResults from "./pages/StudentResults";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +26,46 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/courses"
+              element={
+                <ProtectedRoute>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/batches"
+              element={
+                <ProtectedRoute>
+                  <Batches />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/students"
+              element={
+                <ProtectedRoute>
+                  <Students />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student-results"
+              element={
+                <ProtectedRoute>
+                  <StudentResults />
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

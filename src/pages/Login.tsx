@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,22 +25,27 @@ const Login = () => {
   const { login, isAuthenticated, isLoading, error: authError } = useAuth();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    const from = (location.state as any)?.from?.pathname || "/";
-    navigate(from, { replace: true });
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || "/";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     const success = await login(username, password);
-    
+
     if (success) {
       const from = (location.state as any)?.from?.pathname || "/";
       navigate(from, { replace: true });
     } else {
-      setError(authError || "Invalid username or password. Please check your credentials and try again.");
+      setError(
+        authError ||
+          "Invalid username or password. Please check your credentials and try again."
+      );
     }
   };
 
@@ -42,9 +53,12 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        ></div>
       </div>
 
       {/* Theme Toggle */}
@@ -59,7 +73,7 @@ const Login = () => {
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 rounded-2xl flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-white dark:text-slate-900" />
             </div>
-            
+
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 KUG Oriental Academy
@@ -74,7 +88,10 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Username Field */}
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Label
+                  htmlFor="username"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
                   Username
                 </Label>
                 <div className="relative">
@@ -93,7 +110,10 @@ const Login = () => {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
                   Password
                 </Label>
                 <div className="relative">
@@ -112,14 +132,21 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
               {/* Error Message */}
               {error && (
-                <Alert variant="destructive" className="border-red-200 dark:border-red-800">
+                <Alert
+                  variant="destructive"
+                  className="border-red-200 dark:border-red-800"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-sm">
                     {error}
