@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Award, CheckCircle, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
-import { Student, DCPStudent } from "@/types";
+import { Student } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,7 +33,7 @@ export const BulkCertificateDialog = ({
   const [selectedRegiNos, setSelectedRegiNos] = useState<Set<string>>(
     new Set()
   );
-  const [students, setStudents] = useState<(Student | DCPStudent)[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
 
   // Fetch students data from API when dialog opens
   useEffect(() => {
@@ -42,12 +42,12 @@ export const BulkCertificateDialog = ({
 
       setIsLoading(true);
       try {
-        let fetchedStudents: (Student | DCPStudent)[] = [];
+        let fetchedStudents: Student[] = [];
 
         if (courseType === "PDA") {
-          fetchedStudents = await DataService.getStudents();
+          fetchedStudents = await DataService.getStudentsByCourseType("PDA");
         } else if (courseType === "DCP") {
-          fetchedStudents = await DataService.getDCPStudents();
+          fetchedStudents = await DataService.getStudentsByCourseType("DCP");
         }
 
         setStudents(fetchedStudents);
@@ -61,7 +61,7 @@ export const BulkCertificateDialog = ({
         console.log(
           `Students with certificates:`,
           fetchedStudents.filter(
-            (s) => s.CertificateNo && s.CertificateNo.trim() !== ""
+            (s) => s.CertificateNumber && s.CertificateNumber.trim() !== ""
           )
         );
         // Note: is_published field is not available in the API response
@@ -90,7 +90,7 @@ export const BulkCertificateDialog = ({
   // Since is_published field is not available, use certificate numbers as the criterion
   const passedStudents = students.filter((student) => {
     const hasCertificate =
-      student.CertificateNo && student.CertificateNo.trim() !== "";
+      student.CertificateNumber && student.CertificateNumber.trim() !== "";
 
     // Include students who have certificate numbers (they are eligible for certificates)
     return hasCertificate;
@@ -102,7 +102,7 @@ export const BulkCertificateDialog = ({
       console.log(`Filtering ${courseType} students:`, {
         total: students.length,
         withResults: students.filter((s) => s.Result).length,
-        withCertificates: students.filter((s) => s.CertificateNo).length,
+        withCertificates: students.filter((s) => s.CertificateNumber).length,
         passedWithCertificates: passedStudents.length,
         resultTypes: [...new Set(students.map((s) => s.Result))],
         sampleStudent: students[0],
@@ -140,14 +140,12 @@ export const BulkCertificateDialog = ({
     });
   };
 
-  const isDCPStudent = (
-    student: Student | DCPStudent
-  ): student is DCPStudent => {
-    return "DCP001_CE" in student;
+  const isDCPStudent = (student: Student): boolean => {
+    return student.CourseType === "DCP";
   };
 
   const generateSingleCertificate = async (
-    student: Student | DCPStudent,
+    student: Student,
     pdf: jsPDF
   ): Promise<void> => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -222,7 +220,7 @@ export const BulkCertificateDialog = ({
 
     // Certificate Number
     const certificateNo =
-      student.CertificateNo || "2025" + student.RegiNo.slice(-4);
+      student.CertificateNumber || "2025" + student.RegiNo.slice(-4);
     pdf.text(`Certificate No. : ${certificateNo}`, 20, 133);
 
     // Course description
@@ -232,9 +230,7 @@ export const BulkCertificateDialog = ({
 
     pdf.text("The certificate of", pdfWidth / 2, 145, { align: "center" });
 
-    const courseName = isDCPStudent(student)
-      ? "Diploma in Counselling Psychology"
-      : "Professional Diploma in Acupuncture";
+    const courseName = student.Course;
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
     pdf.text(courseName, pdfWidth / 2, 153, { align: "center" });
@@ -269,12 +265,18 @@ export const BulkCertificateDialog = ({
     completionY += 4;
     pdf.text(completionLine4, pdfWidth / 2, completionY, { align: "center" });
 
-    // Add student photo (only for DCP students as PDA photos are not available)
-    if (isDCPStudent(student)) {
+    // Add student photo using backend photo URL
+    if (student.Photo) {
       try {
         const photoImg = new Image();
         photoImg.crossOrigin = "anonymous";
-        photoImg.src = `/DCP STUDENTS PHOTOS/${student.RegiNo}.png`;
+        // Use backend photo URL
+        const photoUrl = student.Photo.startsWith("http")
+          ? student.Photo
+          : `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}${
+              student.Photo
+            }`;
+        photoImg.src = photoUrl;
 
         await new Promise((resolve) => {
           photoImg.onload = () => {
@@ -501,7 +503,7 @@ export const BulkCertificateDialog = ({
                       <div>
                         <p className="font-medium text-sm">{student.Name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {student.RegiNo} • Cert: {student.CertificateNo}
+                          {student.RegiNo} • Cert: {student.CertificateNumber}
                         </p>
                       </div>
                     </div>

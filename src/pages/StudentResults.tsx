@@ -102,6 +102,7 @@ interface BulkStudentResultData {
     pw_obtained?: number;
   }>;
   is_published: boolean;
+  published_date?: string;
   // Resolved IDs
   student_id?: number;
   course_id?: number;
@@ -164,6 +165,7 @@ const StudentResults: React.FC = () => {
     result: "",
     marks: [],
     is_published: false,
+    published_date: new Date().toISOString().split("T")[0],
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -177,6 +179,41 @@ const StudentResults: React.FC = () => {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkResult, setBulkResult] = useState<BulkCreationResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+
+  // Bulk update states
+  const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false);
+  const [selectedResultsForExport, setSelectedResultsForExport] = useState<
+    Set<number>
+  >(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+  const [isBulkUpdateMode, setIsBulkUpdateMode] = useState(false);
+
+  // Separate bulk update states
+  const [isBulkUpdateImportDialogOpen, setIsBulkUpdateImportDialogOpen] =
+    useState(false);
+  const [bulkUpdateData, setBulkUpdateData] = useState<BulkStudentResultData[]>(
+    []
+  );
+  const [bulkUpdateValidations, setBulkUpdateValidations] = useState<
+    BulkStudentResultValidation[]
+  >([]);
+  const [isProcessingBulkUpdate, setIsProcessingBulkUpdate] = useState(false);
+  const [bulkUpdateProgress, setBulkUpdateProgress] = useState(0);
+  const [bulkUpdateResult, setBulkUpdateResult] =
+    useState<BulkCreationResult | null>(null);
+
+  // Bulk delete states
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [selectedResultsForDelete, setSelectedResultsForDelete] = useState<
+    Set<number>
+  >(new Set());
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<{
+    success: number;
+    failed: number;
+    errors: Array<{ row: number; registerNumber: string; error: string }>;
+  } | null>(null);
 
   const { toast } = useToast();
 
@@ -396,6 +433,7 @@ const StudentResults: React.FC = () => {
       result: "",
       marks: [],
       is_published: false,
+      published_date: new Date().toISOString().split("T")[0],
     });
     setErrors({});
     setEditingResult(null);
@@ -415,6 +453,8 @@ const StudentResults: React.FC = () => {
         result: result.result || "",
         marks: result.marks || [],
         is_published: result.is_published || false,
+        published_date:
+          result.published_date || new Date().toISOString().split("T")[0],
       });
       fetchSubjects(result.course);
     } else {
@@ -565,6 +605,7 @@ const StudentResults: React.FC = () => {
           pw_obtained: mark.pw_obtained,
         })),
         is_published: formData.is_published || false,
+        published_date: formData.published_date || null,
       };
 
       if (editingResult) {
@@ -705,8 +746,8 @@ const StudentResults: React.FC = () => {
 
             // Parse marks - new format: Subject 1, Type 1, TE Obtained 1, CE Obtained 1, PE Obtained 1, PW Obtained 1, Subject 2, Type 2, ...
             // Each subject group takes 6 columns: Subject Name, Type, TE Obtained, CE Obtained, PE Obtained, PW Obtained
-            // Start from column 7 (index 7) since we added is_published at column 6
-            for (let i = 7; i < row.length; i += 6) {
+            // Start from column 8 (index 8) since we added is_published at column 6 and published_date at column 7
+            for (let i = 8; i < row.length; i += 6) {
               if (row[i] && row[i].toString().trim()) {
                 const subjectName = row[i].toString().trim();
                 const subjectType = row[i + 1]?.toString().trim().toLowerCase();
@@ -750,6 +791,8 @@ const StudentResults: React.FC = () => {
               result: row[5]?.toString() || "",
               is_published:
                 row[6]?.toString().toLowerCase() === "true" || false,
+              published_date:
+                row[7]?.toString() || new Date().toISOString().split("T")[0],
               marks,
             };
           });
@@ -949,6 +992,169 @@ const StudentResults: React.FC = () => {
     setBulkValidations(validations);
   };
 
+  // Separate validation for bulk updates (doesn't check for duplicate course results)
+  const validateBulkUpdateData = async (data: BulkStudentResultData[]) => {
+    const validations: BulkStudentResultValidation[] = await Promise.all(
+      data.map(async (result, index) => {
+        const errors: string[] = [];
+        const row = index + 2; // +2 because we skip header and arrays are 0-indexed
+
+        // Validate student name
+        if (!result.student_name.trim()) {
+          errors.push("Student name is required");
+        } else {
+          const student = students.find(
+            (s) => s.name.toLowerCase() === result.student_name.toLowerCase()
+          );
+          if (!student) {
+            errors.push(`Student "${result.student_name}" not found`);
+          } else {
+            result.student_id = student.id;
+          }
+        }
+
+        // Validate course name
+        if (!result.course_name.trim()) {
+          errors.push("Course name is required");
+        } else {
+          const course = courses.find(
+            (c) => c.name.toLowerCase() === result.course_name.toLowerCase()
+          );
+          if (!course) {
+            errors.push(`Course "${result.course_name}" not found`);
+          } else {
+            result.course_id = course.id;
+          }
+        }
+
+        // Validate batch name
+        if (!result.batch_name.trim()) {
+          errors.push("Batch name is required");
+        } else {
+          const batch = batches.find(
+            (b) => b.name.toLowerCase() === result.batch_name.toLowerCase()
+          );
+          if (!batch) {
+            errors.push(`Batch "${result.batch_name}" not found`);
+          } else {
+            // Check if batch belongs to the course
+            if (result.course_id && batch.course !== result.course_id) {
+              errors.push(
+                `Batch "${result.batch_name}" does not belong to course "${result.course_name}"`
+              );
+            } else {
+              result.batch_id = batch.id;
+            }
+          }
+        }
+
+        // Validate register number
+        if (!result.register_number.trim()) {
+          errors.push("Register number is required");
+        }
+
+        // Validate certificate number
+        if (!result.certificate_number.trim()) {
+          errors.push("Certificate number is required");
+        }
+
+        // For updates, we need to check if the result exists
+        if (result.register_number.trim()) {
+          const existingResult = studentResults.find(
+            (existing) =>
+              existing.register_number.toLowerCase() ===
+              result.register_number.toLowerCase()
+          );
+          if (!existingResult) {
+            errors.push(
+              `No existing result found with register number "${result.register_number}". Please ensure this is an update of an existing result.`
+            );
+          }
+        }
+
+        // Validate marks and resolve subject IDs
+        if (result.marks && result.marks.length > 0 && result.course_id) {
+          try {
+            const response = await api.get(
+              `/api/course/subjects/${result.course_id}/`
+            );
+            const courseSubjects = response.data;
+
+            for (const mark of result.marks) {
+              if (!mark.subject_name.trim()) {
+                errors.push("Subject name is required for marks");
+              } else {
+                const subject = courseSubjects.find(
+                  (s: any) =>
+                    s.name.toLowerCase() === mark.subject_name.toLowerCase()
+                );
+                if (!subject) {
+                  errors.push(
+                    `Subject "${mark.subject_name}" not found for course "${result.course_name}"`
+                  );
+                } else {
+                  // Validate mark fields based on subject type
+                  const hasTheory =
+                    mark.te_obtained !== null || mark.ce_obtained !== null;
+                  const hasPractical =
+                    mark.pe_obtained !== null || mark.pw_obtained !== null;
+
+                  if (!hasTheory && !hasPractical) {
+                    errors.push(
+                      `At least one mark is required for subject "${mark.subject_name}"`
+                    );
+                  }
+
+                  if (hasTheory && hasPractical) {
+                    errors.push(
+                      `Cannot mix theory and practical marks for subject "${mark.subject_name}"`
+                    );
+                  }
+
+                  // Store subject ID for later use
+                  if (!result.subject_ids) {
+                    result.subject_ids = {};
+                  }
+                  result.subject_ids[mark.subject_name] = subject.id;
+                }
+              }
+            }
+          } catch (error) {
+            errors.push(
+              `Failed to fetch subjects for course "${result.course_name}"`
+            );
+          }
+        } else if (result.course_id) {
+          errors.push("At least one subject mark is required");
+        }
+
+        // Check for duplicate register numbers within the bulk data
+        const duplicateRegisterIndex = data.findIndex(
+          (r, i) =>
+            i !== index &&
+            r.register_number.toLowerCase() ===
+              result.register_number.toLowerCase()
+        );
+        if (duplicateRegisterIndex !== -1) {
+          errors.push(
+            `Duplicate register number found in row ${
+              duplicateRegisterIndex + 2
+            }`
+          );
+        }
+
+        return {
+          row,
+          data: result,
+          errors,
+          isValid: errors.length === 0,
+        };
+      })
+    );
+
+    setBulkUpdateValidations(validations);
+  };
+
   const handleBulkCreate = async () => {
     const validResults = bulkValidations.filter((v) => v.isValid);
     if (validResults.length === 0) {
@@ -991,6 +1197,9 @@ const StudentResults: React.FC = () => {
             pw_obtained: mark.pw_obtained,
           })),
           is_published: validation.data.is_published || false,
+          published_date:
+            validation.data.published_date ||
+            new Date().toISOString().split("T")[0],
         };
 
         await api.post("/api/students/student-results/create/", payload);
@@ -1025,6 +1234,321 @@ const StudentResults: React.FC = () => {
     }
   };
 
+  const handleBulkUpdate = async () => {
+    const validResults = bulkUpdateValidations.filter((v) => v.isValid);
+    if (validResults.length === 0) {
+      toast({
+        title: "No valid results",
+        description: "Please fix validation errors before updating results.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingBulkUpdate(true);
+    setBulkUpdateProgress(0);
+    setBulkUpdateResult(null);
+
+    const result: BulkCreationResult = {
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    for (let i = 0; i < validResults.length; i++) {
+      const validation = validResults[i];
+      const progress = ((i + 1) / validResults.length) * 100;
+      setBulkUpdateProgress(progress);
+
+      try {
+        // Find existing result by register number
+        const existingResult = studentResults.find(
+          (result) => result.register_number === validation.data.register_number
+        );
+
+        if (!existingResult) {
+          result.failed++;
+          result.errors.push({
+            row: validation.row,
+            registerNumber: validation.data.register_number,
+            error: "Result not found for update",
+          });
+          continue;
+        }
+
+        const payload = {
+          student: validation.data.student_id,
+          course: validation.data.course_id,
+          batch: validation.data.batch_id,
+          register_number: validation.data.register_number,
+          certificate_number: validation.data.certificate_number,
+          result: validation.data.result || null,
+          marks: validation.data.marks.map((mark) => ({
+            subject: validation.data.subject_ids?.[mark.subject_name] || 0,
+            te_obtained: mark.te_obtained,
+            ce_obtained: mark.ce_obtained,
+            pe_obtained: mark.pe_obtained,
+            pw_obtained: mark.pw_obtained,
+          })),
+          is_published: validation.data.is_published || false,
+        };
+
+        await api.put(
+          `/api/students/student-results/update/${existingResult.id}/`,
+          payload
+        );
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: validation.row,
+          registerNumber: validation.data.register_number,
+          error: error.response?.data?.message || "Failed to update result",
+        });
+      }
+    }
+
+    setBulkUpdateResult(result);
+    setIsProcessingBulkUpdate(false);
+
+    if (result.success > 0) {
+      toast({
+        title: "Bulk Update Complete",
+        description: `Successfully updated ${result.success} results. ${result.failed} failed.`,
+      });
+      fetchData();
+    }
+
+    if (result.failed > 0) {
+      toast({
+        title: "Some results failed",
+        description: `${result.failed} results could not be updated. Check the details below.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // File upload handler for bulk updates
+  const handleBulkUpdateFileUpload = async (file: File) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    // Check file type and set appropriate reading method
+    if (file.name.toLowerCase().endsWith(".csv")) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
+
+    reader.onload = async (e) => {
+      try {
+        let jsonData: any[][];
+
+        // Check file type and parse accordingly
+        if (file.name.toLowerCase().endsWith(".csv")) {
+          // Parse CSV file
+          const csvText = e.target?.result as string;
+          const lines = csvText.split("\n");
+          jsonData = lines.map((line) => {
+            // Simple CSV parsing - handles quoted fields
+            const result = [];
+            let current = "";
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              if (char === '"') {
+                inQuotes = !inQuotes;
+              } else if (char === "," && !inQuotes) {
+                result.push(current.trim());
+                current = "";
+              } else {
+                current += char;
+              }
+            }
+            result.push(current.trim());
+            return result;
+          });
+        } else {
+          // Parse Excel file
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        }
+
+        // Skip header row and process data
+        const resultData: BulkStudentResultData[] = jsonData
+          .slice(1)
+          .map((row: any[], index: number) => {
+            // Parse marks from the row (assuming marks are in columns after the basic info)
+            const marks: Array<{
+              subject_name: string;
+              te_obtained?: number;
+              ce_obtained?: number;
+              pe_obtained?: number;
+              pw_obtained?: number;
+            }> = [];
+
+            // Parse marks - new format: Subject 1, Type 1, TE Obtained 1, CE Obtained 1, PE Obtained 1, PW Obtained 1, Subject 2, Type 2, ...
+            // Each subject group takes 6 columns: Subject Name, Type, TE Obtained, CE Obtained, PE Obtained, PW Obtained
+            // Start from column 8 (index 8) since we added is_published at column 6 and published_date at column 7
+            for (let i = 8; i < row.length; i += 6) {
+              if (row[i] && row[i].toString().trim()) {
+                const subjectName = row[i].toString().trim();
+                const subjectType = row[i + 1]?.toString().trim().toLowerCase();
+
+                // Create mark object with all possible fields
+                const mark = {
+                  subject_name: subjectName,
+                  te_obtained: row[i + 2]
+                    ? parseInt(row[i + 2].toString())
+                    : null,
+                  ce_obtained: row[i + 3]
+                    ? parseInt(row[i + 3].toString())
+                    : null,
+                  pe_obtained: row[i + 4]
+                    ? parseInt(row[i + 4].toString())
+                    : null,
+                  pw_obtained: row[i + 5]
+                    ? parseInt(row[i + 5].toString())
+                    : null,
+                };
+
+                // Only add if at least one mark is provided
+                const hasAnyMark =
+                  mark.te_obtained !== null ||
+                  mark.ce_obtained !== null ||
+                  mark.pe_obtained !== null ||
+                  mark.pw_obtained !== null;
+
+                if (hasAnyMark) {
+                  marks.push(mark);
+                }
+              }
+            }
+
+            return {
+              student_name: row[0]?.toString() || "",
+              course_name: row[1]?.toString() || "",
+              batch_name: row[2]?.toString() || "",
+              register_number: row[3]?.toString() || "",
+              certificate_number: row[4]?.toString() || "",
+              result: row[5]?.toString() || "",
+              is_published:
+                row[6]?.toString().toLowerCase() === "true" || false,
+              marks,
+            };
+          });
+
+        setBulkUpdateData(resultData);
+        await validateBulkUpdateData(resultData);
+      } catch (error) {
+        console.error("Error parsing file:", error);
+        toast({
+          title: "Error",
+          description:
+            "Failed to parse file. Please check the format and ensure it's a valid Excel or CSV file.",
+          variant: "destructive",
+        });
+      }
+    };
+  };
+
+  // Bulk delete functions
+  const toggleDeleteSelection = (resultId: number) => {
+    setSelectedResultsForDelete((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(resultId)) {
+        newSet.delete(resultId);
+      } else {
+        newSet.add(resultId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForDelete = () => {
+    setSelectedResultsForDelete(
+      new Set(paginatedResults.map((result) => result.id!))
+    );
+  };
+
+  const clearDeleteSelection = () => {
+    setSelectedResultsForDelete(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedResultsForDelete.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one student result to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingBulk(true);
+    setBulkDeleteProgress(0);
+    setBulkDeleteResult(null);
+
+    const result = {
+      success: 0,
+      failed: 0,
+      errors: [] as Array<{
+        row: number;
+        registerNumber: string;
+        error: string;
+      }>,
+    };
+
+    const selectedResults = studentResults.filter((result) =>
+      selectedResultsForDelete.has(result.id!)
+    );
+
+    for (let i = 0; i < selectedResults.length; i++) {
+      const studentResult = selectedResults[i];
+      const progress = ((i + 1) / selectedResults.length) * 100;
+      setBulkDeleteProgress(progress);
+
+      try {
+        await api.delete(
+          `/api/students/student-results/delete/${studentResult.id}/`
+        );
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: i + 1,
+          registerNumber: studentResult.register_number,
+          error: error.response?.data?.message || "Failed to delete result",
+        });
+      }
+    }
+
+    setBulkDeleteResult(result);
+    setIsDeletingBulk(false);
+
+    if (result.success > 0) {
+      toast({
+        title: "Bulk Delete Complete",
+        description: `Successfully deleted ${result.success} results. ${result.failed} failed.`,
+      });
+      fetchData();
+      setSelectedResultsForDelete(new Set());
+    }
+
+    if (result.failed > 0) {
+      toast({
+        title: "Some results failed",
+        description: `${result.failed} results could not be deleted. Check the details below.`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const downloadTemplate = () => {
     const templateData = [
       [
@@ -1035,6 +1559,7 @@ const StudentResults: React.FC = () => {
         "Certificate Number",
         "Result",
         "Is Published",
+        "Published Date",
         "Subject 1",
         "Type 1",
         "TE Obtained 1",
@@ -1126,6 +1651,7 @@ const StudentResults: React.FC = () => {
         "Certificate Number",
         "Result",
         "Is Published",
+        "Published Date",
         "Subject 1",
         "Type 1",
         "TE Obtained 1",
@@ -1225,6 +1751,152 @@ const StudentResults: React.FC = () => {
     setBulkProgress(0);
   };
 
+  // Bulk update functions
+  const toggleResultSelection = (resultId: number) => {
+    setSelectedResultsForExport((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(resultId)) {
+        newSet.delete(resultId);
+      } else {
+        newSet.add(resultId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllResults = () => {
+    setSelectedResultsForExport(
+      new Set(paginatedResults.map((result) => result.id!))
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedResultsForExport(new Set());
+  };
+
+  const exportSelectedToExcel = async () => {
+    if (selectedResultsForExport.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one student result to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const selectedResults = studentResults.filter((result) =>
+        selectedResultsForExport.has(result.id!)
+      );
+
+      // Create Excel data using the same template structure as bulk import
+      const excelData = [
+        [
+          "Student Name",
+          "Course Name",
+          "Batch Name",
+          "Register Number",
+          "Certificate Number",
+          "Result",
+          "Is Published",
+          "Subject 1",
+          "Type 1",
+          "TE Obtained 1",
+          "CE Obtained 1",
+          "PE Obtained 1",
+          "PW Obtained 1",
+          "Subject 2",
+          "Type 2",
+          "TE Obtained 2",
+          "CE Obtained 2",
+          "PE Obtained 2",
+          "PW Obtained 2",
+          "Subject 3",
+          "Type 3",
+          "TE Obtained 3",
+          "CE Obtained 3",
+          "PE Obtained 3",
+          "PW Obtained 3",
+        ],
+      ];
+
+      // Add data rows
+      selectedResults.forEach((result) => {
+        const row = [
+          result.student_name,
+          result.course_name,
+          result.batch_name,
+          result.register_number,
+          result.certificate_number,
+          result.result || "",
+          result.is_published ? "TRUE" : "FALSE",
+        ];
+
+        // Add marks data
+        if (result.marks && result.marks.length > 0) {
+          result.marks.forEach((mark, index) => {
+            if (index < 3) {
+              // Limit to 3 subjects max
+              const subjectType =
+                mark.te_obtained !== null || mark.ce_obtained !== null
+                  ? "theory"
+                  : "practical";
+              row.push(
+                mark.subject_name || "",
+                subjectType,
+                mark.te_obtained?.toString() || "",
+                mark.ce_obtained?.toString() || "",
+                mark.pe_obtained?.toString() || "",
+                mark.pw_obtained?.toString() || ""
+              );
+            }
+          });
+
+          // Fill remaining subject columns if less than 3 subjects
+          const remainingSubjects = 3 - (result.marks?.length || 0);
+          for (let i = 0; i < remainingSubjects; i++) {
+            row.push("", "", "", "", "", "");
+          }
+        } else {
+          // No marks - fill with empty values
+          for (let i = 0; i < 18; i++) {
+            // 3 subjects * 6 columns each
+            row.push("");
+          }
+        }
+
+        excelData.push(row);
+      });
+
+      // Create and download Excel file
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Student Results");
+      XLSX.writeFile(
+        wb,
+        `student_results_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      toast({
+        title: "Export Successful",
+        description: `Exported ${selectedResultsForExport.size} student results to Excel file.`,
+      });
+
+      setIsBulkUpdateDialogOpen(false);
+      setSelectedResultsForExport(new Set());
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export student results to Excel file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1263,6 +1935,22 @@ const StudentResults: React.FC = () => {
             >
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Import</span>
+            </Button>
+            <Button
+              onClick={() => setIsBulkUpdateDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="hidden sm:inline">Convert to Excel</span>
+            </Button>
+            <Button
+              onClick={() => setIsBulkDeleteDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Bulk Delete</span>
             </Button>
           </div>
         </div>
@@ -1390,31 +2078,31 @@ const StudentResults: React.FC = () => {
                 <TableRow key={result.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                      {/* <User className="h-4 w-4 text-muted-foreground" /> */}
                       {result.student_name}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
                       {result.course_name}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
+                      {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
                       {result.batch_name}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-muted-foreground" />
+                      {/* <Award className="h-4 w-4 text-muted-foreground" /> */}
                       {result.register_number}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                      {/* <GraduationCap className="h-4 w-4 text-muted-foreground" /> */}
                       {result.certificate_number}
                     </div>
                   </TableCell>
@@ -1754,7 +2442,6 @@ const StudentResults: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="Pass">Pass</SelectItem>
                       <SelectItem value="Fail">Fail</SelectItem>
-                      <SelectItem value="Distinction">Distinction</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1782,6 +2469,24 @@ const StudentResults: React.FC = () => {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Check this box to mark the result as published
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="published_date">Published Date</Label>
+                  <Input
+                    id="published_date"
+                    type="date"
+                    value={formData.published_date || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        published_date: e.target.value || null,
+                      })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Select the date when the result was published
                   </p>
                 </div>
               </div>
@@ -2048,6 +2753,698 @@ const StudentResults: React.FC = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Bulk Update Dialog */}
+        <Dialog
+          open={isBulkUpdateDialogOpen}
+          onOpenChange={setIsBulkUpdateDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Update Student Results</DialogTitle>
+              <DialogDescription>
+                Select student results to export to Excel, edit the data, and
+                upload back for bulk updates.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium">Select Student Results</p>
+                    <p className="text-sm text-muted-foreground">
+                      Choose the student results you want to export and update.
+                      {selectedResultsForExport.size > 0 &&
+                        ` ${selectedResultsForExport.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllResults}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedResults.length === 0}
+                  >
+                    Select All ({paginatedResults.length})
+                  </Button>
+                  <Button
+                    onClick={clearSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedResultsForExport.size === 0}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Results Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Results to Export
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedResultsForExport.size > 0 &&
+                              selectedResultsForExport.size ===
+                                paginatedResults.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedResultsForExport.size ===
+                                paginatedResults.length
+                              ) {
+                                clearSelection();
+                              } else {
+                                selectAllResults();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Batch</TableHead>
+                        <TableHead>Register No.</TableHead>
+                        <TableHead>Result</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedResults.map((result) => (
+                        <TableRow key={result.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedResultsForExport.has(result.id!)}
+                              onChange={() => toggleResultSelection(result.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {result.student_name}
+                          </TableCell>
+                          <TableCell>{result.course_name}</TableCell>
+                          <TableCell>{result.batch_name}</TableCell>
+                          <TableCell>{result.register_number}</TableCell>
+                          <TableCell>
+                            {result.result ? (
+                              <Badge
+                                variant={
+                                  result.result.toLowerCase() === "pass"
+                                    ? "default"
+                                    : result.result.toLowerCase() ===
+                                      "distinction"
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                              >
+                                {result.result}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                No result
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {result.is_published ? (
+                              <Badge
+                                variant="outline"
+                                className="text-green-600 border-green-600"
+                              >
+                                Published
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-orange-600 border-orange-600"
+                              >
+                                Unpublished
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkUpdateDialogOpen(false);
+                    setSelectedResultsForExport(new Set());
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={exportSelectedToExcel}
+                  disabled={selectedResultsForExport.size === 0 || isExporting}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel ({selectedResultsForExport.size})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Update Import Dialog */}
+        <Dialog
+          open={isBulkUpdateImportDialogOpen}
+          onOpenChange={setIsBulkUpdateImportDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Update Student Results</DialogTitle>
+              <DialogDescription>
+                Upload an Excel file with existing student results to update
+                them in bulk. The system will validate that the results exist
+                before updating.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* File Upload */}
+              {bulkUpdateData.length === 0 && (
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    dragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                  }`}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setDragActive(false);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragActive(false);
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                      handleBulkUpdateFileUpload(files[0]);
+                    }
+                  }}
+                >
+                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium mb-2">
+                    Upload Excel or CSV File for Bulk Update
+                  </p>
+                  <p className="text-muted-foreground mb-4">
+                    Drag and drop your Excel (.xlsx, .xls) or CSV file here, or
+                    click to browse. This should contain existing student
+                    results that you want to update.
+                  </p>
+                  <Input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleBulkUpdateFileUpload(file);
+                    }}
+                    className="hidden"
+                    id="bulk-update-upload"
+                  />
+                  <Button asChild>
+                    <Label
+                      htmlFor="bulk-update-upload"
+                      className="cursor-pointer"
+                    >
+                      Choose File
+                    </Label>
+                  </Button>
+                </div>
+              )}
+
+              {/* Validation Results */}
+              {bulkUpdateValidations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">
+                      Validation Results
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {bulkUpdateValidations.filter((v) => v.isValid).length}{" "}
+                        Valid
+                      </Badge>
+                      <Badge variant="destructive">
+                        {bulkUpdateValidations.filter((v) => !v.isValid).length}{" "}
+                        Invalid
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="max-h-60 overflow-auto border rounded-lg">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Row
+                          </th>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Student
+                          </th>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Course
+                          </th>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Batch
+                          </th>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Register No
+                          </th>
+                          <th className="p-3 text-left text-sm font-medium">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkUpdateValidations.map((validation, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="p-3 text-sm">{validation.row}</td>
+                            <td className="p-3 text-sm">
+                              {validation.data.student_name}
+                            </td>
+                            <td className="p-3 text-sm">
+                              {validation.data.course_name}
+                            </td>
+                            <td className="p-3 text-sm">
+                              {validation.data.batch_name}
+                            </td>
+                            <td className="p-3 text-sm">
+                              {validation.data.register_number}
+                            </td>
+                            <td className="p-3">
+                              {validation.isValid ? (
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="text-sm">Valid</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 text-red-600">
+                                  <AlertCircle className="h-4 w-4" />
+                                  <span className="text-sm">Invalid</span>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Error Details */}
+                  {bulkUpdateValidations.some((v) => !v.isValid) && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-destructive">
+                        Validation Errors:
+                      </h4>
+                      <div className="space-y-1 max-h-32 overflow-auto">
+                        {bulkUpdateValidations
+                          .filter((v) => !v.isValid)
+                          .map((validation, index) => (
+                            <div
+                              key={index}
+                              className="text-sm text-destructive"
+                            >
+                              <strong>Row {validation.row}:</strong>{" "}
+                              {validation.errors.join(", ")}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Progress Bar */}
+                  {isProcessingBulkUpdate && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Updating results...</span>
+                        <span>{Math.round(bulkUpdateProgress)}%</span>
+                      </div>
+                      <Progress value={bulkUpdateProgress} className="w-full" />
+                    </div>
+                  )}
+
+                  {/* Results */}
+                  {bulkUpdateResult && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="h-5 w-5" />
+                          <span className="font-medium">
+                            {bulkUpdateResult.success} Updated
+                          </span>
+                        </div>
+                        {bulkUpdateResult.failed > 0 && (
+                          <div className="flex items-center gap-2 text-red-600">
+                            <AlertCircle className="h-5 w-5" />
+                            <span className="font-medium">
+                              {bulkUpdateResult.failed} Failed
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {bulkUpdateResult.errors.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-destructive">
+                            Failed Updates:
+                          </h4>
+                          <div className="space-y-1 max-h-32 overflow-auto">
+                            {bulkUpdateResult.errors.map((error, index) => (
+                              <div
+                                key={index}
+                                className="text-sm text-destructive"
+                              >
+                                <strong>
+                                  Row {error.row} ({error.registerNumber}):
+                                </strong>{" "}
+                                {error.error}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsBulkUpdateImportDialogOpen(false);
+                        setBulkUpdateData([]);
+                        setBulkUpdateValidations([]);
+                        setBulkUpdateResult(null);
+                        setBulkUpdateProgress(0);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    {!isProcessingBulkUpdate && !bulkUpdateResult && (
+                      <Button
+                        onClick={handleBulkUpdate}
+                        disabled={
+                          bulkUpdateValidations.filter((v) => v.isValid)
+                            .length === 0
+                        }
+                      >
+                        Update{" "}
+                        {bulkUpdateValidations.filter((v) => v.isValid).length}{" "}
+                        Results
+                      </Button>
+                    )}
+                    {bulkUpdateResult && (
+                      <Button
+                        onClick={() => {
+                          setIsBulkUpdateImportDialogOpen(false);
+                          setBulkUpdateData([]);
+                          setBulkUpdateValidations([]);
+                          setBulkUpdateResult(null);
+                          setBulkUpdateProgress(0);
+                        }}
+                      >
+                        Close
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Dialog */}
+        <Dialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Delete Student Results</DialogTitle>
+              <DialogDescription>
+                Select student results to delete in bulk. This action cannot be
+                undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-900">
+                      Select Student Results to Delete
+                    </p>
+                    <p className="text-sm text-red-700">
+                      Choose the student results you want to delete permanently.
+                      {selectedResultsForDelete.size > 0 &&
+                        ` ${selectedResultsForDelete.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForDelete}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedResults.length === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Select All ({paginatedResults.length})
+                  </Button>
+                  <Button
+                    onClick={clearDeleteSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedResultsForDelete.size === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Results Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Results to Delete
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedResultsForDelete.size > 0 &&
+                              selectedResultsForDelete.size ===
+                                paginatedResults.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedResultsForDelete.size ===
+                                paginatedResults.length
+                              ) {
+                                clearDeleteSelection();
+                              } else {
+                                selectAllForDelete();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Batch</TableHead>
+                        <TableHead>Register No.</TableHead>
+                        <TableHead>Result</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedResults.map((result) => (
+                        <TableRow key={result.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedResultsForDelete.has(result.id!)}
+                              onChange={() => toggleDeleteSelection(result.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {result.student_name}
+                          </TableCell>
+                          <TableCell>{result.course_name}</TableCell>
+                          <TableCell>{result.batch_name}</TableCell>
+                          <TableCell>{result.register_number}</TableCell>
+                          <TableCell>
+                            {result.result ? (
+                              <Badge
+                                variant={
+                                  result.result.toLowerCase() === "pass"
+                                    ? "default"
+                                    : result.result.toLowerCase() ===
+                                      "distinction"
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                              >
+                                {result.result}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                No result
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {result.is_published ? (
+                              <Badge
+                                variant="outline"
+                                className="text-green-600 border-green-600"
+                              >
+                                Published
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-orange-600 border-orange-600"
+                              >
+                                Unpublished
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {isDeletingBulk && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Deleting results...</span>
+                    <span>{Math.round(bulkDeleteProgress)}%</span>
+                  </div>
+                  <Progress value={bulkDeleteProgress} className="w-full" />
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkDeleteResult && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">
+                        {bulkDeleteResult.success} Deleted
+                      </span>
+                    </div>
+                    {bulkDeleteResult.failed > 0 && (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">
+                          {bulkDeleteResult.failed} Failed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkDeleteResult.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-destructive">
+                        Failed Deletions:
+                      </h4>
+                      <div className="space-y-1 max-h-32 overflow-auto">
+                        {bulkDeleteResult.errors.map((error, index) => (
+                          <div key={index} className="text-sm text-destructive">
+                            <strong>{error.registerNumber}:</strong>{" "}
+                            {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkDeleteDialogOpen(false);
+                    setSelectedResultsForDelete(new Set());
+                    setBulkDeleteResult(null);
+                    setBulkDeleteProgress(0);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {!isDeletingBulk && !bulkDeleteResult && (
+                  <Button
+                    onClick={handleBulkDelete}
+                    disabled={selectedResultsForDelete.size === 0}
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedResultsForDelete.size} Results
+                  </Button>
+                )}
+                {bulkDeleteResult && (
+                  <Button
+                    onClick={() => {
+                      setIsBulkDeleteDialogOpen(false);
+                      setSelectedResultsForDelete(new Set());
+                      setBulkDeleteResult(null);
+                      setBulkDeleteProgress(0);
+                    }}
+                  >
+                    Close
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Bulk Creation Dialog */}
         <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
           <DialogContent className="max-w-6xl max-h-[90vh]">
@@ -2093,6 +3490,34 @@ const StudentResults: React.FC = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Bulk Update Section */}
+              {/* <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50 border-blue-200">
+                <div className="flex items-center gap-3">
+                  <Edit className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      Bulk Update Existing Results
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      Export existing results to Excel, edit them, and upload
+                      back for bulk updates.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    setIsBulkDialogOpen(false);
+                    setIsBulkUpdateDialogOpen(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Convert to Excel
+                </Button>
+              </div> */}
 
               {/* File Upload */}
               {bulkData.length === 0 && (

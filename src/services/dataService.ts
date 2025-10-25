@@ -3,11 +3,11 @@
  * Provides real data from backend API
  */
 
-import { Student, DCPStudent } from "../types";
+import { Student } from "../types";
 import api from "./api";
 
 export class DataService {
-  // Get all PDA students (authenticated endpoint)
+  // Get all students (authenticated endpoint)
   static async getStudents(): Promise<Student[]> {
     try {
       const response = await api.get("/api/students/students/");
@@ -18,19 +18,18 @@ export class DataService {
     }
   }
 
-  // Get all DCP students (authenticated endpoint)
-  static async getDCPStudents(): Promise<DCPStudent[]> {
+  // Get students by course type (authenticated endpoint)
+  static async getStudentsByCourseType(courseType: string): Promise<Student[]> {
     try {
-      // For now, we'll use the same endpoint and filter by course type
       const response = await api.get("/api/students/students/");
       return response.data.filter(
         (student: any) =>
-          student.CourseType === "DCP" ||
-          student.Course?.name?.toUpperCase().includes("DCP")
+          student.CourseType === courseType ||
+          student.Course?.name?.toUpperCase().includes(courseType)
       );
     } catch (error) {
-      console.error("Failed to fetch DCP students:", error);
-      throw new Error("Failed to fetch DCP students");
+      console.error(`Failed to fetch ${courseType} students:`, error);
+      throw new Error(`Failed to fetch ${courseType} students`);
     }
   }
 
@@ -55,6 +54,7 @@ export class DataService {
         Photo: studentData.Photo,
         CourseType: studentData.CourseType,
         Subjects: studentData.Subjects || [],
+        PublishedDate: studentData.PublishedDate || null,
       };
 
       return transformedStudent;
@@ -64,49 +64,6 @@ export class DataService {
         return null;
       }
       throw new Error("Failed to fetch student");
-    }
-  }
-
-  // Get DCP student by registration number (for public access)
-  static async getDCPStudentByRegiNo(
-    regiNo: string
-  ): Promise<DCPStudent | null> {
-    try {
-      const response = await api.get(`/api/students/public/search/${regiNo}/`);
-      const studentData = response.data;
-
-      // Check if it's a DCP student
-      if (
-        studentData.CourseType !== "DCP" &&
-        !studentData.Course?.toUpperCase().includes("DCP")
-      ) {
-        return null;
-      }
-
-      // Transform the response to match the expected format
-      const transformedStudent: DCPStudent = {
-        id: studentData.id,
-        Name: studentData.Name,
-        RegiNo: studentData.RegiNo,
-        Course: studentData.Course,
-        Batch: studentData.Batch,
-        CertificateNumber: studentData.CertificateNumber,
-        Result: studentData.Result,
-        Email: studentData.Email,
-        Phone: studentData.Phone,
-        WhatsApp: studentData.WhatsApp,
-        Photo: studentData.Photo,
-        CourseType: studentData.CourseType,
-        Subjects: studentData.Subjects || [],
-      };
-
-      return transformedStudent;
-    } catch (error: any) {
-      console.error("Failed to fetch DCP student by regi no:", error);
-      if (error.response?.status === 404) {
-        return null;
-      }
-      throw new Error("Failed to fetch DCP student");
     }
   }
 

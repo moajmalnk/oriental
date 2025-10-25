@@ -55,4 +55,36 @@ api.interceptors.response.use(
   }
 );
 
+// Announcement API functions
+export const announcementAPI = {
+  // Get all announcements
+  getAnnouncements: () => api.get("/api/users/announcements/"),
+
+  // Get active announcements (public)
+  getActiveAnnouncements: () => api.get("/api/users/announcements/active/"),
+
+  // Get single announcement
+  getAnnouncement: (id: number) => api.get(`/api/users/announcements/${id}/`),
+
+  // Create announcement
+  createAnnouncement: (data: {
+    message: string;
+    is_active: boolean;
+    expires_by: string;
+  }) => api.post("/api/users/announcements/create/", data),
+
+  // Update announcement
+  updateAnnouncement: (
+    id: number,
+    data: {
+      message: string;
+      is_active: boolean;
+      expires_by: string;
+    }
+  ) => api.put(`/api/users/announcements/${id}/`, data),
+
+  // Delete announcement
+  deleteAnnouncement: (id: number) => api.delete(`/api/users/announcements/${id}/`),
+};
+
 export default api;

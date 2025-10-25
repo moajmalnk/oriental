@@ -16,7 +16,7 @@ export interface Student {
   Name: string;
   RegiNo: string;
   Course: string;
-  Batch: string;
+  Batch: Batch;
   CertificateNumber: string;
   Result: string;
   Email: string;
@@ -25,6 +25,7 @@ export interface Student {
   Photo?: string | null;
   CourseType: string;
   Subjects: SubjectMark[];
+  PublishedDate?: string | null;
   // Legacy fields for backward compatibility
   name?: string;
   email?: string;
@@ -40,37 +41,6 @@ export interface StudentFormData {
   phone: string;
   whatsapp_number?: string | null;
   photo?: File | null;
-}
-
-export interface DCPStudent {
-  id?: number;
-  Name: string;
-  RegiNo: string;
-  Course: string;
-  Batch: string;
-  CertificateNumber: string;
-  Result: string;
-  Email: string;
-  Phone: string;
-  WhatsApp?: string | null;
-  Photo?: string | null;
-  CourseType: string;
-  Subjects: SubjectMark[];
-  // Legacy fields for backward compatibility
-  CertificateNo?: string;
-  DCP001_CE?: number | null;
-  DCP001_TE?: number | null;
-  DCP001_Total?: number | string;
-  DCP002_CE?: number | null;
-  DCP002_TE?: number | null;
-  DCP002_Total?: number | string;
-  DCP003_CE?: number | null;
-  DCP003_TE?: number | null;
-  DCP003_Total?: number | string;
-  DCP004_PW?: number | null;
-  DCP004_PE?: number | null;
-  DCP004_Total?: number | string;
-  Total?: number;
 }
 
 export interface ApiResponse<T = any> {
@@ -186,6 +156,7 @@ export interface StudentResult {
   created_at?: string;
   updated_at?: string;
   is_published?: boolean;
+  published_date?: string | null;
 }
 
 export interface StudentResultFormData {
@@ -197,7 +168,25 @@ export interface StudentResultFormData {
   result?: string | null;
   marks: StudentMark[];
   is_published?: boolean;
+  published_date?: string | null;
+}
+
+export interface Announcement {
+  id?: number;
+  message: string;
+  is_active: boolean;
+  expires_by: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: number;
+  created_by_name?: string; // For display purposes
+}
+
+export interface AnnouncementFormData {
+  message: string;
+  is_active: boolean;
+  expires_by: string;
 }
 
 // Legacy types for backward compatibility
-export type { Student as LegacyStudent, DCPStudent as LegacyDCPStudent };
+export type { Student as LegacyStudent };

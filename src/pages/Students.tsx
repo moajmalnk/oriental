@@ -17,6 +17,7 @@ import {
   Phone,
   MessageCircle,
   Image,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -111,6 +126,30 @@ const Students: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [bulkImages, setBulkImages] = useState<File[]>([]);
 
+  // Bulk delete states
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [selectedStudentsForDelete, setSelectedStudentsForDelete] = useState<
+    Set<number>
+  >(new Set());
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<{
+    success: number;
+    failed: number;
+    errors: Array<{ row: number; studentName: string; error: string }>;
+  } | null>(null);
+
+  // Convert to Excel states
+  const [isBulkExportDialogOpen, setIsBulkExportDialogOpen] = useState(false);
+  const [selectedStudentsForExport, setSelectedStudentsForExport] = useState<
+    Set<number>
+  >(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   const { toast } = useToast();
 
   // Fetch students
@@ -166,6 +205,34 @@ const Students: React.FC = () => {
     setSearchQuery("");
     setFilteredStudents(students);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchStudents();
@@ -663,6 +730,177 @@ const Students: React.FC = () => {
     setBulkImages([]);
   };
 
+  // Bulk delete functions
+  const toggleDeleteSelection = (studentId: number) => {
+    setSelectedStudentsForDelete((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForDelete = () => {
+    setSelectedStudentsForDelete(
+      new Set(paginatedStudents.map((student) => student.id!))
+    );
+  };
+
+  const clearDeleteSelection = () => {
+    setSelectedStudentsForDelete(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedStudentsForDelete.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one student to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingBulk(true);
+    setBulkDeleteProgress(0);
+    setBulkDeleteResult(null);
+
+    const result = {
+      success: 0,
+      failed: 0,
+      errors: [] as Array<{
+        row: number;
+        studentName: string;
+        error: string;
+      }>,
+    };
+
+    const selectedStudents = students.filter((student) =>
+      selectedStudentsForDelete.has(student.id!)
+    );
+
+    for (let i = 0; i < selectedStudents.length; i++) {
+      const student = selectedStudents[i];
+      const progress = ((i + 1) / selectedStudents.length) * 100;
+      setBulkDeleteProgress(progress);
+
+      try {
+        await api.delete(`/api/students/students/delete/${student.id}/`);
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: i + 1,
+          studentName: student.name,
+          error: error.response?.data?.message || "Failed to delete student",
+        });
+      }
+    }
+
+    setBulkDeleteResult(result);
+    setIsDeletingBulk(false);
+
+    if (result.success > 0) {
+      toast({
+        title: "Bulk Delete Complete",
+        description: `Successfully deleted ${result.success} students. ${result.failed} failed.`,
+      });
+      fetchStudents();
+      setSelectedStudentsForDelete(new Set());
+    }
+
+    if (result.failed > 0) {
+      toast({
+        title: "Some students failed",
+        description: `${result.failed} students could not be deleted. Check the details below.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Export functions
+  const toggleExportSelection = (studentId: number) => {
+    setSelectedStudentsForExport((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForExport = () => {
+    setSelectedStudentsForExport(
+      new Set(paginatedStudents.map((student) => student.id!))
+    );
+  };
+
+  const clearExportSelection = () => {
+    setSelectedStudentsForExport(new Set());
+  };
+
+  const exportSelectedToExcel = async () => {
+    if (selectedStudentsForExport.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one student to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const selectedStudents = students.filter((student) =>
+        selectedStudentsForExport.has(student.id!)
+      );
+
+      // Create Excel data
+      const excelData = [
+        ["Student Name", "Email", "Phone", "WhatsApp Number", "Created Date"],
+        ...selectedStudents.map((student) => [
+          student.name,
+          student.email,
+          student.phone,
+          student.whatsapp_number || "",
+          student.created_at
+            ? new Date(student.created_at).toLocaleDateString()
+            : "",
+        ]),
+      ];
+
+      // Create and download Excel file
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Students");
+      XLSX.writeFile(
+        wb,
+        `students_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      toast({
+        title: "Export Successful",
+        description: `Exported ${selectedStudentsForExport.size} students to Excel file.`,
+      });
+
+      setIsBulkExportDialogOpen(false);
+      setSelectedStudentsForExport(new Set());
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export students to Excel file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Handle photo upload
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -710,6 +948,22 @@ const Students: React.FC = () => {
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Import</span>
             </Button>
+            <Button
+              onClick={() => setIsBulkExportDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="hidden sm:inline">Convert to Excel</span>
+            </Button>
+            <Button
+              onClick={() => setIsBulkDeleteDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Bulk Delete</span>
+            </Button>
           </div>
         </div>
 
@@ -741,76 +995,163 @@ const Students: React.FC = () => {
           )}
         </div>
 
-        {/* Students Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudents.map((student) => (
-            <Card
-              key={student.id}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    {student.photo ? (
-                      <img
-                        src={student.photo}
-                        alt={student.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-6 w-6 text-muted-foreground" />
+        {/* Students Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Created Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedStudents.map((student) => (
+                <TableRow key={student.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      {student.photo ? (
+                        <img
+                          src={student.photo}
+                          alt={student.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium">{student.name}</div>
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {/* <Mail className="h-4 w-4 text-muted-foreground" /> */}
+                      <span className="text-sm">{student.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{student.phone}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {student.whatsapp_number ? (
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {student.whatsapp_number}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
                     )}
-                    <div>
-                      <CardTitle className="text-xl">{student.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-1 mt-1">
-                        <Mail className="h-3 w-3" />
-                        <span className="text-sm">{student.email}</span>
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDialog(student)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteConfirmation(student)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{student.phone}</span>
-                  </div>
-                  {student.whatsapp_number && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>{student.whatsapp_number}</span>
-                    </div>
-                  )}
-                  {student.created_at && (
-                    <div className="text-xs text-muted-foreground">
-                      Added: {new Date(student.created_at).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {student.created_at
+                        ? new Date(student.created_at).toLocaleDateString()
+                        : "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDialog(student)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => openDeleteConfirmation(student)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredStudents.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, filteredStudents.length)} of{" "}
+              {filteredStudents.length} students
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <span key={page} className="text-muted-foreground">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
         {filteredStudents.length === 0 && (
           <div className="text-center py-12">
@@ -1147,19 +1488,24 @@ const Students: React.FC = () => {
                           Clear All
                         </Button>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-40 overflow-y-auto">
                         {bulkImages.map((image, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={URL.createObjectURL(image)}
-                              alt={image.name}
-                              className="w-full h-20 object-cover rounded border"
-                            />
-                            <div className="absolute top-1 right-1">
+                          <div
+                            key={index}
+                            className="flex flex-col items-center"
+                          >
+                            <div className="relative w-20 h-20">
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={image.name}
+                                width="80px"
+                                height="80px"
+                                className="w-20 h-20 object-cover rounded border"
+                              />
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                className="h-6 w-6 p-0"
+                                className="absolute -top-1 -right-1 h-5 w-5 p-0 z-10"
                                 onClick={() => {
                                   setBulkImages((prev) =>
                                     prev.filter((_, i) => i !== index)
@@ -1169,7 +1515,7 @@ const Students: React.FC = () => {
                                 <X className="h-3 w-3" />
                               </Button>
                             </div>
-                            <p className="text-xs text-center mt-1 truncate">
+                            <p className="text-xs text-center mt-1 truncate w-20">
                               {image.name}
                             </p>
                           </div>
@@ -1445,6 +1791,400 @@ const Students: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Dialog */}
+        <Dialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Delete Students</DialogTitle>
+              <DialogDescription>
+                Select students to delete in bulk. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-900">
+                      Select Students to Delete
+                    </p>
+                    <p className="text-sm text-red-700">
+                      Choose the students you want to delete permanently.
+                      {selectedStudentsForDelete.size > 0 &&
+                        ` ${selectedStudentsForDelete.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForDelete}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedStudents.length === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Select All ({paginatedStudents.length})
+                  </Button>
+                  <Button
+                    onClick={clearDeleteSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedStudentsForDelete.size === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Students Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Students to Delete
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedStudentsForDelete.size > 0 &&
+                              selectedStudentsForDelete.size ===
+                                paginatedStudents.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedStudentsForDelete.size ===
+                                paginatedStudents.length
+                              ) {
+                                clearDeleteSelection();
+                              } else {
+                                selectAllForDelete();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Created Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedStudents.map((student) => (
+                        <TableRow
+                          key={student.id}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudentsForDelete.has(
+                                student.id!
+                              )}
+                              onChange={() =>
+                                toggleDeleteSelection(student.id!)
+                              }
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              {student.photo ? (
+                                <img
+                                  src={student.photo}
+                                  alt={student.name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                              <span>{student.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>
+                            {student.created_at
+                              ? new Date(
+                                  student.created_at
+                                ).toLocaleDateString()
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {isDeletingBulk && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Deleting students...</span>
+                    <span>{Math.round(bulkDeleteProgress)}%</span>
+                  </div>
+                  <Progress value={bulkDeleteProgress} className="w-full" />
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkDeleteResult && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">
+                        {bulkDeleteResult.success} Deleted
+                      </span>
+                    </div>
+                    {bulkDeleteResult.failed > 0 && (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">
+                          {bulkDeleteResult.failed} Failed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkDeleteResult.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-destructive">
+                        Failed Deletions:
+                      </h4>
+                      <div className="space-y-1 max-h-32 overflow-auto">
+                        {bulkDeleteResult.errors.map((error, index) => (
+                          <div key={index} className="text-sm text-destructive">
+                            <strong>{error.studentName}:</strong> {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkDeleteDialogOpen(false);
+                    setSelectedStudentsForDelete(new Set());
+                    setBulkDeleteResult(null);
+                    setBulkDeleteProgress(0);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {!isDeletingBulk && !bulkDeleteResult && (
+                  <Button
+                    onClick={handleBulkDelete}
+                    disabled={selectedStudentsForDelete.size === 0}
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedStudentsForDelete.size} Students
+                  </Button>
+                )}
+                {bulkDeleteResult && (
+                  <Button
+                    onClick={() => {
+                      setIsBulkDeleteDialogOpen(false);
+                      setSelectedStudentsForDelete(new Set());
+                      setBulkDeleteResult(null);
+                      setBulkDeleteProgress(0);
+                    }}
+                  >
+                    Close
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Export Dialog */}
+        <Dialog
+          open={isBulkExportDialogOpen}
+          onOpenChange={setIsBulkExportDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Export Students to Excel</DialogTitle>
+              <DialogDescription>
+                Select students to export to Excel format for external use.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium">Select Students to Export</p>
+                    <p className="text-sm text-muted-foreground">
+                      Choose the students you want to export to Excel.
+                      {selectedStudentsForExport.size > 0 &&
+                        ` ${selectedStudentsForExport.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForExport}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedStudents.length === 0}
+                  >
+                    Select All ({paginatedStudents.length})
+                  </Button>
+                  <Button
+                    onClick={clearExportSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedStudentsForExport.size === 0}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Students Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Students to Export
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedStudentsForExport.size > 0 &&
+                              selectedStudentsForExport.size ===
+                                paginatedStudents.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedStudentsForExport.size ===
+                                paginatedStudents.length
+                              ) {
+                                clearExportSelection();
+                              } else {
+                                selectAllForExport();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>WhatsApp</TableHead>
+                        <TableHead>Created Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedStudents.map((student) => (
+                        <TableRow
+                          key={student.id}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudentsForExport.has(
+                                student.id!
+                              )}
+                              onChange={() =>
+                                toggleExportSelection(student.id!)
+                              }
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              {student.photo ? (
+                                <img
+                                  src={student.photo}
+                                  alt={student.name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                              <span>{student.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>
+                            {student.whatsapp_number || "-"}
+                          </TableCell>
+                          <TableCell>
+                            {student.created_at
+                              ? new Date(
+                                  student.created_at
+                                ).toLocaleDateString()
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkExportDialogOpen(false);
+                    setSelectedStudentsForExport(new Set());
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={exportSelectedToExcel}
+                  disabled={selectedStudentsForExport.size === 0 || isExporting}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel ({selectedStudentsForExport.size})
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

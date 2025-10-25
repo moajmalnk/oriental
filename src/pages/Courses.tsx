@@ -17,6 +17,7 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -117,6 +132,30 @@ const Courses: React.FC = () => {
   const [bulkResult, setBulkResult] = useState<BulkCreationResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
+  // Bulk delete states
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [selectedCoursesForDelete, setSelectedCoursesForDelete] = useState<
+    Set<number>
+  >(new Set());
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<{
+    success: number;
+    failed: number;
+    errors: Array<{ row: number; courseName: string; error: string }>;
+  } | null>(null);
+
+  // Convert to Excel states
+  const [isBulkExportDialogOpen, setIsBulkExportDialogOpen] = useState(false);
+  const [selectedCoursesForExport, setSelectedCoursesForExport] = useState<
+    Set<number>
+  >(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   const { toast } = useToast();
 
   // Fetch courses
@@ -175,6 +214,34 @@ const Courses: React.FC = () => {
     setSearchQuery("");
     setFilteredCourses(courses);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchCourses();
@@ -822,6 +889,181 @@ const Courses: React.FC = () => {
     setBulkProgress(0);
   };
 
+  // Bulk delete functions
+  const toggleDeleteSelection = (courseId: number) => {
+    setSelectedCoursesForDelete((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) {
+        newSet.delete(courseId);
+      } else {
+        newSet.add(courseId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForDelete = () => {
+    setSelectedCoursesForDelete(
+      new Set(paginatedCourses.map((course) => course.id!))
+    );
+  };
+
+  const clearDeleteSelection = () => {
+    setSelectedCoursesForDelete(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCoursesForDelete.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one course to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingBulk(true);
+    setBulkDeleteProgress(0);
+    setBulkDeleteResult(null);
+
+    const result = {
+      success: 0,
+      failed: 0,
+      errors: [] as Array<{
+        row: number;
+        courseName: string;
+        error: string;
+      }>,
+    };
+
+    const selectedCourses = courses.filter((course) =>
+      selectedCoursesForDelete.has(course.id!)
+    );
+
+    for (let i = 0; i < selectedCourses.length; i++) {
+      const course = selectedCourses[i];
+      const progress = ((i + 1) / selectedCourses.length) * 100;
+      setBulkDeleteProgress(progress);
+
+      try {
+        await api.delete(`/api/course/delete/${course.id}/`);
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: i + 1,
+          courseName: course.name,
+          error: error.response?.data?.message || "Failed to delete course",
+        });
+      }
+    }
+
+    setBulkDeleteResult(result);
+    setIsDeletingBulk(false);
+
+    if (result.success > 0) {
+      toast({
+        title: "Bulk Delete Complete",
+        description: `Successfully deleted ${result.success} courses. ${result.failed} failed.`,
+      });
+      fetchCourses();
+      setSelectedCoursesForDelete(new Set());
+    }
+
+    if (result.failed > 0) {
+      toast({
+        title: "Some courses failed",
+        description: `${result.failed} courses could not be deleted. Check the details below.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Export functions
+  const toggleExportSelection = (courseId: number) => {
+    setSelectedCoursesForExport((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) {
+        newSet.delete(courseId);
+      } else {
+        newSet.add(courseId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForExport = () => {
+    setSelectedCoursesForExport(
+      new Set(paginatedCourses.map((course) => course.id!))
+    );
+  };
+
+  const clearExportSelection = () => {
+    setSelectedCoursesForExport(new Set());
+  };
+
+  const exportSelectedToExcel = async () => {
+    if (selectedCoursesForExport.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one course to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const selectedCourses = courses.filter((course) =>
+        selectedCoursesForExport.has(course.id!)
+      );
+
+      // Create Excel data
+      const excelData = [
+        [
+          "Course Name",
+          "Short Code",
+          "Duration (Months)",
+          "Subjects Count",
+          "Subjects",
+        ],
+        ...selectedCourses.map((course) => [
+          course.name,
+          course.short_code,
+          course.duration_months?.toString() || "",
+          course.subjects.length.toString(),
+          course.subjects.map((s) => s.name).join(", "),
+        ]),
+      ];
+
+      // Create and download Excel file
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Courses");
+      XLSX.writeFile(
+        wb,
+        `courses_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      toast({
+        title: "Export Successful",
+        description: `Exported ${selectedCoursesForExport.size} courses to Excel file.`,
+      });
+
+      setIsBulkExportDialogOpen(false);
+      setSelectedCoursesForExport(new Set());
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export courses to Excel file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -861,6 +1103,22 @@ const Courses: React.FC = () => {
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Import</span>
             </Button>
+            <Button
+              onClick={() => setIsBulkExportDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="hidden sm:inline">Convert to Excel</span>
+            </Button>
+            <Button
+              onClick={() => setIsBulkDeleteDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Bulk Delete</span>
+            </Button>
           </div>
         </div>
 
@@ -892,83 +1150,172 @@ const Courses: React.FC = () => {
           )}
         </div>
 
-        {/* Courses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => (
-            <Card key={course.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">{course.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary">{course.short_code}</Badge>
-                      {course.duration_months && (
-                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
+        {/* Courses Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Course Name</TableHead>
+                <TableHead>Short Code</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Subjects</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedCourses.map((course) => (
+                <TableRow key={course.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
+                      <span>{course.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{course.short_code}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {course.duration_months ? (
+                      <div className="flex items-center gap-2">
+                        {/* <Calendar className="h-4 w-4 text-muted-foreground" /> */}
+                        <span className="text-sm">
                           {course.duration_months} months
                         </span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDialog(course)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteDialog(course)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    <span>
-                      {course.subjects.length} subject
-                      {course.subjects.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {course.subjects.slice(0, 3).map((subject, index) => (
-                      <div key={index} className="text-sm">
-                        <div className="font-medium">{subject.name}</div>
-                        <div className="text-muted-foreground">
-                          {getSubjectType(subject) === "theory" && (
-                            <span>
-                              TE: {subject.te_max || 0}, CE:{" "}
-                              {subject.ce_max || 0}
-                            </span>
-                          )}
-                          {getSubjectType(subject) === "practical" && (
-                            <span>
-                              PE: {subject.pe_max || 0}, PW:{" "}
-                              {subject.pw_max || 0}
-                            </span>
-                          )}
-                        </div>
                       </div>
-                    ))}
-                    {course.subjects.length > 3 && (
-                      <div className="text-sm text-muted-foreground">
-                        +{course.subjects.length - 3} more subjects
-                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
                     )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        {/* <BookOpen className="h-3 w-3" /> */}
+                        <span>
+                          {course.subjects.length} subject
+                          {course.subjects.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      {course.subjects.slice(0, 2).map((subject, index) => (
+                        <div
+                          key={index}
+                          className="text-xs text-muted-foreground"
+                        >
+                          <div className="font-medium">{subject.name}</div>
+                          <div>
+                            {getSubjectType(subject) === "theory" && (
+                              <span>
+                                TE: {subject.te_max || 0}, CE:{" "}
+                                {subject.ce_max || 0}
+                              </span>
+                            )}
+                            {getSubjectType(subject) === "practical" && (
+                              <span>
+                                PE: {subject.pe_max || 0}, PW:{" "}
+                                {subject.pw_max || 0}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {course.subjects.length > 2 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{course.subjects.length - 2} more subjects
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDialog(course)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => openDeleteDialog(course)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredCourses.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, filteredCourses.length)} of{" "}
+              {filteredCourses.length} courses
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <span key={page} className="text-muted-foreground">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
         {filteredCourses.length === 0 && (
           <div className="text-center py-12">
@@ -1581,6 +1928,374 @@ const Courses: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Dialog */}
+        <Dialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Delete Courses</DialogTitle>
+              <DialogDescription>
+                Select courses to delete in bulk. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-900">
+                      Select Courses to Delete
+                    </p>
+                    <p className="text-sm text-red-700">
+                      Choose the courses you want to delete permanently.
+                      {selectedCoursesForDelete.size > 0 &&
+                        ` ${selectedCoursesForDelete.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForDelete}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedCourses.length === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Select All ({paginatedCourses.length})
+                  </Button>
+                  <Button
+                    onClick={clearDeleteSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedCoursesForDelete.size === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Courses Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Courses to Delete
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedCoursesForDelete.size > 0 &&
+                              selectedCoursesForDelete.size ===
+                                paginatedCourses.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedCoursesForDelete.size ===
+                                paginatedCourses.length
+                              ) {
+                                clearDeleteSelection();
+                              } else {
+                                selectAllForDelete();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Course Name</TableHead>
+                        <TableHead>Short Code</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Subjects</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedCourses.map((course) => (
+                        <TableRow key={course.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedCoursesForDelete.has(course.id!)}
+                              onChange={() => toggleDeleteSelection(course.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
+                              <span>{course.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {course.short_code}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {course.duration_months
+                              ? `${course.duration_months} months`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {course.subjects.length} subjects
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {isDeletingBulk && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Deleting courses...</span>
+                    <span>{Math.round(bulkDeleteProgress)}%</span>
+                  </div>
+                  <Progress value={bulkDeleteProgress} className="w-full" />
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkDeleteResult && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">
+                        {bulkDeleteResult.success} Deleted
+                      </span>
+                    </div>
+                    {bulkDeleteResult.failed > 0 && (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">
+                          {bulkDeleteResult.failed} Failed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkDeleteResult.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-destructive">
+                        Failed Deletions:
+                      </h4>
+                      <div className="space-y-1 max-h-32 overflow-auto">
+                        {bulkDeleteResult.errors.map((error, index) => (
+                          <div key={index} className="text-sm text-destructive">
+                            <strong>{error.courseName}:</strong> {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkDeleteDialogOpen(false);
+                    setSelectedCoursesForDelete(new Set());
+                    setBulkDeleteResult(null);
+                    setBulkDeleteProgress(0);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {!isDeletingBulk && !bulkDeleteResult && (
+                  <Button
+                    onClick={handleBulkDelete}
+                    disabled={selectedCoursesForDelete.size === 0}
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedCoursesForDelete.size} Courses
+                  </Button>
+                )}
+                {bulkDeleteResult && (
+                  <Button
+                    onClick={() => {
+                      setIsBulkDeleteDialogOpen(false);
+                      setSelectedCoursesForDelete(new Set());
+                      setBulkDeleteResult(null);
+                      setBulkDeleteProgress(0);
+                    }}
+                  >
+                    Close
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Export Dialog */}
+        <Dialog
+          open={isBulkExportDialogOpen}
+          onOpenChange={setIsBulkExportDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Export Courses to Excel</DialogTitle>
+              <DialogDescription>
+                Select courses to export to Excel format for external use.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium">Select Courses to Export</p>
+                    <p className="text-sm text-muted-foreground">
+                      Choose the courses you want to export to Excel.
+                      {selectedCoursesForExport.size > 0 &&
+                        ` ${selectedCoursesForExport.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForExport}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedCourses.length === 0}
+                  >
+                    Select All ({paginatedCourses.length})
+                  </Button>
+                  <Button
+                    onClick={clearExportSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedCoursesForExport.size === 0}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Courses Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Courses to Export
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedCoursesForExport.size > 0 &&
+                              selectedCoursesForExport.size ===
+                                paginatedCourses.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedCoursesForExport.size ===
+                                paginatedCourses.length
+                              ) {
+                                clearExportSelection();
+                              } else {
+                                selectAllForExport();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Course Name</TableHead>
+                        <TableHead>Short Code</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Subjects</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedCourses.map((course) => (
+                        <TableRow key={course.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedCoursesForExport.has(course.id!)}
+                              onChange={() => toggleExportSelection(course.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
+                              <span>{course.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {course.short_code}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {course.duration_months
+                              ? `${course.duration_months} months`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {course.subjects.length} subjects
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkExportDialogOpen(false);
+                    setSelectedCoursesForExport(new Set());
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={exportSelectedToExcel}
+                  disabled={selectedCoursesForExport.size === 0 || isExporting}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel ({selectedCoursesForExport.size})
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

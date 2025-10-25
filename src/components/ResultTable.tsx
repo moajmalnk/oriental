@@ -1,10 +1,10 @@
-import { Student, DCPStudent } from "@/types";
+import { Student } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useResponsive } from "@/hooks/use-responsive";
 
 interface ResultTableProps {
-  student: Student | DCPStudent;
+  student: Student;
 }
 
 export const ResultTable = ({ student }: ResultTableProps) => {
@@ -15,19 +15,23 @@ export const ResultTable = ({ student }: ResultTableProps) => {
     "Subjects" in student && Array.isArray(student.Subjects);
 
   const getResultBadgeVariant = (result: string) => {
-    switch (result) {
-      case "PASS" || "Pass" || "pass" :
+    // Convert to lowercase for consistent comparison
+    const normalizedResult = result?.toLowerCase();
+
+    switch (normalizedResult) {
+      case "pass":
         return "default";
-      case "FAIL" || "Fail" || "fail":
+      case "fail":
         return "destructive";
-      case "AB":
-        return "secondary";
-      case "RW":
+      case "ab":
+        return "destructive";
+      case "rw":
         return "outline";
-      case "ABSENT":
+      case "absent":
         return "destructive";
       default:
-        return "secondary";
+        // For any result that is not "pass", show as destructive (red)
+        return "destructive";
     }
   };
 
@@ -528,14 +532,12 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">
-                      Certificate Number
+                      Register Number
                     </p>
                     <p className="text-lg font-semibold text-foreground">
-                      {student.CertificateNumber}
+                      {student.RegiNo}
                     </p>
                   </div>
-                 
-                 
                 </div>
               </div>
             </div>

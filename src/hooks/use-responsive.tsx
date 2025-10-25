@@ -18,7 +18,7 @@ export const useResponsive = (): ResponsiveState => {
     isLargeDesktop: false,
     width: 0,
     height: 0,
-    breakpoint: "md"
+    breakpoint: "md",
   });
 
   useEffect(() => {
@@ -28,14 +28,14 @@ export const useResponsive = (): ResponsiveState => {
 
       const isMobile = width < 768;
       const isTablet = width >= 768 && width < 1024;
-      const isDesktop = width >= 1024 && width < 1536;
-      const isLargeDesktop = width >= 1536;
+      const isDesktop = width >= 1024;
+      const isLargeDesktop = width >= 1920;
 
       let breakpoint: "sm" | "md" | "lg" | "xl" | "2xl" = "md";
       if (width < 640) breakpoint = "sm";
       else if (width < 768) breakpoint = "md";
       else if (width < 1024) breakpoint = "lg";
-      else if (width < 1536) breakpoint = "xl";
+      else if (width < 1920) breakpoint = "xl";
       else breakpoint = "2xl";
 
       setState({
@@ -45,7 +45,7 @@ export const useResponsive = (): ResponsiveState => {
         isLargeDesktop,
         width,
         height,
-        breakpoint
+        breakpoint,
       });
     };
 

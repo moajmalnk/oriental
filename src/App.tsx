@@ -13,6 +13,7 @@ import Courses from "./pages/Courses";
 import Batches from "./pages/Batches";
 import Students from "./pages/Students";
 import StudentResults from "./pages/StudentResults";
+import Announcements from "./pages/Announcements";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <StudentResults />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/announcements"
+              element={
+                <ProtectedRoute>
+                  <Announcements />
                 </ProtectedRoute>
               }
             />

@@ -10,9 +10,10 @@ import {
   ProfessionalLoader,
   AcademicLoader,
 } from "@/components/ProfessionalLoader";
-import { BulkCertificateDialog } from "@/components/BulkCertificateDialog";
+import { EnhancedBulkCertificateDialog } from "@/components/EnhancedBulkCertificateDialog";
+import AnnouncementSlideshow from "@/components/AnnouncementSlideshow";
 import { Layout } from "@/components/Layout";
-import { type Student, type DCPStudent } from "@/types";
+import { type Student } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,16 +31,14 @@ import {
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const [searchResult, setSearchResult] = useState<Student | DCPStudent | null>(
-    null
-  );
+  const [searchResult, setSearchResult] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isResultAvailable, setIsResultAvailable] = useState(false);
   const [timeUntilAvailable, setTimeUntilAvailable] = useState<string>("");
-  const [pdaDialogOpen, setPdaDialogOpen] = useState(false);
-  const [dcpDialogOpen, setDcpDialogOpen] = useState(false);
+  const [bulkCertificateDialogOpen, setBulkCertificateDialogOpen] =
+    useState(false);
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
   const { logout, user, isAuthenticated } = useAuth();
@@ -110,12 +109,11 @@ const Index = () => {
     setHasSearched(false);
 
     try {
-      // Search in both PDA and DCP students data using API
-      const pdaStudent = await DataService.getStudentByRegiNo(searchTerm);
-      const dcpStudent = await DataService.getDCPStudentByRegiNo(searchTerm);
+      // Search for student using the unified API
+      const student = await DataService.getStudentByRegiNo(searchTerm);
 
       // Gate only DCP results by time; PDA always allowed
-      if (dcpStudent && !isResultAvailable) {
+      if (student && student.CourseType === "DCP" && !isResultAvailable) {
         setIsLoading(false);
         toast({
           title: "DCP Results Not Available Yet",
@@ -126,15 +124,13 @@ const Index = () => {
         return;
       }
 
-      const found = pdaStudent || dcpStudent;
-
-      setSearchResult(found || null);
+      setSearchResult(student || null);
       setHasSearched(true);
 
-      if (found) {
+      if (student) {
         toast({
           title: "Result Found",
-          description: `Record found for ${found.Name}`,
+          description: `Record found for ${student.Name}`,
         });
       } else {
         toast({
@@ -171,10 +167,7 @@ const Index = () => {
 
   if (isPageLoading) {
     return (
-      <Layout
-        onPdaClick={() => setPdaDialogOpen(true)}
-        onDcpClick={() => setDcpDialogOpen(true)}
-      >
+      <Layout onBulkCertificateClick={() => setBulkCertificateDialogOpen(true)}>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
           <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
             <SkeletonHeader />
@@ -185,10 +178,7 @@ const Index = () => {
   }
 
   return (
-    <Layout
-      onPdaClick={() => setPdaDialogOpen(true)}
-      onDcpClick={() => setDcpDialogOpen(true)}
-    >
+    <Layout onBulkCertificateClick={() => setBulkCertificateDialogOpen(true)}>
       {/* Professional Header */}
       <header
         className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden"
@@ -249,9 +239,7 @@ const Index = () => {
                       className="h-5 w-5 text-emerald-400"
                       aria-hidden="true"
                     />
-                    <span className="text-base font-semibold text-emerald-100 tracking-wide">
-                      DCP Results Now Available
-                    </span>
+                    <AnnouncementSlideshow />
                   </div>
                   <div
                     className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
@@ -293,7 +281,12 @@ const Index = () => {
           <section className="text-center" aria-label="Student Result Search">
             <SearchBox onSearch={handleSearch} isLoading={isLoading} />
 
-            {/* DCP Result Availability Notice */}
+            {/* Announcements Slideshow */}
+            {/* <div className="mt-8 max-w-3xl mx-auto">
+              <AnnouncementSlideshow />
+            </div> */}
+
+            {/* DCP Result Availability Notice - Only show if no announcements */}
             {!isResultAvailable && (
               <div className="mt-8 max-w-3xl mx-auto">
                 <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-elegant backdrop-blur-sm">
@@ -378,17 +371,81 @@ const Index = () => {
                   <ResultTable student={searchResult} />
                   <PrintPDFButtons student={searchResult} />
 
-                  {/* Certificate Preview - Only for authenticated users */}
-                  {isAuthenticated && (
-                    <div className="mt-12">
-                      <h2 className="text-2xl font-bold text-center mb-6 text-foreground">
-                        Certificate Preview
-                      </h2>
-                      <div className="flex justify-center">
-                        <Certificate student={searchResult} />
+                  {/* Certificate Preview - Only for authenticated users and passed students */}
+                  {isAuthenticated &&
+                    searchResult &&
+                    (searchResult.Result === "Pass" ||
+                      searchResult.Result === "PASS" ||
+                      searchResult.Result === "pass") && (
+                      <>
+                        {/* Desktop Certificate Preview */}
+                        {isDesktop && (
+                          <div className="mt-12">
+                            <h2 className="text-2xl font-bold text-center mb-6 text-foreground">
+                              Certificate Preview
+                            </h2>
+                            <div className="flex justify-center">
+                              <Certificate student={searchResult} />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Non-desktop message */}
+                        {!isDesktop && (
+                          <div className="mt-12">
+                            <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-elegant backdrop-blur-sm max-w-2xl mx-auto">
+                              <div className="text-center">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                  <Award className="h-8 w-8 text-blue-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-foreground mb-3">
+                                  Certificate Preview Available
+                                </h3>
+                                <p className="text-muted-foreground leading-relaxed mb-4">
+                                  To view the certificate preview and generate
+                                  PDF certificates, please switch to desktop
+                                  view (full screen) for the best experience and
+                                  proper PDF generation.
+                                </p>
+                                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span>
+                                    Desktop view recommended for certificate
+                                    operations
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                  {/* Message for failed students */}
+                  {isAuthenticated &&
+                    searchResult &&
+                    searchResult.Result !== "Pass" &&
+                    searchResult.Result !== "PASS" &&
+                    searchResult.Result !== "pass" && (
+                      <div className="mt-12">
+                        <div className="bg-gradient-card rounded-2xl p-6 sm:p-8 border border-border/50 shadow-elegant backdrop-blur-sm max-w-2xl mx-auto">
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <AlertCircle className="h-8 w-8 text-amber-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground mb-3">
+                              Certificate Not Available
+                            </h3>
+                            <p className="text-muted-foreground leading-relaxed">
+                              Certificates are only issued to students who have
+                              successfully passed their examinations. You can
+                              still download the mark list to view the detailed
+                              results.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               ) : (
                 <ErrorMessage />
@@ -504,20 +561,12 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Bulk Certificate Dialogs - Only for authenticated users */}
+      {/* Enhanced Bulk Certificate Dialog - Only for authenticated users */}
       {isAuthenticated && (
-        <>
-          <BulkCertificateDialog
-            open={pdaDialogOpen}
-            onOpenChange={setPdaDialogOpen}
-            courseType="PDA"
-          />
-          <BulkCertificateDialog
-            open={dcpDialogOpen}
-            onOpenChange={setDcpDialogOpen}
-            courseType="DCP"
-          />
-        </>
+        <EnhancedBulkCertificateDialog
+          open={bulkCertificateDialogOpen}
+          onOpenChange={setBulkCertificateDialogOpen}
+        />
       )}
 
       {/* Professional Footer */}

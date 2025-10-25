@@ -13,15 +13,15 @@ import {
   Menu,
   X,
   Calendar,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface NavbarProps {
-  onPdaClick?: () => void;
-  onDcpClick?: () => void;
+  onBulkCertificateClick?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onBulkCertificateClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
@@ -104,6 +104,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
       icon: Award,
       show: isAuthenticated,
     },
+    {
+      path: "/announcements",
+      label: "Announcements",
+      icon: MessageSquare,
+      show: isAuthenticated,
+    },
   ];
 
   const handleMobileMenuToggle = () => {
@@ -119,10 +125,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
     <>
       {/* Main Navbar */}
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="container mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14">
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-1">
+            <div className="hidden lg:flex items-center space-x-0.5">
               {navItems.map((item) => {
                 if (!item.show) return null;
                 const Icon = item.icon;
@@ -131,13 +137,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
                     key={item.path}
                     variant={isActive(item.path) ? "default" : "ghost"}
                     onClick={() => navigate(item.path)}
-                    className={`gap-2 ${
+                    size="sm"
+                    className={`gap-1.5 px-2 py-1.5 text-xs ${
                       isActive(item.path)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-3.5 w-3.5" />
                     {item.label}
                   </Button>
                 );
@@ -145,44 +152,35 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
             </div>
 
             {/* Right side - Actions and User Menu */}
-            <div className="flex items-center space-x-2">
-              {/* PDA/DCP buttons - only on home page and desktop */}
+            <div className="flex items-center space-x-1">
+              {/* Bulk Certificate button - only on home page and desktop */}
               {isAuthenticated && location.pathname === "/" && (
-                <div className="hidden lg:flex items-center space-x-1">
+                <div className="hidden lg:flex items-center">
                   <Button
-                    onClick={onPdaClick}
+                    onClick={onBulkCertificateClick}
                     variant="outline"
                     size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
+                    className="gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    <Award className="h-4 w-4" />
-                    PDA
-                  </Button>
-                  <Button
-                    onClick={onDcpClick}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <Award className="h-4 w-4" />
-                    DCP
+                    <Award className="h-3.5 w-3.5" />
+                    Bulk Certificates
                   </Button>
                 </div>
               )}
 
               {/* User info and logout - desktop only */}
               {isAuthenticated ? (
-                <div className="hidden lg:flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">
+                <div className="hidden lg:flex items-center space-x-1">
+                  <span className="text-xs text-muted-foreground">
                     {user?.username}
                   </span>
                   <Button
                     onClick={handleLogout}
                     variant="ghost"
                     size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
+                    className="gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-3.5 w-3.5" />
                     Logout
                   </Button>
                 </div>
@@ -191,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
                   onClick={() => navigate("/login")}
                   variant="ghost"
                   size="sm"
-                  className="hidden lg:flex gap-2 text-muted-foreground hover:text-foreground"
+                  className="hidden lg:flex gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Login
                 </Button>
@@ -205,13 +203,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
                 variant="ghost"
                 size="sm"
                 onClick={handleMobileMenuToggle}
-                className="lg:hidden"
+                className="lg:hidden p-1.5"
                 aria-label="Toggle navigation menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 ) : (
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-4 w-4" />
                 )}
               </Button>
             </div>
@@ -238,23 +236,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border/40">
-            <h2 className="text-base font-semibold text-foreground">
+          <div className="flex items-center justify-between p-3 border-b border-border/40">
+            <h2 className="text-sm font-semibold text-foreground">
               Navigation
             </h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+              className="text-muted-foreground hover:text-foreground h-7 w-7 p-0"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
 
           {/* Navigation Items */}
-          <ScrollbarVertical className="flex-1 p-4">
-            <div className="space-y-1">
+          <ScrollbarVertical className="flex-1 p-3">
+            <div className="space-y-0.5">
               {navItems.map((item) => {
                 if (!item.show) return null;
                 const Icon = item.icon;
@@ -263,47 +261,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
                     key={item.path}
                     variant={isActive(item.path) ? "default" : "ghost"}
                     onClick={() => handleNavClick(item.path)}
-                    className={`w-full justify-start gap-2 h-10 ${
+                    size="sm"
+                    className={`w-full justify-start gap-1.5 h-8 px-2 ${
                       isActive(item.path)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-sm">{item.label}</span>
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="text-xs">{item.label}</span>
                   </Button>
                 );
               })}
             </div>
 
-            {/* PDA/DCP buttons for mobile/tablet */}
+            {/* Bulk Certificate button for mobile/tablet */}
             {isAuthenticated && location.pathname === "/" && (
-              <div className="mt-6 space-y-2">
+              <div className="mt-4 space-y-1">
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Quick Actions
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Button
                     onClick={() => {
-                      onPdaClick?.();
+                      onBulkCertificateClick?.();
                       setIsMobileMenuOpen(false);
                     }}
                     variant="outline"
-                    className="w-full justify-start gap-2 h-9"
+                    size="sm"
+                    className="w-full justify-start gap-1.5 h-8 px-2"
                   >
-                    <Award className="h-4 w-4" />
-                    <span className="text-sm">PDA</span>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      onDcpClick?.();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    variant="outline"
-                    className="w-full justify-start gap-2 h-9"
-                  >
-                    <Award className="h-4 w-4" />
-                    <span className="text-sm">DCP</span>
+                    <Award className="h-3.5 w-3.5" />
+                    <span className="text-xs">Bulk Certificates</span>
                   </Button>
                 </div>
               </div>
@@ -311,22 +300,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
           </ScrollbarVertical>
 
           {/* Sidebar Footer */}
-          <div className="border-t border-border/40 p-4">
+          <div className="border-t border-border/40 p-3">
             {isAuthenticated ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">
                   <div className="font-medium text-foreground">
                     Logged in as:
                   </div>
-                  <div className="text-sm">{user?.username}</div>
+                  <div className="text-xs">{user?.username}</div>
                 </div>
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
-                  className="w-full justify-start gap-2 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  size="sm"
+                  className="w-full justify-start gap-1.5 h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span className="text-sm">Logout</span>
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="text-xs">Logout</span>
                 </Button>
               </div>
             ) : (
@@ -335,9 +325,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPdaClick, onDcpClick }) => {
                   navigate("/login");
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full gap-2 h-9"
+                size="sm"
+                className="w-full gap-1.5 h-8 px-2"
               >
-                <span className="text-sm">Login</span>
+                <span className="text-xs">Login</span>
               </Button>
             )}
           </div>

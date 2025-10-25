@@ -16,6 +16,7 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -116,6 +131,30 @@ const Batches: React.FC = () => {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkResult, setBulkResult] = useState<BulkCreationResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+
+  // Bulk delete states
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [selectedBatchesForDelete, setSelectedBatchesForDelete] = useState<
+    Set<number>
+  >(new Set());
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const [bulkDeleteResult, setBulkDeleteResult] = useState<{
+    success: number;
+    failed: number;
+    errors: Array<{ row: number; batchName: string; error: string }>;
+  } | null>(null);
+
+  // Convert to Excel states
+  const [isBulkExportDialogOpen, setIsBulkExportDialogOpen] = useState(false);
+  const [selectedBatchesForExport, setSelectedBatchesForExport] = useState<
+    Set<number>
+  >(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const { toast } = useToast();
 
@@ -187,6 +226,34 @@ const Batches: React.FC = () => {
     setSearchQuery("");
     setFilteredBatches(batches);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredBatches.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedBatches = filteredBatches.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchBatches();
@@ -635,6 +702,177 @@ const Batches: React.FC = () => {
     setBulkProgress(0);
   };
 
+  // Bulk delete functions
+  const toggleDeleteSelection = (batchId: number) => {
+    setSelectedBatchesForDelete((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(batchId)) {
+        newSet.delete(batchId);
+      } else {
+        newSet.add(batchId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForDelete = () => {
+    setSelectedBatchesForDelete(
+      new Set(paginatedBatches.map((batch) => batch.id!))
+    );
+  };
+
+  const clearDeleteSelection = () => {
+    setSelectedBatchesForDelete(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedBatchesForDelete.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one batch to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingBulk(true);
+    setBulkDeleteProgress(0);
+    setBulkDeleteResult(null);
+
+    const result = {
+      success: 0,
+      failed: 0,
+      errors: [] as Array<{
+        row: number;
+        batchName: string;
+        error: string;
+      }>,
+    };
+
+    const selectedBatches = batches.filter((batch) =>
+      selectedBatchesForDelete.has(batch.id!)
+    );
+
+    for (let i = 0; i < selectedBatches.length; i++) {
+      const batch = selectedBatches[i];
+      const progress = ((i + 1) / selectedBatches.length) * 100;
+      setBulkDeleteProgress(progress);
+
+      try {
+        await api.delete(`/api/students/batches/delete/${batch.id}/`);
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          row: i + 1,
+          batchName: batch.name,
+          error: error.response?.data?.message || "Failed to delete batch",
+        });
+      }
+    }
+
+    setBulkDeleteResult(result);
+    setIsDeletingBulk(false);
+
+    if (result.success > 0) {
+      toast({
+        title: "Bulk Delete Complete",
+        description: `Successfully deleted ${result.success} batches. ${result.failed} failed.`,
+      });
+      fetchBatches();
+      setSelectedBatchesForDelete(new Set());
+    }
+
+    if (result.failed > 0) {
+      toast({
+        title: "Some batches failed",
+        description: `${result.failed} batches could not be deleted. Check the details below.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Export functions
+  const toggleExportSelection = (batchId: number) => {
+    setSelectedBatchesForExport((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(batchId)) {
+        newSet.delete(batchId);
+      } else {
+        newSet.add(batchId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllForExport = () => {
+    setSelectedBatchesForExport(
+      new Set(paginatedBatches.map((batch) => batch.id!))
+    );
+  };
+
+  const clearExportSelection = () => {
+    setSelectedBatchesForExport(new Set());
+  };
+
+  const exportSelectedToExcel = async () => {
+    if (selectedBatchesForExport.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one batch to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const selectedBatches = batches.filter((batch) =>
+        selectedBatchesForExport.has(batch.id!)
+      );
+
+      // Create Excel data
+      const excelData = [
+        ["Batch Name", "Start Date", "Duration (Months)", "Course", "End Date"],
+        ...selectedBatches.map((batch) => [
+          batch.name,
+          new Date(batch.start_date).toLocaleDateString(),
+          batch.duration_months?.toString() || "",
+          batch.course_name,
+          batch.duration_months
+            ? getEndDate(batch.start_date, batch.duration_months)
+            : "",
+        ]),
+      ];
+
+      // Create and download Excel file
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Batches");
+      XLSX.writeFile(
+        wb,
+        `batches_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      toast({
+        title: "Export Successful",
+        description: `Exported ${selectedBatchesForExport.size} batches to Excel file.`,
+      });
+
+      setIsBulkExportDialogOpen(false);
+      setSelectedBatchesForExport(new Set());
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export batches to Excel file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -696,6 +934,22 @@ const Batches: React.FC = () => {
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Import</span>
             </Button>
+            <Button
+              onClick={() => setIsBulkExportDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="hidden sm:inline">Convert to Excel</span>
+            </Button>
+            <Button
+              onClick={() => setIsBulkDeleteDialogOpen(true)}
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Bulk Delete</span>
+            </Button>
           </div>
         </div>
 
@@ -727,67 +981,155 @@ const Batches: React.FC = () => {
           )}
         </div>
 
-        {/* Batches Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBatches.map((batch) => (
-            <Card key={batch.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">{batch.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
+        {/* Batches Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Batch Name</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedBatches.map((batch) => (
+                <TableRow key={batch.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
+                      <span>{batch.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
                       <Badge variant="secondary">{batch.course_name}</Badge>
-                      {batch.duration_months && (
-                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {batch.duration_months} months
-                        </span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDialog(batch)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteConfirmation(batch)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>Started: {formatDate(batch.start_date)}</span>
-                  </div>
-                  {batch.duration_months && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        Ends:{" "}
-                        {getEndDate(batch.start_date, batch.duration_months)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {/* <Calendar className="h-4 w-4 text-muted-foreground" /> */}
+                      <span className="text-sm">
+                        {formatDate(batch.start_date)}
                       </span>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    <span>Course: {batch.course_name}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                  <TableCell>
+                    {batch.duration_months ? (
+                      <div className="flex items-center gap-2">
+                        {/* <Clock className="h-4 w-4 text-muted-foreground" /> */}
+                        <span className="text-sm">
+                          {batch.duration_months} months
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {batch.duration_months ? (
+                      <span className="text-sm text-muted-foreground">
+                        {getEndDate(batch.start_date, batch.duration_months)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDialog(batch)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => openDeleteConfirmation(batch)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredBatches.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, filteredBatches.length)} of{" "}
+              {filteredBatches.length} batches
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <span key={page} className="text-muted-foreground">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
         {filteredBatches.length === 0 && (
           <div className="text-center py-12">
@@ -1259,6 +1601,375 @@ const Batches: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Dialog */}
+        <Dialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Bulk Delete Batches</DialogTitle>
+              <DialogDescription>
+                Select batches to delete in bulk. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-900">
+                      Select Batches to Delete
+                    </p>
+                    <p className="text-sm text-red-700">
+                      Choose the batches you want to delete permanently.
+                      {selectedBatchesForDelete.size > 0 &&
+                        ` ${selectedBatchesForDelete.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForDelete}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedBatches.length === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Select All ({paginatedBatches.length})
+                  </Button>
+                  <Button
+                    onClick={clearDeleteSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedBatchesForDelete.size === 0}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Batches Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Batches to Delete
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedBatchesForDelete.size > 0 &&
+                              selectedBatchesForDelete.size ===
+                                paginatedBatches.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedBatchesForDelete.size ===
+                                paginatedBatches.length
+                              ) {
+                                clearDeleteSelection();
+                              } else {
+                                selectAllForDelete();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Batch Name</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>Duration</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedBatches.map((batch) => (
+                        <TableRow key={batch.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedBatchesForDelete.has(batch.id!)}
+                              onChange={() => toggleDeleteSelection(batch.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span>{batch.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {batch.course_name}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDate(batch.start_date)}</TableCell>
+                          <TableCell>
+                            {batch.duration_months
+                              ? `${batch.duration_months} months`
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {isDeletingBulk && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Deleting batches...</span>
+                    <span>{Math.round(bulkDeleteProgress)}%</span>
+                  </div>
+                  <Progress value={bulkDeleteProgress} className="w-full" />
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkDeleteResult && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">
+                        {bulkDeleteResult.success} Deleted
+                      </span>
+                    </div>
+                    {bulkDeleteResult.failed > 0 && (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">
+                          {bulkDeleteResult.failed} Failed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkDeleteResult.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-destructive">
+                        Failed Deletions:
+                      </h4>
+                      <div className="space-y-1 max-h-32 overflow-auto">
+                        {bulkDeleteResult.errors.map((error, index) => (
+                          <div key={index} className="text-sm text-destructive">
+                            <strong>{error.batchName}:</strong> {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkDeleteDialogOpen(false);
+                    setSelectedBatchesForDelete(new Set());
+                    setBulkDeleteResult(null);
+                    setBulkDeleteProgress(0);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {!isDeletingBulk && !bulkDeleteResult && (
+                  <Button
+                    onClick={handleBulkDelete}
+                    disabled={selectedBatchesForDelete.size === 0}
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedBatchesForDelete.size} Batches
+                  </Button>
+                )}
+                {bulkDeleteResult && (
+                  <Button
+                    onClick={() => {
+                      setIsBulkDeleteDialogOpen(false);
+                      setSelectedBatchesForDelete(new Set());
+                      setBulkDeleteResult(null);
+                      setBulkDeleteProgress(0);
+                    }}
+                  >
+                    Close
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Export Dialog */}
+        <Dialog
+          open={isBulkExportDialogOpen}
+          onOpenChange={setIsBulkExportDialogOpen}
+        >
+          <DialogContent className="max-w-6xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Export Batches to Excel</DialogTitle>
+              <DialogDescription>
+                Select batches to export to Excel format for external use.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium">Select Batches to Export</p>
+                    <p className="text-sm text-muted-foreground">
+                      Choose the batches you want to export to Excel.
+                      {selectedBatchesForExport.size > 0 &&
+                        ` ${selectedBatchesForExport.size} selected`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={selectAllForExport}
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedBatches.length === 0}
+                  >
+                    Select All ({paginatedBatches.length})
+                  </Button>
+                  <Button
+                    onClick={clearExportSelection}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedBatchesForExport.size === 0}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+
+              {/* Batches Selection Table */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Select Batches to Export
+                </h3>
+                <div className="max-h-60 overflow-auto border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedBatchesForExport.size > 0 &&
+                              selectedBatchesForExport.size ===
+                                paginatedBatches.length
+                            }
+                            onChange={() => {
+                              if (
+                                selectedBatchesForExport.size ===
+                                paginatedBatches.length
+                              ) {
+                                clearExportSelection();
+                              } else {
+                                selectAllForExport();
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </TableHead>
+                        <TableHead>Batch Name</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>End Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedBatches.map((batch) => (
+                        <TableRow key={batch.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedBatchesForExport.has(batch.id!)}
+                              onChange={() => toggleExportSelection(batch.id!)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span>{batch.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {batch.course_name}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDate(batch.start_date)}</TableCell>
+                          <TableCell>
+                            {batch.duration_months
+                              ? `${batch.duration_months} months`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {batch.duration_months
+                              ? getEndDate(
+                                  batch.start_date,
+                                  batch.duration_months
+                                )
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsBulkExportDialogOpen(false);
+                    setSelectedBatchesForExport(new Set());
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={exportSelectedToExcel}
+                  disabled={selectedBatchesForExport.size === 0 || isExporting}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel ({selectedBatchesForExport.size})
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

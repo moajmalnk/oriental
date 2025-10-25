@@ -3,18 +3,16 @@ import { Navbar } from "./Navbar";
 
 interface LayoutProps {
   children: React.ReactNode;
-  onPdaClick?: () => void;
-  onDcpClick?: () => void;
+  onBulkCertificateClick?: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
   children,
-  onPdaClick,
-  onDcpClick,
+  onBulkCertificateClick,
 }) => {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar onPdaClick={onPdaClick} onDcpClick={onDcpClick} />
+      <Navbar onBulkCertificateClick={onBulkCertificateClick} />
       <main className="flex-1">{children}</main>
     </div>
   );

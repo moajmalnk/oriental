@@ -52,7 +52,7 @@ export const SearchBox = ({ onSearch, isLoading = false }: SearchBoxProps) => {
                 placeholder={
                   isMobile
                     ? "e.g., PDA2024065 or CERT123"
-                    : "Enter register number or certificate number"
+                    : "Enter register number"
                 }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
