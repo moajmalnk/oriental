@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Admin } from '../types';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { Admin } from "../types";
+import api from "../services/api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../services/constants";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,14 +24,20 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Mock admin user for local development
-const MOCK_ADMIN: Admin = {
-  id: 1,
-  username: 'info@kugoriental.com',
-  email: 'info@kugoriental.com',
-  full_name: 'KUGOriental',
-  role: 'super_admin',
-  created_at: new Date().toISOString(),
+// Helper function to map backend role to frontend role
+const mapRole = (
+  backendRole: string
+): "super_admin" | "admin" | "moderator" => {
+  switch (backendRole) {
+    case "superadmin":
+      return "super_admin";
+    case "admin":
+      return "admin";
+    case "moderator":
+      return "moderator";
+    default:
+      return "admin";
+  }
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -34,11 +48,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check authentication status on app load
   useEffect(() => {
-    const checkAuthStatus = () => {
-      const token = localStorage.getItem('oriental_auth_token');
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem(ACCESS_TOKEN);
       if (token) {
-        setUser(MOCK_ADMIN);
-        setIsAuthenticated(true);
+        try {
+          // Verify token by fetching user profile
+          const response = await api.get("/api/users/profile/");
+          const userData = response.data;
+
+          setUser({
+            id: userData.id,
+            username: userData.username,
+            email: userData.email,
+            full_name: userData.full_name,
+            role: mapRole(userData.role),
+            created_at: userData.created_at,
+          });
+          setIsAuthenticated(true);
+        } catch (error) {
+          // Token is invalid, remove it
+          localStorage.removeItem(ACCESS_TOKEN);
+          localStorage.removeItem(REFRESH_TOKEN);
+          setIsAuthenticated(false);
+          setUser(null);
+        }
       }
       setIsLoading(false);
     };
@@ -46,24 +79,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Simple mock authentication - accept any username/password
-      if (username && password) {
-        localStorage.setItem('oriental_auth_token', 'mock_token');
-        setUser(MOCK_ADMIN);
-        setIsAuthenticated(true);
-        return true;
-      } else {
-        setError('Username and password are required');
-        return false;
-      }
+
+      // Authenticate with backend
+      const response = await api.post("/api/token/", {
+        username,
+        password,
+      });
+
+      const { access, refresh } = response.data;
+
+      // Store tokens
+      localStorage.setItem(ACCESS_TOKEN, access);
+      localStorage.setItem(REFRESH_TOKEN, refresh);
+
+      // Fetch user profile
+      const profileResponse = await api.get("/api/users/profile/");
+      const userData = profileResponse.data;
+
+      setUser({
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        full_name: userData.full_name,
+        role: mapRole(userData.role),
+        created_at: userData.created_at,
+      });
+      setIsAuthenticated(true);
+      return true;
     } catch (error: any) {
-      console.error('Login failed:', error);
-      setError(error.message || 'Login failed');
+      console.error("Login failed:", error);
+      setError(error.response?.data?.detail || "Login failed");
       return false;
     } finally {
       setIsLoading(false);
@@ -71,7 +123,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('oriental_auth_token');
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
     setIsAuthenticated(false);
     setUser(null);
     setError(null);
@@ -86,17 +139,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

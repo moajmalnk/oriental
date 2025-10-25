@@ -1,73 +1,107 @@
 /**
  * Data Service for Oriental College
- * Provides local data without backend dependencies
+ * Provides real data from backend API
  */
 
-import { Student, DCPStudent } from '../types';
-import { studentsData, dcpStudentsData } from '../data/studentsData';
+import { Student } from "../types";
+import api from "./api";
 
 export class DataService {
-  // Get all PDA students
+  // Get all students (authenticated endpoint)
   static async getStudents(): Promise<Student[]> {
     try {
-      return studentsData;
+      const response = await api.get("/api/students/students/");
+      return response.data;
     } catch (error) {
-      console.error('Failed to fetch students:', error);
-      throw new Error('Failed to fetch students');
+      console.error("Failed to fetch students:", error);
+      throw new Error("Failed to fetch students");
     }
   }
 
-  // Get all DCP students
-  static async getDCPStudents(): Promise<DCPStudent[]> {
+  // Get students by course type (authenticated endpoint)
+  static async getStudentsByCourseType(courseType: string): Promise<Student[]> {
     try {
-      return dcpStudentsData;
+      const response = await api.get("/api/students/students/");
+      return response.data.filter(
+        (student: any) =>
+          student.CourseType === courseType ||
+          student.Course?.name?.toUpperCase().includes(courseType)
+      );
     } catch (error) {
-      console.error('Failed to fetch DCP students:', error);
-      throw new Error('Failed to fetch DCP students');
+      console.error(`Failed to fetch ${courseType} students:`, error);
+      throw new Error(`Failed to fetch ${courseType} students`);
     }
   }
 
   // Get student by registration number (for public access)
   static async getStudentByRegiNo(regiNo: string): Promise<Student | null> {
     try {
-      const student = studentsData.find(s => s.RegiNo === regiNo);
-      return student || null;
-    } catch (error) {
-      console.error('Failed to fetch student by regi no:', error);
-      return null;
-    }
-  }
+      const response = await api.get(`/api/students/public/search/${regiNo}/`);
+      const studentData = response.data;
 
-  // Get DCP student by registration number (for public access)
-  static async getDCPStudentByRegiNo(regiNo: string): Promise<DCPStudent | null> {
-    try {
-      const student = dcpStudentsData.find(s => s.RegiNo === regiNo);
-      return student || null;
-    } catch (error) {
-      console.error('Failed to fetch DCP student by regi no:', error);
-      return null;
+      // Transform the response to match the expected format
+      const transformedStudent: Student = {
+        id: studentData.id,
+        Name: studentData.Name,
+        RegiNo: studentData.RegiNo,
+        Course: studentData.Course,
+        Batch: studentData.Batch,
+        CertificateNumber: studentData.CertificateNumber,
+        Result: studentData.Result,
+        Email: studentData.Email,
+        Phone: studentData.Phone,
+        WhatsApp: studentData.WhatsApp,
+        Photo: studentData.Photo,
+        CourseType: studentData.CourseType,
+        Subjects: studentData.Subjects || [],
+        PublishedDate: studentData.PublishedDate || null,
+      };
+
+      return transformedStudent;
+    } catch (error: any) {
+      console.error("Failed to fetch student by regi no:", error);
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error("Failed to fetch student");
     }
   }
 
   // Get statistics for dashboard
   static async getStatistics() {
     try {
-      const pdaStudents = studentsData.length;
-      const dcpStudents = dcpStudentsData.length;
-      const totalStudents = pdaStudents + dcpStudents;
-      
-      const pdaPassed = studentsData.filter(s => s.Result === 'PASS').length;
-      const dcpPassed = dcpStudentsData.filter(s => s.Result === 'PASS').length;
+      // Fetch all students from the backend
+      const response = await api.get("/api/students/students/");
+      const allStudents = response.data;
+
+      const pdaStudents = allStudents.filter(
+        (s: any) =>
+          s.CourseType === "PDA" ||
+          s.Course?.name?.toUpperCase().includes("PDA")
+      );
+      const dcpStudents = allStudents.filter(
+        (s: any) =>
+          s.CourseType === "DCP" ||
+          s.Course?.name?.toUpperCase().includes("DCP")
+      );
+
+      const totalStudents = allStudents.length;
+      const pdaPassed = pdaStudents.filter(
+        (s: any) => s.Result === "PASS"
+      ).length;
+      const dcpPassed = dcpStudents.filter(
+        (s: any) => s.Result === "PASS"
+      ).length;
       const totalPassed = pdaPassed + dcpPassed;
 
       return {
         pda: {
-          total_students: pdaStudents,
-          published_students: pdaStudents,
+          total_students: pdaStudents.length,
+          published_students: pdaStudents.length,
         },
         dcp: {
-          total_students: dcpStudents,
-          published_students: dcpStudents,
+          total_students: dcpStudents.length,
+          published_students: dcpStudents.length,
         },
         total_students: totalStudents,
         total_published: totalStudents,
@@ -75,8 +109,8 @@ export class DataService {
         active_batches: 1,
       };
     } catch (error) {
-      console.error('Failed to fetch statistics:', error);
-      throw new Error('Failed to fetch statistics');
+      console.error("Failed to fetch statistics:", error);
+      throw new Error("Failed to fetch statistics");
     }
   }
 
@@ -84,13 +118,13 @@ export class DataService {
   static async healthCheck() {
     try {
       return {
-        status: 'healthy',
-        version: '1.0.0',
+        status: "healthy",
+        version: "1.0.0",
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Health check failed:', error);
-      throw new Error('Health check failed');
+      console.error("Health check failed:", error);
+      throw new Error("Health check failed");
     }
   }
 }

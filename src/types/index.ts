@@ -7,46 +7,40 @@ export interface Admin {
   username: string;
   email: string;
   full_name: string;
-  role: 'super_admin' | 'admin' | 'moderator';
+  role: "super_admin" | "admin" | "moderator";
   created_at: string;
 }
 
 export interface Student {
-  RegiNo: string;
+  id?: number;
   Name: string;
-  CertificateNo: string;
-  Anatomy_CE: number | null;
-  Anatomy_TE: number | null;
-  Anatomy_Total: number | string;
-  Acupuncture_CE: number | null;
-  Acupuncture_TE: number | null;
-  Acupuncture_Total: number | string;
-  Practical_PR: number | null;
-  Practical_Project: number | null;
-  Practical_Viva: number | null;
-  Practical_Total: number | string;
-  Total: number;
+  RegiNo: string;
+  Course: string;
+  Batch: Batch;
+  CertificateNumber: string;
   Result: string;
+  Email: string;
+  Phone: string;
+  WhatsApp?: string | null;
+  Photo?: string | null;
+  CourseType: string;
+  Subjects: SubjectMark[];
+  PublishedDate?: string | null;
+  // Legacy fields for backward compatibility
+  name?: string;
+  email?: string;
+  phone?: string;
+  whatsapp_number?: string | null;
+  photo?: string | null;
+  created_at?: string;
 }
 
-export interface DCPStudent {
-  RegiNo: string;
-  Name: string;
-  CertificateNo: string;
-  DCP001_CE: number | null;
-  DCP001_TE: number | null;
-  DCP001_Total: number | string;
-  DCP002_CE: number | null;
-  DCP002_TE: number | null;
-  DCP002_Total: number | string;
-  DCP003_CE: number | null;
-  DCP003_TE: number | null;
-  DCP003_Total: number | string;
-  DCP004_PW: number | null;
-  DCP004_PE: number | null;
-  DCP004_Total: number | string;
-  Total: number;
-  Result: string;
+export interface StudentFormData {
+  name: string;
+  email: string;
+  phone: string;
+  whatsapp_number?: string | null;
+  photo?: File | null;
 }
 
 export interface ApiResponse<T = any> {
@@ -68,5 +62,131 @@ export interface AuthState {
   error: string | null;
 }
 
+export interface Subject {
+  id?: number;
+  name: string;
+  te_max?: number | null;
+  ce_max?: number | null;
+  pe_max?: number | null;
+  pw_max?: number | null;
+  theory_total?: number | null;
+  practical_total?: number | null;
+  overall_total?: number | null;
+}
+
+export interface Course {
+  id?: number;
+  name: string;
+  short_code: string;
+  duration_months?: number | null;
+  subjects: Subject[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CourseFormData {
+  name: string;
+  short_code: string;
+  duration_months?: number | null;
+  subjects: Subject[];
+}
+
+export interface Batch {
+  id?: number;
+  name: string;
+  start_date: string;
+  duration_months?: number | null;
+  course: number; // Course ID
+  course_name?: string; // For display purposes
+  created_at?: string;
+}
+
+export interface BatchFormData {
+  name: string;
+  start_date: string;
+  duration_months?: number | null;
+  course: number;
+}
+
+export interface StudentMark {
+  id?: number;
+  subject: number; // Subject ID
+  subject_name?: string; // For display purposes
+  te_obtained?: number | null;
+  ce_obtained?: number | null;
+  pe_obtained?: number | null;
+  pw_obtained?: number | null;
+  theory_total?: number | null;
+  practical_total?: number | null;
+  overall_obtained?: number | null;
+}
+
+export interface SubjectMark {
+  SubjectName: string;
+  TE?: number | null;
+  CE?: number | null;
+  PE?: number | null;
+  PW?: number | null;
+  TheoryTotal?: number | null;
+  PracticalTotal?: number | null;
+  OverallObtained?: number | null;
+  SubjectType: "Theory" | "Practical";
+  // Maximum scores from subject configuration
+  TE_Max?: number | null;
+  CE_Max?: number | null;
+  PE_Max?: number | null;
+  PW_Max?: number | null;
+  TheoryTotal_Max?: number | null;
+  PracticalTotal_Max?: number | null;
+  OverallTotal_Max?: number | null;
+}
+
+export interface StudentResult {
+  id?: number;
+  student: number; // Student ID
+  student_name?: string; // For display purposes
+  course: number; // Course ID
+  course_name?: string; // For display purposes
+  batch: number; // Batch ID
+  batch_name?: string; // For display purposes
+  register_number: string;
+  certificate_number: string;
+  result?: string | null;
+  marks: StudentMark[];
+  created_at?: string;
+  updated_at?: string;
+  is_published?: boolean;
+  published_date?: string | null;
+}
+
+export interface StudentResultFormData {
+  student: number;
+  course: number;
+  batch: number;
+  register_number: string;
+  certificate_number: string;
+  result?: string | null;
+  marks: StudentMark[];
+  is_published?: boolean;
+  published_date?: string | null;
+}
+
+export interface Announcement {
+  id?: number;
+  message: string;
+  is_active: boolean;
+  expires_by: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: number;
+  created_by_name?: string; // For display purposes
+}
+
+export interface AnnouncementFormData {
+  message: string;
+  is_active: boolean;
+  expires_by: string;
+}
+
 // Legacy types for backward compatibility
-export type { Student as LegacyStudent, DCPStudent as LegacyDCPStudent };
+export type { Student as LegacyStudent };
