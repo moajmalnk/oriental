@@ -2279,32 +2279,34 @@ const StudentResults: React.FC = () => {
 
         {/* Student Result Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
                 {editingResult
                   ? "Edit Student Result"
                   : "Create New Student Result"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm sm:text-base">
                 {editingResult
                   ? "Update student result details and marks"
                   : "Add a new student result with marks"}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="student">Student *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="student" className="text-sm sm:text-base">
+                    Student *
+                  </Label>
                   <Select
                     value={formData.student.toString()}
                     onValueChange={(value) =>
                       setFormData({ ...formData, student: parseInt(value) })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm sm:text-base">
                       <SelectValue placeholder="Select a student" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2319,19 +2321,23 @@ const StudentResults: React.FC = () => {
                     </SelectContent>
                   </Select>
                   {errors.student && (
-                    <p className="text-sm text-destructive">{errors.student}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.student}
+                    </p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="course">Course *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="course" className="text-sm sm:text-base">
+                    Course *
+                  </Label>
                   <Select
                     value={formData.course.toString()}
                     onValueChange={(value) =>
                       handleCourseChange(parseInt(value))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm sm:text-base">
                       <SelectValue placeholder="Select a course" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2346,12 +2352,16 @@ const StudentResults: React.FC = () => {
                     </SelectContent>
                   </Select>
                   {errors.course && (
-                    <p className="text-sm text-destructive">{errors.course}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.course}
+                    </p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="batch">Batch *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="batch" className="text-sm sm:text-base">
+                    Batch *
+                  </Label>
                   <Select
                     value={formData.batch.toString()}
                     onValueChange={(value) =>
@@ -2359,7 +2369,7 @@ const StudentResults: React.FC = () => {
                     }
                     disabled={!formData.course || formData.course === 0}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm sm:text-base">
                       <SelectValue
                         placeholder={
                           !formData.course || formData.course === 0
@@ -2386,8 +2396,13 @@ const StudentResults: React.FC = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register_number">Register Number *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label
+                    htmlFor="register_number"
+                    className="text-sm sm:text-base"
+                  >
+                    Register Number *
+                  </Label>
                   <Input
                     id="register_number"
                     value={formData.register_number}
@@ -2398,16 +2413,20 @@ const StudentResults: React.FC = () => {
                       })
                     }
                     placeholder="e.g., REG001"
+                    className="text-sm sm:text-base"
                   />
                   {errors.register_number && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.register_number}
                     </p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="certificate_number">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label
+                    htmlFor="certificate_number"
+                    className="text-sm sm:text-base"
+                  >
                     Certificate Number *
                   </Label>
                   <Input
@@ -2420,23 +2439,26 @@ const StudentResults: React.FC = () => {
                       })
                     }
                     placeholder="e.g., CERT001"
+                    className="text-sm sm:text-base"
                   />
                   {errors.certificate_number && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.certificate_number}
                     </p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="result">Result</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="result" className="text-sm sm:text-base">
+                    Result
+                  </Label>
                   <Select
                     value={formData.result || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, result: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm sm:text-base">
                       <SelectValue placeholder="Select result" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2446,7 +2468,7 @@ const StudentResults: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1 sm:space-y-2">
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -2462,7 +2484,7 @@ const StudentResults: React.FC = () => {
                     />
                     <Label
                       htmlFor="is_published"
-                      className="text-sm font-medium"
+                      className="text-sm sm:text-base font-medium"
                     >
                       Published
                     </Label>
@@ -2686,15 +2708,20 @@ const StudentResults: React.FC = () => {
               )}
 
               {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -2716,28 +2743,31 @@ const StudentResults: React.FC = () => {
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="mx-2 sm:mx-4 md:mx-6">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-lg sm:text-xl">
+                Are you sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm sm:text-base">
                 This action cannot be undone. This will permanently delete the
                 student result for{" "}
                 <strong>{resultToDelete?.student_name}</strong> and remove all
                 associated marks.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
               <AlertDialogCancel
                 onClick={() => {
                   setResultToDelete(null);
                   setIsDeleteDialogOpen(false);
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
@@ -2758,35 +2788,39 @@ const StudentResults: React.FC = () => {
           open={isBulkUpdateDialogOpen}
           onOpenChange={setIsBulkUpdateDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Update Student Results</DialogTitle>
-              <DialogDescription>
-                Select student results to export to Excel, edit the data, and
-                upload back for bulk updates.
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Export Student Results
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
+                Select student results to export to Excel,then delete the data, then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Select Student Results</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Select Student Results
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Choose the student results you want to export and update.
                       {selectedResultsForExport.size > 0 &&
                         ` ${selectedResultsForExport.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllResults}
                     variant="outline"
                     size="sm"
                     disabled={paginatedResults.length === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedResults.length})
                   </Button>
@@ -2795,6 +2829,7 @@ const StudentResults: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedResultsForExport.size === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -2802,15 +2837,15 @@ const StudentResults: React.FC = () => {
               </div>
 
               {/* Results Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Results to Export
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -2828,35 +2863,58 @@ const StudentResults: React.FC = () => {
                                 selectAllResults();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Batch</TableHead>
-                        <TableHead>Register No.</TableHead>
-                        <TableHead>Result</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Student
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Course
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Batch
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Register No.
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden xl:table-cell">
+                          Result
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden 2xl:table-cell">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedResults.map((result) => (
-                        <TableRow key={result.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={result.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedResultsForExport.has(result.id!)}
                               onChange={() => toggleResultSelection(result.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {result.student_name}
-                          </TableCell>
-                          <TableCell>{result.course_name}</TableCell>
-                          <TableCell>{result.batch_name}</TableCell>
-                          <TableCell>{result.register_number}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <span className="truncate">
+                              {result.student_name}
+                            </span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            {result.course_name}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {result.batch_name}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden lg:table-cell">
+                            {result.register_number}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden xl:table-cell">
                             {result.result ? (
                               <Badge
                                 variant={
@@ -2867,63 +2925,68 @@ const StudentResults: React.FC = () => {
                                     ? "secondary"
                                     : "destructive"
                                 }
+                                className="text-xs sm:text-sm"
                               >
                                 {result.result}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground text-sm">
+                              <span className="text-muted-foreground text-xs sm:text-sm">
                                 No result
                               </span>
                             )}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden 2xl:table-cell">
                             {result.is_published ? (
                               <Badge
                                 variant="outline"
-                                className="text-green-600 border-green-600"
+                                className="text-green-600 border-green-600 text-xs sm:text-sm"
                               >
                                 Published
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="text-orange-600 border-orange-600"
+                                className="text-orange-600 border-orange-600 text-xs sm:text-sm"
                               >
                                 Unpublished
                               </Badge>
                             )}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setIsBulkUpdateDialogOpen(false);
                     setSelectedResultsForExport(new Set());
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={exportSelectedToExcel}
                   disabled={selectedResultsForExport.size === 0 || isExporting}
+                  className="w-full sm:w-auto"
                 >
                   {isExporting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Exporting...
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Exporting...</span>
                     </>
                   ) : (
                     <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export to Excel ({selectedResultsForExport.size})
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">
+                        Export to Excel ({selectedResultsForExport.size})
+                      </span>
                     </>
                   )}
                 </Button>
@@ -2937,21 +3000,23 @@ const StudentResults: React.FC = () => {
           open={isBulkUpdateImportDialogOpen}
           onOpenChange={setIsBulkUpdateImportDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Update Student Results</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Update Student Results
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload an Excel file with existing student results to update
                 them in bulk. The system will validate that the results exist
                 before updating.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* File Upload */}
               {bulkUpdateData.length === 0 && (
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center transition-colors ${
                     dragActive
                       ? "border-primary bg-primary/5"
                       : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -2974,11 +3039,11 @@ const StudentResults: React.FC = () => {
                     }
                   }}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
+                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium mb-2">
                     Upload Excel or CSV File for Bulk Update
                   </p>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                     Drag and drop your Excel (.xlsx, .xls) or CSV file here, or
                     click to browse. This should contain existing student
                     results that you want to update.
@@ -2993,7 +3058,7 @@ const StudentResults: React.FC = () => {
                     className="hidden"
                     id="bulk-update-upload"
                   />
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Label
                       htmlFor="bulk-update-upload"
                       className="cursor-pointer"
@@ -3210,38 +3275,40 @@ const StudentResults: React.FC = () => {
           open={isBulkDeleteDialogOpen}
           onOpenChange={setIsBulkDeleteDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Delete Student Results</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Delete Student Results
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Select student results to delete in bulk. This action cannot be
                 undone.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-red-50 border-red-200 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mt-1" />
                   <div>
-                    <p className="font-medium text-red-900">
+                    <p className="font-medium text-red-900 text-sm sm:text-base">
                       Select Student Results to Delete
                     </p>
-                    <p className="text-sm text-red-700">
+                    <p className="text-xs sm:text-sm text-red-700">
                       Choose the student results you want to delete permanently.
                       {selectedResultsForDelete.size > 0 &&
                         ` ${selectedResultsForDelete.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
                     disabled={paginatedResults.length === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedResults.length})
                   </Button>
@@ -3250,7 +3317,7 @@ const StudentResults: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedResultsForDelete.size === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -3258,15 +3325,15 @@ const StudentResults: React.FC = () => {
               </div>
 
               {/* Results Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Results to Delete
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -3284,35 +3351,58 @@ const StudentResults: React.FC = () => {
                                 selectAllForDelete();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Batch</TableHead>
-                        <TableHead>Register No.</TableHead>
-                        <TableHead>Result</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Student
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Course
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Batch
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Register No.
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden xl:table-cell">
+                          Result
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden 2xl:table-cell">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedResults.map((result) => (
-                        <TableRow key={result.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={result.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedResultsForDelete.has(result.id!)}
                               onChange={() => toggleDeleteSelection(result.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {result.student_name}
-                          </TableCell>
-                          <TableCell>{result.course_name}</TableCell>
-                          <TableCell>{result.batch_name}</TableCell>
-                          <TableCell>{result.register_number}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <span className="truncate">
+                              {result.student_name}
+                            </span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            {result.course_name}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {result.batch_name}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden lg:table-cell">
+                            {result.register_number}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden xl:table-cell">
                             {result.result ? (
                               <Badge
                                 variant={
@@ -3323,36 +3413,37 @@ const StudentResults: React.FC = () => {
                                     ? "secondary"
                                     : "destructive"
                                 }
+                                className="text-xs sm:text-sm"
                               >
                                 {result.result}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground text-sm">
+                              <span className="text-muted-foreground text-xs sm:text-sm">
                                 No result
                               </span>
                             )}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden 2xl:table-cell">
                             {result.is_published ? (
                               <Badge
                                 variant="outline"
-                                className="text-green-600 border-green-600"
+                                className="text-green-600 border-green-600 text-xs sm:text-sm"
                               >
                                 Published
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="text-orange-600 border-orange-600"
+                                className="text-orange-600 border-orange-600 text-xs sm:text-sm"
                               >
                                 Unpublished
                               </Badge>
                             )}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -3447,46 +3538,52 @@ const StudentResults: React.FC = () => {
 
         {/* Bulk Creation Dialog */}
         <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Import Student Results</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Import Student Results
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload an Excel (.xlsx, .xls) or CSV file to create multiple
                 student results at once. Download the template for the correct
                 format.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Template Download */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Download Template</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Download Template
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Use this Excel template to format your student result data
                       correctly. You can also use CSV format with the same
                       column structure.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={downloadTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Excel
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">Excel</span>
                   </Button>
                   <Button
                     onClick={downloadCSVTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    CSV
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">CSV</span>
                   </Button>
                 </div>
               </div>
@@ -3522,7 +3619,7 @@ const StudentResults: React.FC = () => {
               {/* File Upload */}
               {bulkData.length === 0 && (
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center transition-colors ${
                     dragActive
                       ? "border-primary bg-primary/5"
                       : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -3545,11 +3642,11 @@ const StudentResults: React.FC = () => {
                     }
                   }}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
+                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium mb-2">
                     Upload Excel or CSV File
                   </p>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                     Drag and drop your Excel (.xlsx, .xls) or CSV file here, or
                     click to browse
                   </p>
@@ -3563,7 +3660,7 @@ const StudentResults: React.FC = () => {
                     className="hidden"
                     id="bulk-upload"
                   />
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Label htmlFor="bulk-upload" className="cursor-pointer">
                       Choose File
                     </Label>
@@ -3573,16 +3670,19 @@ const StudentResults: React.FC = () => {
 
               {/* Validation Results */}
               {bulkValidations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold">
                       Validation Results
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         {bulkValidations.filter((v) => v.isValid).length} Valid
                       </Badge>
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs sm:text-sm"
+                      >
                         {bulkValidations.filter((v) => !v.isValid).length}{" "}
                         Invalid
                       </Badge>

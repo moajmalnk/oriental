@@ -1187,23 +1187,25 @@ const Students: React.FC = () => {
 
         {/* Student Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
                 {editingStudent ? "Edit Student" : "Create New Student"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm sm:text-base">
                 {editingStudent
                   ? "Update student information"
                   : "Add a new student to the system"}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Student Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Student Name *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="name" className="text-sm sm:text-base">
+                    Student Name *
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -1211,13 +1213,18 @@ const Students: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="e.g., John Doe"
+                    className="text-sm sm:text-base"
                   />
                   {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="email" className="text-sm sm:text-base">
+                    Email *
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -1226,13 +1233,18 @@ const Students: React.FC = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     placeholder="e.g., john.doe@example.com"
+                    className="text-sm sm:text-base"
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.email}
+                    </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="phone" className="text-sm sm:text-base">
+                    Phone Number *
+                  </Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -1240,13 +1252,21 @@ const Students: React.FC = () => {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     placeholder="e.g., +1234567890"
+                    className="text-sm sm:text-base"
                   />
                   {errors.phone && (
-                    <p className="text-sm text-destructive">{errors.phone}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.phone}
+                    </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label
+                    htmlFor="whatsapp_number"
+                    className="text-sm sm:text-base"
+                  >
+                    WhatsApp Number
+                  </Label>
                   <Input
                     id="whatsapp_number"
                     value={formData.whatsapp_number || ""}
@@ -1257,9 +1277,10 @@ const Students: React.FC = () => {
                       })
                     }
                     placeholder="e.g., +1234567890"
+                    className="text-sm sm:text-base"
                   />
                   {errors.whatsapp_number && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.whatsapp_number}
                     </p>
                   )}
@@ -1267,18 +1288,20 @@ const Students: React.FC = () => {
               </div>
 
               {/* Photo Upload */}
-              <div className="space-y-2">
-                <Label htmlFor="photo">Student Photo</Label>
-                <div className="flex items-center gap-4">
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="photo" className="text-sm sm:text-base">
+                  Student Photo
+                </Label>
+                <div className="flex items-center gap-3 sm:gap-4">
                   <Input
                     id="photo"
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoChange}
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm"
                   />
                   {formData.photo && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       {formData.photo.name}
                     </div>
                   )}
@@ -1288,22 +1311,27 @@ const Students: React.FC = () => {
                     <img
                       src={URL.createObjectURL(formData.photo)}
                       alt="Preview"
-                      className="w-20 h-20 rounded-full object-cover"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover"
                     />
                   </div>
                 )}
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -1325,27 +1353,30 @@ const Students: React.FC = () => {
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="mx-2 sm:mx-4 md:mx-6">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-lg sm:text-xl">
+                Are you sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm sm:text-base">
                 This action cannot be undone. This will permanently delete the
                 student <strong>{studentToDelete?.name}</strong> and remove all
                 associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
               <AlertDialogCancel
                 onClick={() => {
                   setStudentToDelete(null);
                   setIsDeleteDialogOpen(false);
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
@@ -1363,68 +1394,74 @@ const Students: React.FC = () => {
 
         {/* Bulk Creation Dialog */}
         <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Import Students</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Import Students
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload an Excel (.xlsx, .xls) or CSV file to create multiple
                 students at once. Download the template for the correct format.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Template Download */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Download Template</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Download Template
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Use this Excel template to format your student data
                       correctly. You can also use CSV format with the same
                       column structure.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={downloadTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Excel
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">Excel</span>
                   </Button>
                   <Button
                     onClick={downloadCSVTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    CSV
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">CSV</span>
                   </Button>
                 </div>
               </div>
 
               {/* Step 1: Upload Images First */}
               {bulkData.length === 0 && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold">
                         1
                       </div>
-                      <h3 className="font-semibold text-blue-900">
+                      <h3 className="font-semibold text-blue-900 text-sm sm:text-base">
                         Step 1: Upload Student Photos
                       </h3>
                     </div>
-                    <p className="text-sm text-blue-700 mb-4">
+                    <p className="text-xs sm:text-sm text-blue-700 mb-3 sm:mb-4">
                       First, upload all student photos. These will be matched
                       with the Excel/CSV data using the photo file names.
                     </p>
 
                     <div
-                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors ${
                         dragActive
                           ? "border-primary bg-primary/5"
                           : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -1445,9 +1482,11 @@ const Students: React.FC = () => {
                         files.forEach((file) => handleFileUpload(file));
                       }}
                     >
-                      <Image className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="font-medium mb-1">Upload Student Photos</p>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <Image className="h-6 w-6 sm:h-8 sm:w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="font-medium mb-1 text-sm sm:text-base">
+                        Upload Student Photos
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                         Drag and drop images here, or click to browse
                       </p>
                       <Input
@@ -1461,13 +1500,15 @@ const Students: React.FC = () => {
                         className="hidden"
                         id="bulk-image-upload"
                       />
-                      <Button asChild>
+                      <Button asChild size="sm" className="w-full sm:w-auto">
                         <Label
                           htmlFor="bulk-image-upload"
                           className="cursor-pointer"
                         >
-                          <Image className="h-4 w-4 mr-2" />
-                          Choose Images
+                          <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          <span className="text-xs sm:text-sm">
+                            Choose Images
+                          </span>
                         </Label>
                       </Button>
                     </div>
@@ -1476,43 +1517,44 @@ const Students: React.FC = () => {
                   {/* Show uploaded images */}
                   {bulkImages.length > 0 && (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <h4 className="font-medium text-sm sm:text-base">
                           Uploaded Images ({bulkImages.length})
                         </h4>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setBulkImages([])}
+                          className="w-full sm:w-auto text-xs sm:text-sm"
                         >
                           Clear All
                         </Button>
                       </div>
-                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-40 overflow-y-auto">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                         {bulkImages.map((image, index) => (
                           <div
                             key={index}
                             className="flex flex-col items-center"
                           >
-                            <div className="relative w-20 h-20">
+                            <div className="relative w-16 h-16 sm:w-20 sm:h-20">
                               <img
                                 src={URL.createObjectURL(image)}
                                 alt={image.name}
                                 width="80px"
                                 height="80px"
-                                className="w-20 h-20 object-cover rounded border"
+                                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border"
                               />
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                className="absolute -top-1 -right-1 h-5 w-5 p-0 z-10"
+                                className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 p-0 z-10"
                                 onClick={() => {
                                   setBulkImages((prev) =>
                                     prev.filter((_, i) => i !== index)
                                   );
                                 }}
                               >
-                                <X className="h-3 w-3" />
+                                <X className="h-2 w-2 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
                             <p className="text-xs text-center mt-1 truncate w-20">
@@ -1594,42 +1636,45 @@ const Students: React.FC = () => {
 
               {/* Validation Results */}
               {bulkValidations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold">
                       Validation Results
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         {bulkValidations.filter((v) => v.isValid).length} Valid
                       </Badge>
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs sm:text-sm"
+                      >
                         {bulkValidations.filter((v) => !v.isValid).length}{" "}
                         Invalid
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="max-h-80 overflow-auto border rounded-lg">
+                  <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
                     <table className="w-full">
                       <thead className="bg-muted/50 sticky top-0">
                         <tr>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Row
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Student Name
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
                             Email
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
                             Phone
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
                             Photo
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Status
                           </th>
                         </tr>
@@ -1637,20 +1682,22 @@ const Students: React.FC = () => {
                       <tbody>
                         {bulkValidations.map((validation, index) => (
                           <tr key={index} className="border-t">
-                            <td className="p-3 text-sm">{validation.row}</td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                              {validation.row}
+                            </td>
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
                               {validation.data.name}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
                               {validation.data.email}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
                               {validation.data.phone}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm hidden lg:table-cell">
                               {validation.data.photo_path ? (
                                 <div className="flex items-center gap-1">
-                                  <Image className="h-4 w-4 text-blue-500" />
+                                  <Image className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                                   <span className="text-xs">
                                     {validation.data.photo_path}
                                   </span>
@@ -1757,13 +1804,14 @@ const Students: React.FC = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end gap-3">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       onClick={() => {
                         setIsBulkDialogOpen(false);
                         resetBulkDialog();
                       }}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -1773,6 +1821,7 @@ const Students: React.FC = () => {
                         disabled={
                           bulkValidations.filter((v) => v.isValid).length === 0
                         }
+                        className="w-full sm:w-auto"
                       >
                         Create {bulkValidations.filter((v) => v.isValid).length}{" "}
                         Students
@@ -1784,6 +1833,7 @@ const Students: React.FC = () => {
                           setIsBulkDialogOpen(false);
                           resetBulkDialog();
                         }}
+                        className="w-full sm:w-auto"
                       >
                         Close
                       </Button>
@@ -1800,37 +1850,39 @@ const Students: React.FC = () => {
           open={isBulkDeleteDialogOpen}
           onOpenChange={setIsBulkDeleteDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Delete Students</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Delete Students
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Select students to delete in bulk. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-red-50 border-red-200 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mt-1" />
                   <div>
-                    <p className="font-medium text-red-900">
+                    <p className="font-medium text-red-900 text-sm sm:text-base">
                       Select Students to Delete
                     </p>
-                    <p className="text-sm text-red-700">
+                    <p className="text-xs sm:text-sm text-red-700">
                       Choose the students you want to delete permanently.
                       {selectedStudentsForDelete.size > 0 &&
                         ` ${selectedStudentsForDelete.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
                     disabled={paginatedStudents.length === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedStudents.length})
                   </Button>
@@ -1839,7 +1891,7 @@ const Students: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedStudentsForDelete.size === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -1847,15 +1899,15 @@ const Students: React.FC = () => {
               </div>
 
               {/* Students Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Students to Delete
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -1873,22 +1925,30 @@ const Students: React.FC = () => {
                                 selectAllForDelete();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Created Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Student
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Email
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Phone
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Created Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedStudents.map((student) => (
-                        <TableRow
+                        <tr
                           key={student.id}
-                          className="hover:bg-muted/50"
+                          className="border-t hover:bg-muted/50"
                         >
-                          <TableCell>
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedStudentsForDelete.has(
@@ -1897,38 +1957,42 @@ const Students: React.FC = () => {
                               onChange={() =>
                                 toggleDeleteSelection(student.id!)
                               }
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
                               {student.photo ? (
                                 <img
                                   src={student.photo}
                                   alt={student.name}
-                                  className="w-8 h-8 rounded-full object-cover"
+                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                  <User className="h-4 w-4 text-muted-foreground" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                 </div>
                               )}
-                              <span>{student.name}</span>
+                              <span className="truncate">{student.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phone}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            {student.email}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {student.phone}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {student.created_at
                               ? new Date(
                                   student.created_at
                                 ).toLocaleDateString()
                               : "-"}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -2025,34 +2089,39 @@ const Students: React.FC = () => {
           open={isBulkExportDialogOpen}
           onOpenChange={setIsBulkExportDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Export Students to Excel</DialogTitle>
-              <DialogDescription>
-                Select students to export to Excel format for external use.
+              <DialogTitle className="text-lg sm:text-xl">
+                Export Students to Excel
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
+                Select students to export to Excel format then delete the data, then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Select Students to Export</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Select Students to Export
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Choose the students you want to export to Excel.
                       {selectedStudentsForExport.size > 0 &&
                         ` ${selectedStudentsForExport.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForExport}
                     variant="outline"
                     size="sm"
                     disabled={paginatedStudents.length === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedStudents.length})
                   </Button>
@@ -2061,6 +2130,7 @@ const Students: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedStudentsForExport.size === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -2068,15 +2138,15 @@ const Students: React.FC = () => {
               </div>
 
               {/* Students Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Students to Export
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -2094,23 +2164,33 @@ const Students: React.FC = () => {
                                 selectAllForExport();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>WhatsApp</TableHead>
-                        <TableHead>Created Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Student
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Email
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Phone
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          WhatsApp
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden xl:table-cell">
+                          Created Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedStudents.map((student) => (
-                        <TableRow
+                        <tr
                           key={student.id}
-                          className="hover:bg-muted/50"
+                          className="border-t hover:bg-muted/50"
                         >
-                          <TableCell>
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedStudentsForExport.has(
@@ -2119,68 +2199,76 @@ const Students: React.FC = () => {
                               onChange={() =>
                                 toggleExportSelection(student.id!)
                               }
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
                               {student.photo ? (
                                 <img
                                   src={student.photo}
                                   alt={student.name}
-                                  className="w-8 h-8 rounded-full object-cover"
+                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                  <User className="h-4 w-4 text-muted-foreground" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                 </div>
                               )}
-                              <span>{student.name}</span>
+                              <span className="truncate">{student.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phone}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            {student.email}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {student.phone}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {student.whatsapp_number || "-"}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden xl:table-cell">
                             {student.created_at
                               ? new Date(
                                   student.created_at
                                 ).toLocaleDateString()
                               : "-"}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setIsBulkExportDialogOpen(false);
                     setSelectedStudentsForExport(new Set());
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={exportSelectedToExcel}
                   disabled={selectedStudentsForExport.size === 0 || isExporting}
+                  className="w-full sm:w-auto"
                 >
                   {isExporting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Exporting...
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Exporting...</span>
                     </>
                   ) : (
                     <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export to Excel ({selectedStudentsForExport.size})
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">
+                        Export to Excel ({selectedStudentsForExport.size})
+                      </span>
                     </>
                   )}
                 </Button>

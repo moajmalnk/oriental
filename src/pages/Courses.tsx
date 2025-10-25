@@ -1201,7 +1201,7 @@ const Courses: React.FC = () => {
                           className="text-xs text-muted-foreground"
                         >
                           <div className="font-medium">{subject.name}</div>
-                          <div>
+                          {/* <div>
                             {getSubjectType(subject) === "theory" && (
                               <span>
                                 TE: {subject.te_max || 0}, CE:{" "}
@@ -1214,7 +1214,7 @@ const Courses: React.FC = () => {
                                 {subject.pw_max || 0}
                               </span>
                             )}
-                          </div>
+                          </div> */}
                         </div>
                       ))}
                       {course.subjects.length > 2 && (
@@ -1347,23 +1347,25 @@ const Courses: React.FC = () => {
 
         {/* Course Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
                 {editingCourse ? "Edit Course" : "Create New Course"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm sm:text-base">
                 {editingCourse
                   ? "Update course details and subjects"
                   : "Add a new course with its subjects"}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Course Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Course Name *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="name" className="text-sm sm:text-base">
+                    Course Name *
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -1371,13 +1373,18 @@ const Courses: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="e.g., Computer Science"
+                    className="text-sm sm:text-base"
                   />
                   {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="short_code">Short Code *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="short_code" className="text-sm sm:text-base">
+                    Short Code *
+                  </Label>
                   <Input
                     id="short_code"
                     value={formData.short_code}
@@ -1385,15 +1392,21 @@ const Courses: React.FC = () => {
                       setFormData({ ...formData, short_code: e.target.value })
                     }
                     placeholder="e.g., CS"
+                    className="text-sm sm:text-base"
                   />
                   {errors.short_code && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.short_code}
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration_months">Duration (Months)</Label>
+                <div className="space-y-1 sm:space-y-2 md:col-span-2 lg:col-span-1">
+                  <Label
+                    htmlFor="duration_months"
+                    className="text-sm sm:text-base"
+                  >
+                    Duration (Months)
+                  </Label>
                   <Input
                     id="duration_months"
                     type="number"
@@ -1407,9 +1420,10 @@ const Courses: React.FC = () => {
                       })
                     }
                     placeholder="e.g., 24"
+                    className="text-sm sm:text-base"
                   />
                   {errors.duration_months && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.duration_months}
                     </p>
                   )}
@@ -1419,11 +1433,13 @@ const Courses: React.FC = () => {
               <Separator />
 
               {/* Subjects Section */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <div>
-                    <h3 className="text-lg font-semibold">Subjects</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="text-base sm:text-lg font-semibold">
+                      Subjects
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Add subjects with either theory or practical marks (not
                       both)
                     </p>
@@ -1433,6 +1449,7 @@ const Courses: React.FC = () => {
                     onClick={addSubject}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Subject
@@ -1445,28 +1462,33 @@ const Courses: React.FC = () => {
                   </Alert>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {formData.subjects.map((subject, index) => (
                     <Card key={index}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-4">
-                          <h4 className="font-medium">Subject {index + 1}</h4>
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex justify-between items-start mb-3 sm:mb-4">
+                          <h4 className="font-medium text-sm sm:text-base">
+                            Subject {index + 1}
+                          </h4>
                           {formData.subjects.length > 1 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => removeSubject(index)}
-                              className="text-destructive hover:text-destructive"
+                              className="text-destructive hover:text-destructive p-1 sm:p-2"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           )}
                         </div>
 
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor={`subject_name_${index}`}>
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="space-y-1 sm:space-y-2">
+                            <Label
+                              htmlFor={`subject_name_${index}`}
+                              className="text-sm sm:text-base"
+                            >
                               Subject Name *
                             </Label>
                             <Input
@@ -1476,13 +1498,14 @@ const Courses: React.FC = () => {
                                 updateSubject(index, "name", e.target.value)
                               }
                               placeholder="e.g., Programming Fundamentals"
+                              className="text-sm sm:text-base"
                             />
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             {/* Theory Marks */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium">
+                            <div className="space-y-1 sm:space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">
                                 Theory Marks
                               </Label>
                               <div className="grid grid-cols-2 gap-2">
@@ -1507,6 +1530,7 @@ const Courses: React.FC = () => {
                                       )
                                     }
                                     placeholder="0"
+                                    className="text-xs sm:text-sm"
                                   />
                                 </div>
                                 <div>
@@ -1530,14 +1554,15 @@ const Courses: React.FC = () => {
                                       )
                                     }
                                     placeholder="0"
+                                    className="text-xs sm:text-sm"
                                   />
                                 </div>
                               </div>
                             </div>
 
                             {/* Practical Marks */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium">
+                            <div className="space-y-1 sm:space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">
                                 Practical Marks
                               </Label>
                               <div className="grid grid-cols-2 gap-2">
@@ -1562,6 +1587,7 @@ const Courses: React.FC = () => {
                                       )
                                     }
                                     placeholder="0"
+                                    className="text-xs sm:text-sm"
                                   />
                                 </div>
                                 <div>
@@ -1585,6 +1611,7 @@ const Courses: React.FC = () => {
                                       )
                                     }
                                     placeholder="0"
+                                    className="text-xs sm:text-sm"
                                   />
                                 </div>
                               </div>
@@ -1592,7 +1619,7 @@ const Courses: React.FC = () => {
                           </div>
 
                           {errors[`subject_${index}`] && (
-                            <p className="text-sm text-destructive">
+                            <p className="text-xs sm:text-sm text-destructive">
                               {errors[`subject_${index}`]}
                             </p>
                           )}
@@ -1604,15 +1631,16 @@ const Courses: React.FC = () => {
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingCourse ? "Update Course" : "Create Course"}
                 </Button>
               </div>
@@ -1625,22 +1653,27 @@ const Courses: React.FC = () => {
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="mx-2 sm:mx-4 md:mx-6">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-lg sm:text-xl">
+                Are you sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm sm:text-base">
                 This action cannot be undone. This will permanently delete the
                 course <strong>{courseToDelete?.name}</strong> and remove all
                 associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={closeDeleteDialog}>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
+              <AlertDialogCancel
+                onClick={closeDeleteDialog}
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
               >
                 Delete Course
               </AlertDialogAction>
@@ -1650,46 +1683,52 @@ const Courses: React.FC = () => {
 
         {/* Bulk Import Dialog */}
         <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Import Courses</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Import Courses
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload an Excel (.xlsx, .xls) or CSV file to create multiple
                 courses with subjects at once. Download the template for the
                 correct format.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Template Download */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Download Template</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Download Template
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Use this Excel template to format your course data
                       correctly. You can also use CSV format with the same
                       column structure.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={downloadTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Excel
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">Excel</span>
                   </Button>
                   <Button
                     onClick={downloadCSVTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    CSV
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">CSV</span>
                   </Button>
                 </div>
               </div>
@@ -1697,7 +1736,7 @@ const Courses: React.FC = () => {
               {/* File Upload */}
               {bulkData.length === 0 && (
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center transition-colors ${
                     dragActive
                       ? "border-primary bg-primary/5"
                       : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -1720,11 +1759,11 @@ const Courses: React.FC = () => {
                     }
                   }}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
+                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium mb-2">
                     Upload Excel or CSV File
                   </p>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                     Drag and drop your Excel (.xlsx, .xls) or CSV file here, or
                     click to browse
                   </p>
@@ -1738,7 +1777,7 @@ const Courses: React.FC = () => {
                     className="hidden"
                     id="bulk-upload"
                   />
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Label htmlFor="bulk-upload" className="cursor-pointer">
                       Choose File
                     </Label>
@@ -1748,39 +1787,42 @@ const Courses: React.FC = () => {
 
               {/* Validation Results */}
               {bulkValidations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold">
                       Validation Results
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         {bulkValidations.filter((v) => v.isValid).length} Valid
                       </Badge>
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs sm:text-sm"
+                      >
                         {bulkValidations.filter((v) => !v.isValid).length}{" "}
                         Invalid
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="max-h-60 overflow-auto border rounded-lg">
+                  <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Row
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Course Name
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Short Code
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Subjects
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Status
                           </th>
                         </tr>
@@ -1788,26 +1830,32 @@ const Courses: React.FC = () => {
                       <tbody>
                         {bulkValidations.map((validation, index) => (
                           <tr key={index} className="border-t">
-                            <td className="p-3 text-sm">{validation.row}</td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                              {validation.row}
+                            </td>
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
                               {validation.data.name}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
                               {validation.data.short_code}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
                               {validation.data.subjects.length}
                             </td>
-                            <td className="p-3">
+                            <td className="p-2 sm:p-3">
                               {validation.isValid ? (
                                 <div className="flex items-center gap-1 text-green-600">
-                                  <CheckCircle className="h-4 w-4" />
-                                  <span className="text-sm">Valid</span>
+                                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">
+                                    Valid
+                                  </span>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1 text-red-600">
-                                  <AlertCircle className="h-4 w-4" />
-                                  <span className="text-sm">Invalid</span>
+                                  <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">
+                                    Invalid
+                                  </span>
                                 </div>
                               )}
                             </td>
@@ -1819,17 +1867,17 @@ const Courses: React.FC = () => {
 
                   {/* Error Details */}
                   {bulkValidations.some((v) => !v.isValid) && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-destructive">
+                    <div className="space-y-1 sm:space-y-2">
+                      <h4 className="font-medium text-destructive text-sm sm:text-base">
                         Validation Errors:
                       </h4>
-                      <div className="space-y-1 max-h-32 overflow-auto">
+                      <div className="space-y-1 max-h-24 sm:max-h-32 overflow-auto">
                         {bulkValidations
                           .filter((v) => !v.isValid)
                           .map((validation, index) => (
                             <div
                               key={index}
-                              className="text-sm text-destructive"
+                              className="text-xs sm:text-sm text-destructive"
                             >
                               <strong>Row {validation.row}:</strong>{" "}
                               {validation.errors.join(", ")}
@@ -1894,13 +1942,14 @@ const Courses: React.FC = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end gap-3">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       onClick={() => {
                         setIsBulkDialogOpen(false);
                         resetBulkDialog();
                       }}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -1910,6 +1959,7 @@ const Courses: React.FC = () => {
                         disabled={
                           bulkValidations.filter((v) => v.isValid).length === 0
                         }
+                        className="w-full sm:w-auto"
                       >
                         Create {bulkValidations.filter((v) => v.isValid).length}{" "}
                         Courses
@@ -1921,6 +1971,7 @@ const Courses: React.FC = () => {
                           setIsBulkDialogOpen(false);
                           resetBulkDialog();
                         }}
+                        className="w-full sm:w-auto"
                       >
                         Close
                       </Button>
@@ -1937,37 +1988,39 @@ const Courses: React.FC = () => {
           open={isBulkDeleteDialogOpen}
           onOpenChange={setIsBulkDeleteDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Delete Courses</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Delete Courses
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Select courses to delete in bulk. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-red-50 border-red-200 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mt-1" />
                   <div>
-                    <p className="font-medium text-red-900">
+                    <p className="font-medium text-red-900 text-sm sm:text-base">
                       Select Courses to Delete
                     </p>
-                    <p className="text-sm text-red-700">
+                    <p className="text-xs sm:text-sm text-red-700">
                       Choose the courses you want to delete permanently.
                       {selectedCoursesForDelete.size > 0 &&
                         ` ${selectedCoursesForDelete.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
                     disabled={paginatedCourses.length === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedCourses.length})
                   </Button>
@@ -1976,7 +2029,7 @@ const Courses: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedCoursesForDelete.size === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -1984,15 +2037,15 @@ const Courses: React.FC = () => {
               </div>
 
               {/* Courses Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Courses to Delete
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -2010,51 +2063,63 @@ const Courses: React.FC = () => {
                                 selectAllForDelete();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Course Name</TableHead>
-                        <TableHead>Short Code</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Subjects</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Course Name
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Short Code
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Duration
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Subjects
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedCourses.map((course) => (
-                        <TableRow key={course.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={course.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedCoursesForDelete.has(course.id!)}
                               onChange={() => toggleDeleteSelection(course.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-muted-foreground" />
-                              <span>{course.name}</span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate">{course.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs sm:text-sm"
+                            >
                               {course.short_code}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
                             {course.duration_months
                               ? `${course.duration_months} months`
                               : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {course.subjects.length} subjects
-                            </span>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
+                            {course.subjects.length} subjects
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -2107,7 +2172,7 @@ const Courses: React.FC = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -2116,6 +2181,7 @@ const Courses: React.FC = () => {
                     setBulkDeleteResult(null);
                     setBulkDeleteProgress(0);
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
@@ -2124,9 +2190,12 @@ const Courses: React.FC = () => {
                     onClick={handleBulkDelete}
                     disabled={selectedCoursesForDelete.size === 0}
                     variant="destructive"
+                    className="w-full sm:w-auto"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete {selectedCoursesForDelete.size} Courses
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">
+                      Delete {selectedCoursesForDelete.size} Courses
+                    </span>
                   </Button>
                 )}
                 {bulkDeleteResult && (
@@ -2137,6 +2206,7 @@ const Courses: React.FC = () => {
                       setBulkDeleteResult(null);
                       setBulkDeleteProgress(0);
                     }}
+                    className="w-full sm:w-auto"
                   >
                     Close
                   </Button>
@@ -2151,34 +2221,39 @@ const Courses: React.FC = () => {
           open={isBulkExportDialogOpen}
           onOpenChange={setIsBulkExportDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Export Courses to Excel</DialogTitle>
-              <DialogDescription>
-                Select courses to export to Excel format for external use.
+              <DialogTitle className="text-lg sm:text-xl">
+                Export Courses to Excel
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
+                Select courses to export to Excel format then delete the data, then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Select Courses to Export</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Select Courses to Export
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Choose the courses you want to export to Excel.
                       {selectedCoursesForExport.size > 0 &&
                         ` ${selectedCoursesForExport.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForExport}
                     variant="outline"
                     size="sm"
                     disabled={paginatedCourses.length === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedCourses.length})
                   </Button>
@@ -2187,6 +2262,7 @@ const Courses: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedCoursesForExport.size === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -2194,15 +2270,15 @@ const Courses: React.FC = () => {
               </div>
 
               {/* Courses Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Courses to Export
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -2220,78 +2296,94 @@ const Courses: React.FC = () => {
                                 selectAllForExport();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Course Name</TableHead>
-                        <TableHead>Short Code</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Subjects</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Course Name
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Short Code
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Duration
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Subjects
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedCourses.map((course) => (
-                        <TableRow key={course.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={course.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedCoursesForExport.has(course.id!)}
                               onChange={() => toggleExportSelection(course.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-muted-foreground" />
-                              <span>{course.name}</span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate">{course.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs sm:text-sm"
+                            >
                               {course.short_code}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
                             {course.duration_months
                               ? `${course.duration_months} months`
                               : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {course.subjects.length} subjects
-                            </span>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
+                            {course.subjects.length} subjects
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setIsBulkExportDialogOpen(false);
                     setSelectedCoursesForExport(new Set());
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={exportSelectedToExcel}
                   disabled={selectedCoursesForExport.size === 0 || isExporting}
+                  className="w-full sm:w-auto"
                 >
                   {isExporting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Exporting...
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Exporting...</span>
                     </>
                   ) : (
                     <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export to Excel ({selectedCoursesForExport.size})
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">
+                        Export to Excel ({selectedCoursesForExport.size})
+                      </span>
                     </>
                   )}
                 </Button>

@@ -71,17 +71,6 @@ const Announcements: React.FC = () => {
   const [expiryTime, setExpiryTime] = useState("");
   const { toast } = useToast();
 
-  // Get timezone offset for datetime
-  const getTimezoneOffset = () => {
-    const offset = new Date().getTimezoneOffset();
-    const hours = Math.floor(Math.abs(offset) / 60);
-    const minutes = Math.abs(offset) % 60;
-    const sign = offset <= 0 ? "+" : "-";
-    return `${sign}${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
   // Load announcements
   const loadAnnouncements = async () => {
     try {
@@ -108,11 +97,19 @@ const Announcements: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Combine date and time with timezone offset
-    const combinedDateTime =
-      expiryDate && expiryTime
-        ? `${expiryDate}T${expiryTime}:00${getTimezoneOffset()}`
-        : formData.expires_by;
+    // Combine date and time - use simple format without timezone manipulation
+    let combinedDateTime = formData.expires_by;
+
+    if (expiryDate) {
+      if (expiryTime) {
+        // Both date and time provided - use simple format
+        combinedDateTime = `${expiryDate}T${expiryTime}:00`;
+      } else {
+        // Only date provided, use current time
+        const currentTime = new Date().toTimeString().slice(0, 5); // HH:MM format
+        combinedDateTime = `${expiryDate}T${currentTime}:00`;
+      }
+    }
 
     const submitData = {
       ...formData,
@@ -139,10 +136,7 @@ const Announcements: React.FC = () => {
         setIsCreateDialogOpen(false);
       }
 
-      setFormData({ message: "", is_active: true, expires_by: "" });
-      setExpiryDate("");
-      setExpiryTime("");
-      setEditingAnnouncement(null);
+      resetFormData();
       loadAnnouncements();
     } catch (error: any) {
       console.error("Error saving announcement:", error);
@@ -159,22 +153,66 @@ const Announcements: React.FC = () => {
   const handleEdit = (announcement: Announcement) => {
     setEditingAnnouncement(announcement);
     setFormData({
-      message: announcement.message,
-      is_active: announcement.is_active,
-      expires_by: announcement.expires_by,
+      message: announcement.message || "",
+      is_active: announcement.is_active ?? true,
+      expires_by: announcement.expires_by || "",
     });
 
     // Parse date and time from the existing datetime
     const dateTime = announcement.expires_by;
-    if (dateTime.includes("T")) {
-      // Handle timezone-aware datetime
-      const dateTimePart = dateTime.split(/[+-]/)[0]; // Remove timezone info
-      const [date, time] = dateTimePart.split("T");
-      setExpiryDate(date);
-      setExpiryTime(time.split(".")[0]); // Remove milliseconds
+
+    if (dateTime && typeof dateTime === "string" && dateTime.includes("T")) {
+      try {
+        // Parse the datetime string directly without timezone conversion
+        // Split the datetime to get date and time parts
+        const [datePart, timePart] = dateTime.split("T");
+
+        if (datePart) {
+          setExpiryDate(datePart);
+        }
+
+        if (timePart) {
+          // Remove seconds and timezone info if present
+          const timeOnly =
+            timePart.split(":")[0] + ":" + timePart.split(":")[1];
+          setExpiryTime(timeOnly);
+        }
+      } catch (error) {
+        console.error("Error parsing datetime:", error);
+        setExpiryDate("");
+        setExpiryTime("");
+      }
+    } else {
+      // Reset date and time if no valid datetime
+      setExpiryDate("");
+      setExpiryTime("");
     }
 
     setIsEditDialogOpen(true);
+  };
+
+  // Reset form data
+  const resetFormData = () => {
+    setFormData({ message: "", is_active: true, expires_by: "" });
+    setExpiryDate("");
+    setExpiryTime("");
+    setEditingAnnouncement(null);
+  };
+
+  // Handle create dialog open
+  const handleCreateDialogOpen = (open: boolean) => {
+    if (open) {
+      resetFormData();
+    }
+    setIsCreateDialogOpen(open);
+  };
+
+  // Handle edit dialog open
+  const handleEditDialogOpen = (open: boolean) => {
+    if (!open) {
+      resetFormData();
+    }
+    setIsEditDialogOpen(open);
   };
 
   // Handle delete
@@ -223,26 +261,31 @@ const Announcements: React.FC = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="container mx-auto p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Announcements</h1>
-            <p className="text-muted-foreground">Manage system announcements</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">Announcements</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Manage system announcements
+            </p>
           </div>
           <Dialog
             open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
+            onOpenChange={handleCreateDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
-                Create Announcement
+                <span className="hidden sm:inline">Create Announcement</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="max-w-[95vw] sm:max-w-[425px] mx-2 sm:mx-4">
               <DialogHeader>
-                <DialogTitle>Create New Announcement</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl">
+                  Create New Announcement
+                </DialogTitle>
+                <DialogDescription className="text-sm sm:text-base">
                   Create a new announcement that will be displayed to users.
                 </DialogDescription>
               </DialogHeader>
@@ -263,7 +306,7 @@ const Announcements: React.FC = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="expires_by">Expires By</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <DatePicker
                         value={expiryDate}
                         onChange={(value) => setExpiryDate(value)}
@@ -287,15 +330,18 @@ const Announcements: React.FC = () => {
                     <Label htmlFor="is_active">Active</Label>
                   </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
+                    onClick={() => handleCreateDialogOpen(false)}
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">Create Announcement</Button>
+                  <Button type="submit" className="w-full sm:w-auto">
+                    Create Announcement
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -303,11 +349,13 @@ const Announcements: React.FC = () => {
         </div>
 
         {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+        <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-[425px] mx-2 sm:mx-4">
             <DialogHeader>
-              <DialogTitle>Edit Announcement</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Edit Announcement
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Update the announcement details.
               </DialogDescription>
             </DialogHeader>
@@ -328,7 +376,7 @@ const Announcements: React.FC = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-expires_by">Expires By</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <DatePicker
                       value={expiryDate}
                       onChange={(value) => setExpiryDate(value)}
@@ -352,15 +400,18 @@ const Announcements: React.FC = () => {
                   <Label htmlFor="edit-is_active">Active</Label>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
+                  onClick={() => handleEditDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Update Announcement</Button>
+                <Button type="submit" className="w-full sm:w-auto">
+                  Update Announcement
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -371,21 +422,26 @@ const Announcements: React.FC = () => {
           open={deleteId !== null}
           onOpenChange={() => setDeleteId(null)}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="max-w-[95vw] sm:max-w-md mx-2 sm:mx-4">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-lg sm:text-xl">
+                Are you sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm sm:text-base">
                 This action cannot be undone. This will permanently delete the
                 announcement.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteId(null)}>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
+              <AlertDialogCancel
+                onClick={() => setDeleteId(null)}
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
               >
                 Delete
               </AlertDialogAction>
@@ -412,24 +468,28 @@ const Announcements: React.FC = () => {
           <div className="grid gap-4">
             {announcements.map((announcement) => (
               <Card key={announcement.id} className="relative">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base sm:text-lg leading-tight">
                         {announcement.message}
                       </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          Expires: {formatDate(announcement.expires_by)}
+                      <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
+                        <span className="flex items-center gap-1 text-xs sm:text-sm">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate">
+                            Expires: {formatDate(announcement.expires_by)}
+                          </span>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          Created: {formatDate(announcement.created_at!)}
+                        <span className="flex items-center gap-1 text-xs sm:text-sm">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate">
+                            Created: {formatDate(announcement.created_at!)}
+                          </span>
                         </span>
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                       <Badge
                         variant={
                           isActive(announcement)
@@ -438,6 +498,7 @@ const Announcements: React.FC = () => {
                             ? "destructive"
                             : "secondary"
                         }
+                        className="text-xs sm:text-sm"
                       >
                         {isActive(announcement)
                           ? "Active"
@@ -450,6 +511,7 @@ const Announcements: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(announcement)}
+                          className="h-8 w-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -457,7 +519,7 @@ const Announcements: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteId(announcement.id!)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

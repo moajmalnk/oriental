@@ -43,7 +43,7 @@ const AnnouncementSlideshow: React.FC = () => {
   const currentAnnouncement = announcements[currentIndex];
 
   return (
-    <span className="text-base font-semibold text-emerald-100 tracking-wide">
+    <span className="text-xs sm:text-base font-semibold text-emerald-100 tracking-wide">
       {currentAnnouncement.message}
     </span>
   );

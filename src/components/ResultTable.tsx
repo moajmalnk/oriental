@@ -74,20 +74,26 @@ export const ResultTable = ({ student }: ResultTableProps) => {
     te: number | string | null;
     total: number | string | null;
   }) => (
-    <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
-      <h4 className="font-semibold text-foreground text-sm">{subject}</h4>
-      <div className="grid grid-cols-3 gap-2 text-xs">
+    <div className="bg-gradient-card rounded-lg p-3 sm:p-4 border border-border/50 space-y-2 sm:space-y-3">
+      <h4 className="font-semibold text-foreground text-xs sm:text-sm break-words">
+        {subject}
+      </h4>
+      <div className="grid grid-cols-3 gap-1 sm:gap-2 text-xs">
         <div className="text-center">
-          <span className="text-muted-foreground block">CE</span>
-          <span className="font-mono font-medium">{formatScore(ce)}</span>
+          <span className="text-muted-foreground block text-xs">CE</span>
+          <span className="font-mono font-medium text-sm">
+            {formatScore(ce)}
+          </span>
         </div>
         <div className="text-center">
-          <span className="text-muted-foreground block">TE</span>
-          <span className="font-mono font-medium">{formatScore(te)}</span>
+          <span className="text-muted-foreground block text-xs">TE</span>
+          <span className="font-mono font-medium text-sm">
+            {formatScore(te)}
+          </span>
         </div>
         <div className="text-center">
-          <span className="text-muted-foreground block">Total</span>
-          <span className="font-mono font-bold text-academic">
+          <span className="text-muted-foreground block text-xs">Total</span>
+          <span className="font-mono font-bold text-academic text-sm">
             {formatScore(total)}
           </span>
         </div>
@@ -106,20 +112,26 @@ export const ResultTable = ({ student }: ResultTableProps) => {
     pe: number | string | null;
     total: number | string | null;
   }) => (
-    <div className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3">
-      <h4 className="font-semibold text-foreground text-sm">{subject}</h4>
-      <div className="grid grid-cols-3 gap-2 text-xs">
+    <div className="bg-gradient-card rounded-lg p-3 sm:p-4 border border-border/50 space-y-2 sm:space-y-3">
+      <h4 className="font-semibold text-foreground text-xs sm:text-sm break-words">
+        {subject}
+      </h4>
+      <div className="grid grid-cols-3 gap-1 sm:gap-2 text-xs">
         <div className="text-center">
-          <span className="text-muted-foreground block">P.E</span>
-          <span className="font-mono font-medium">{formatScore(pe)}</span>
+          <span className="text-muted-foreground block text-xs">P.E</span>
+          <span className="font-mono font-medium text-sm">
+            {formatScore(pe)}
+          </span>
         </div>
         <div className="text-center">
-          <span className="text-muted-foreground block">P.W</span>
-          <span className="font-mono font-medium">{formatScore(pw)}</span>
+          <span className="text-muted-foreground block text-xs">P.W</span>
+          <span className="font-mono font-medium text-sm">
+            {formatScore(pw)}
+          </span>
         </div>
         <div className="text-center">
-          <span className="text-muted-foreground block">Total</span>
-          <span className="font-mono font-bold text-success">
+          <span className="text-muted-foreground block text-xs">Total</span>
+          <span className="font-mono font-bold text-success text-sm">
             {formatScore(total)}
           </span>
         </div>
@@ -135,28 +147,28 @@ export const ResultTable = ({ student }: ResultTableProps) => {
       <Card className="shadow-elegant border-0 overflow-hidden bg-gradient-card">
         <CardContent className="p-0">
           {/* Student Info Header */}
-          <div className="bg-gradient-primary text-academic-foreground p-4 sm:p-6 md:p-8">
-            <div className="text-center mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold mb-2">
+          <div className="bg-gradient-primary text-academic-foreground p-3 sm:p-4 md:p-6 lg:p-8">
+            <div className="text-center mb-3 sm:mb-4 md:mb-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-display font-bold mb-2">
                 Student Result Card
               </h2>
-              <div className="w-16 sm:w-24 h-1 bg-white/30 rounded mx-auto"></div>
+              <div className="w-12 sm:w-16 md:w-24 h-1 bg-white/30 rounded mx-auto"></div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+              <div className="space-y-1 sm:space-y-2">
                 <p className="text-academic-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wide">
                   Register Number
                 </p>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold font-mono tracking-wider break-all">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold font-mono tracking-wider break-all">
                   {student.RegiNo}
                 </p>
               </div>
-              <div className="space-y-2 text-right">
+              <div className="space-y-1 sm:space-y-2 text-right">
                 <p className="text-academic-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wide">
                   Student Name
                 </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-display font-semibold break-words">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-semibold break-words">
                   {student.Name}
                 </p>
               </div>
@@ -164,16 +176,16 @@ export const ResultTable = ({ student }: ResultTableProps) => {
           </div>
 
           {/* Results Section */}
-          <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+          <div className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 md:space-y-8">
             {/* Theory Subjects */}
             <div className="space-y-4">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
-                <div className="w-1 h-4 sm:h-6 bg-academic rounded"></div>
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground flex items-center gap-2 sm:gap-3">
+                <div className="w-1 h-3 sm:h-4 md:h-6 bg-academic rounded"></div>
                 Theory Subjects
               </h3>
 
               {isMobile ? (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {getTheorySubjects().map((subject, index) => (
                     <MobileTheoryRow
                       key={index}
@@ -190,16 +202,16 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                     <table className="w-full">
                       <thead>
                         <tr className="bg-muted border-b border-border">
-                          <th className="text-left p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
+                          <th className="text-left p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[120px] text-xs sm:text-sm md:text-base">
                             Subject
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[60px] sm:min-w-[80px] text-xs sm:text-sm md:text-base">
                             TE
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[60px] sm:min-w-[80px] text-xs sm:text-sm md:text-base">
                             CE
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm md:text-base">
                             Total
                           </th>
                         </tr>
@@ -210,16 +222,16 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                             key={index}
                             className="border-b border-border hover:bg-accent/30 transition-colors duration-200"
                           >
-                            <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">
+                            <td className="p-2 sm:p-3 md:p-4 lg:p-6 font-medium text-foreground text-xs sm:text-sm md:text-base">
                               {subject.SubjectName}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-mono text-xs sm:text-sm md:text-base">
                               {formatScore(subject.TE)}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-mono text-xs sm:text-sm md:text-base">
                               {formatScore(subject.CE)}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-academic font-mono text-base sm:text-lg">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-bold text-academic font-mono text-sm sm:text-base md:text-lg">
                               {formatScore(subject.TheoryTotal)}
                             </td>
                           </tr>
@@ -233,13 +245,13 @@ export const ResultTable = ({ student }: ResultTableProps) => {
 
             {/* Practical Marks */}
             <div className="space-y-4">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
-                <div className="w-1 h-4 sm:h-6 bg-success rounded"></div>
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground flex items-center gap-2 sm:gap-3">
+                <div className="w-1 h-3 sm:h-4 md:h-6 bg-success rounded"></div>
                 Practical Subjects
               </h3>
 
               {isMobile ? (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {getPracticalSubjects().map((subject, index) => (
                     <MobilePracticalRow
                       key={index}
@@ -256,16 +268,16 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                     <table className="w-full">
                       <thead>
                         <tr className="bg-muted border-b border-border">
-                          <th className="text-left p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[120px] text-sm sm:text-base">
+                          <th className="text-left p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[120px] text-xs sm:text-sm md:text-base">
                             Subject
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[60px] sm:min-w-[80px] text-xs sm:text-sm md:text-base">
                             P.E
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[80px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[60px] sm:min-w-[80px] text-xs sm:text-sm md:text-base">
                             P.W
                           </th>
-                          <th className="text-center p-3 sm:p-4 md:p-6 font-semibold text-foreground min-w-[100px] text-sm sm:text-base">
+                          <th className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-semibold text-foreground min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm md:text-base">
                             Total
                           </th>
                         </tr>
@@ -276,16 +288,16 @@ export const ResultTable = ({ student }: ResultTableProps) => {
                             key={index}
                             className="border-b border-border hover:bg-accent/30 transition-colors duration-200"
                           >
-                            <td className="p-3 sm:p-4 md:p-6 font-medium text-foreground text-sm sm:text-base">
+                            <td className="p-2 sm:p-3 md:p-4 lg:p-6 font-medium text-foreground text-xs sm:text-sm md:text-base">
                               {subject.SubjectName}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-mono text-xs sm:text-sm md:text-base">
                               {formatScore(subject.PE)}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-mono text-sm sm:text-base">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-mono text-xs sm:text-sm md:text-base">
                               {formatScore(subject.PW)}
                             </td>
-                            <td className="text-center p-3 sm:p-4 md:p-6 font-bold text-success font-mono text-base sm:text-lg">
+                            <td className="text-center p-2 sm:p-3 md:p-4 lg:p-6 font-bold text-success font-mono text-sm sm:text-base md:text-lg">
                               {formatScore(subject.PracticalTotal)}
                             </td>
                           </tr>
@@ -299,52 +311,52 @@ export const ResultTable = ({ student }: ResultTableProps) => {
 
             {/* Maximum Scores Table */}
             <div className="space-y-4">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
-                <div className="w-1 h-4 sm:h-6 bg-warning rounded"></div>
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground flex items-center gap-2 sm:gap-3">
+                <div className="w-1 h-3 sm:h-4 md:h-6 bg-warning rounded"></div>
                 Maximum Scores
               </h3>
 
               {isMobile ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Theory Subjects */}
                   {getTheorySubjects().length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-base font-semibold text-foreground">
+                    <div className="space-y-2 sm:space-y-3">
+                      <h4 className="text-sm sm:text-base font-semibold text-foreground">
                         Theory Subjects
                       </h4>
                       {getTheorySubjects().map((subject, index) => (
                         <div
                           key={index}
-                          className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3"
+                          className="bg-gradient-card rounded-lg p-3 sm:p-4 border border-border/50 space-y-2 sm:space-y-3"
                         >
-                          <h5 className="font-semibold text-foreground text-sm">
+                          <h5 className="font-semibold text-foreground text-xs sm:text-sm break-words">
                             {subject.SubjectName}
                           </h5>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs">
                             <div className="space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   TE:
                                 </span>
-                                <span className="font-mono font-medium">
+                                <span className="font-mono font-medium text-sm">
                                   {subject.TE_Max || "-"}
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   CE:
                                 </span>
-                                <span className="font-mono font-medium">
+                                <span className="font-mono font-medium text-sm">
                                   {subject.CE_Max || "-"}
                                 </span>
                               </div>
                             </div>
                             <div className="space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   Total:
                                 </span>
-                                <span className="font-mono font-bold text-academic">
+                                <span className="font-mono font-bold text-academic text-sm">
                                   {subject.TheoryTotal_Max || "-"}
                                 </span>
                               </div>
@@ -357,43 +369,43 @@ export const ResultTable = ({ student }: ResultTableProps) => {
 
                   {/* Practical Subjects */}
                   {getPracticalSubjects().length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-base font-semibold text-foreground">
+                    <div className="space-y-2 sm:space-y-3">
+                      <h4 className="text-sm sm:text-base font-semibold text-foreground">
                         Practical Subjects
                       </h4>
                       {getPracticalSubjects().map((subject, index) => (
                         <div
                           key={index}
-                          className="bg-gradient-card rounded-lg p-4 border border-border/50 space-y-3"
+                          className="bg-gradient-card rounded-lg p-3 sm:p-4 border border-border/50 space-y-2 sm:space-y-3"
                         >
-                          <h5 className="font-semibold text-foreground text-sm">
+                          <h5 className="font-semibold text-foreground text-xs sm:text-sm break-words">
                             {subject.SubjectName}
                           </h5>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs">
                             <div className="space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   P.E:
                                 </span>
-                                <span className="font-mono font-medium">
+                                <span className="font-mono font-medium text-sm">
                                   {subject.PE_Max || "-"}
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   P.W:
                                 </span>
-                                <span className="font-mono font-medium">
+                                <span className="font-mono font-medium text-sm">
                                   {subject.PW_Max || "-"}
                                 </span>
                               </div>
                             </div>
                             <div className="space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   Total:
                                 </span>
-                                <span className="font-mono font-bold text-success">
+                                <span className="font-mono font-bold text-success text-sm">
                                   {subject.PracticalTotal_Max || "-"}
                                 </span>
                               </div>
@@ -515,26 +527,26 @@ export const ResultTable = ({ student }: ResultTableProps) => {
 
             {/* Course Information */}
             <div className="space-y-4">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground flex items-center gap-3">
-                <div className="w-1 h-4 sm:h-6 bg-info rounded"></div>
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground flex items-center gap-2 sm:gap-3">
+                <div className="w-1 h-3 sm:h-4 md:h-6 bg-info rounded"></div>
                 Course Information
               </h3>
 
-              <div className="bg-gradient-card rounded-xl p-4 sm:p-6 border border-border/50">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gradient-card rounded-xl p-3 sm:p-4 md:p-6 border border-border/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
                       Course
                     </p>
-                    <p className="text-lg font-semibold text-foreground">
+                    <p className="text-base sm:text-lg font-semibold text-foreground break-words">
                       {student.Course}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
                       Register Number
                     </p>
-                    <p className="text-lg font-semibold text-foreground">
+                    <p className="text-base sm:text-lg font-semibold text-foreground break-all">
                       {student.RegiNo}
                     </p>
                   </div>
@@ -543,23 +555,23 @@ export const ResultTable = ({ student }: ResultTableProps) => {
             </div>
 
             {/* Summary Section */}
-            <div className="bg-gradient-to-r from-accent/50 to-secondary/30 rounded-xl p-4 sm:p-6 md:p-8 border border-border/50">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="bg-gradient-to-r from-accent/50 to-secondary/30 rounded-xl p-3 sm:p-4 md:p-6 lg:p-8 border border-border/50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
                 <div className="text-center md:text-left">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 sm:mb-2 uppercase tracking-wide">
                     Total Marks Obtained
                   </p>
-                  <p className="text-3xl sm:text-4xl md:text-5xl font-bold font-mono text-academic">
+                  <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-mono text-academic">
                     {calculateTotal()}
                   </p>
                 </div>
                 <div className="text-center md:text-right">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wide">
                     Final Result
                   </p>
                   <Badge
                     variant={getResultBadgeVariant(student.Result)}
-                    className="text-base sm:text-lg md:text-xl px-4 sm:px-6 py-2 sm:py-3 font-bold rounded-lg"
+                    className="text-sm sm:text-base md:text-lg lg:text-xl px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 font-bold rounded-lg"
                   >
                     {student.Result}
                   </Badge>

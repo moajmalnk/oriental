@@ -1161,23 +1161,25 @@ const Batches: React.FC = () => {
 
         {/* Batch Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
                 {editingBatch ? "Edit Batch" : "Create New Batch"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm sm:text-base">
                 {editingBatch
                   ? "Update batch details and course assignment"
                   : "Add a new batch with course assignment"}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Batch Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Batch Name *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="name" className="text-sm sm:text-base">
+                    Batch Name *
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -1185,13 +1187,18 @@ const Batches: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="e.g., Batch 2024-1"
+                    className="text-sm sm:text-base"
                   />
                   {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">Start Date *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="start_date" className="text-sm sm:text-base">
+                    Start Date *
+                  </Label>
                   <DatePicker
                     value={formData.start_date}
                     onChange={(value) =>
@@ -1200,13 +1207,18 @@ const Batches: React.FC = () => {
                     placeholder="Select start date"
                   />
                   {errors.start_date && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.start_date}
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration_months">Duration (Months)</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label
+                    htmlFor="duration_months"
+                    className="text-sm sm:text-base"
+                  >
+                    Duration (Months)
+                  </Label>
                   <Input
                     id="duration_months"
                     type="number"
@@ -1220,22 +1232,25 @@ const Batches: React.FC = () => {
                       })
                     }
                     placeholder="e.g., 12"
+                    className="text-sm sm:text-base"
                   />
                   {errors.duration_months && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs sm:text-sm text-destructive">
                       {errors.duration_months}
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="course">Course *</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="course" className="text-sm sm:text-base">
+                    Course *
+                  </Label>
                   <Select
                     value={formData.course.toString()}
                     onValueChange={(value) =>
                       setFormData({ ...formData, course: parseInt(value) })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm sm:text-base">
                       <SelectValue placeholder="Select a course" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1250,21 +1265,28 @@ const Batches: React.FC = () => {
                     </SelectContent>
                   </Select>
                   {errors.course && (
-                    <p className="text-sm text-destructive">{errors.course}</p>
+                    <p className="text-xs sm:text-sm text-destructive">
+                      {errors.course}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -1286,27 +1308,30 @@ const Batches: React.FC = () => {
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="mx-2 sm:mx-4 md:mx-6">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-lg sm:text-xl">
+                Are you sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm sm:text-base">
                 This action cannot be undone. This will permanently delete the
                 batch <strong>{batchToDelete?.name}</strong> and remove all
                 associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
               <AlertDialogCancel
                 onClick={() => {
                   setBatchToDelete(null);
                   setIsDeleteDialogOpen(false);
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
@@ -1324,45 +1349,51 @@ const Batches: React.FC = () => {
 
         {/* Bulk Creation Dialog */}
         <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Import Batches</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Import Batches
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload an Excel (.xlsx, .xls) or CSV file to create multiple
                 batches at once. Download the template for the correct format.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Template Download */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Download Template</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Download Template
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Use this Excel template to format your batch data
                       correctly. You can also use CSV format with the same
                       column structure.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={downloadTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Excel
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">Excel</span>
                   </Button>
                   <Button
                     onClick={downloadCSVTemplate}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    CSV
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">CSV</span>
                   </Button>
                 </div>
               </div>
@@ -1370,7 +1401,7 @@ const Batches: React.FC = () => {
               {/* File Upload */}
               {bulkData.length === 0 && (
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center transition-colors ${
                     dragActive
                       ? "border-primary bg-primary/5"
                       : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -1393,11 +1424,11 @@ const Batches: React.FC = () => {
                     }
                   }}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
+                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium mb-2">
                     Upload Excel or CSV File
                   </p>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                     Drag and drop your Excel (.xlsx, .xls) or CSV file here, or
                     click to browse
                   </p>
@@ -1411,7 +1442,7 @@ const Batches: React.FC = () => {
                     className="hidden"
                     id="bulk-upload"
                   />
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Label htmlFor="bulk-upload" className="cursor-pointer">
                       Choose File
                     </Label>
@@ -1421,39 +1452,42 @@ const Batches: React.FC = () => {
 
               {/* Validation Results */}
               {bulkValidations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <h3 className="text-base sm:text-lg font-semibold">
                       Validation Results
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         {bulkValidations.filter((v) => v.isValid).length} Valid
                       </Badge>
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs sm:text-sm"
+                      >
                         {bulkValidations.filter((v) => !v.isValid).length}{" "}
                         Invalid
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="max-h-60 overflow-auto border rounded-lg">
+                  <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Row
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Batch Name
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
                             Start Date
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
                             Course
                           </th>
-                          <th className="p-3 text-left text-sm font-medium">
+                          <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
                             Status
                           </th>
                         </tr>
@@ -1461,26 +1495,32 @@ const Batches: React.FC = () => {
                       <tbody>
                         {bulkValidations.map((validation, index) => (
                           <tr key={index} className="border-t">
-                            <td className="p-3 text-sm">{validation.row}</td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
+                              {validation.row}
+                            </td>
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">
                               {validation.data.name}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
                               {validation.data.start_date}
                             </td>
-                            <td className="p-3 text-sm">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
                               {validation.data.course}
                             </td>
-                            <td className="p-3">
+                            <td className="p-2 sm:p-3">
                               {validation.isValid ? (
                                 <div className="flex items-center gap-1 text-green-600">
-                                  <CheckCircle className="h-4 w-4" />
-                                  <span className="text-sm">Valid</span>
+                                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">
+                                    Valid
+                                  </span>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1 text-red-600">
-                                  <AlertCircle className="h-4 w-4" />
-                                  <span className="text-sm">Invalid</span>
+                                  <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">
+                                    Invalid
+                                  </span>
                                 </div>
                               )}
                             </td>
@@ -1492,17 +1532,17 @@ const Batches: React.FC = () => {
 
                   {/* Error Details */}
                   {bulkValidations.some((v) => !v.isValid) && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-destructive">
+                    <div className="space-y-1 sm:space-y-2">
+                      <h4 className="font-medium text-destructive text-sm sm:text-base">
                         Validation Errors:
                       </h4>
-                      <div className="space-y-1 max-h-32 overflow-auto">
+                      <div className="space-y-1 max-h-24 sm:max-h-32 overflow-auto">
                         {bulkValidations
                           .filter((v) => !v.isValid)
                           .map((validation, index) => (
                             <div
                               key={index}
-                              className="text-sm text-destructive"
+                              className="text-xs sm:text-sm text-destructive"
                             >
                               <strong>Row {validation.row}:</strong>{" "}
                               {validation.errors.join(", ")}
@@ -1567,13 +1607,14 @@ const Batches: React.FC = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end gap-3">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       onClick={() => {
                         setIsBulkDialogOpen(false);
                         resetBulkDialog();
                       }}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -1583,6 +1624,7 @@ const Batches: React.FC = () => {
                         disabled={
                           bulkValidations.filter((v) => v.isValid).length === 0
                         }
+                        className="w-full sm:w-auto"
                       >
                         Create {bulkValidations.filter((v) => v.isValid).length}{" "}
                         Batches
@@ -1594,6 +1636,7 @@ const Batches: React.FC = () => {
                           setIsBulkDialogOpen(false);
                           resetBulkDialog();
                         }}
+                        className="w-full sm:w-auto"
                       >
                         Close
                       </Button>
@@ -1610,37 +1653,39 @@ const Batches: React.FC = () => {
           open={isBulkDeleteDialogOpen}
           onOpenChange={setIsBulkDeleteDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Bulk Delete Batches</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                Bulk Delete Batches
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Select batches to delete in bulk. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 border-red-200">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-red-50 border-red-200 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mt-1" />
                   <div>
-                    <p className="font-medium text-red-900">
+                    <p className="font-medium text-red-900 text-sm sm:text-base">
                       Select Batches to Delete
                     </p>
-                    <p className="text-sm text-red-700">
+                    <p className="text-xs sm:text-sm text-red-700">
                       Choose the batches you want to delete permanently.
                       {selectedBatchesForDelete.size > 0 &&
                         ` ${selectedBatchesForDelete.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
                     disabled={paginatedBatches.length === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedBatches.length})
                   </Button>
@@ -1649,7 +1694,7 @@ const Batches: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedBatchesForDelete.size === 0}
-                    className="border-red-300 text-red-700 hover:bg-red-100"
+                    className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -1657,15 +1702,15 @@ const Batches: React.FC = () => {
               </div>
 
               {/* Batches Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Batches to Delete
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -1683,47 +1728,63 @@ const Batches: React.FC = () => {
                                 selectAllForDelete();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Batch Name</TableHead>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>Duration</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Batch Name
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Course
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Start Date
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Duration
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedBatches.map((batch) => (
-                        <TableRow key={batch.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={batch.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedBatchesForDelete.has(batch.id!)}
                               onChange={() => toggleDeleteSelection(batch.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span>{batch.name}</span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate">{batch.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs sm:text-sm"
+                            >
                               {batch.course_name}
                             </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(batch.start_date)}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {formatDate(batch.start_date)}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {batch.duration_months
                               ? `${batch.duration_months} months`
                               : "-"}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -1820,34 +1881,39 @@ const Batches: React.FC = () => {
           open={isBulkExportDialogOpen}
           onOpenChange={setIsBulkExportDialogOpen}
         >
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogContent className="max-w-6xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6">
             <DialogHeader>
-              <DialogTitle>Export Batches to Excel</DialogTitle>
-              <DialogDescription>
-                Select batches to export to Excel format for external use.
+              <DialogTitle className="text-lg sm:text-xl">
+                Export Batches to Excel
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
+                Select batches to export to Excel format then delete the data, then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Selection Controls */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-muted/50 gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-1" />
                   <div>
-                    <p className="font-medium">Select Batches to Export</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">
+                      Select Batches to Export
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Choose the batches you want to export to Excel.
                       {selectedBatchesForExport.size > 0 &&
                         ` ${selectedBatchesForExport.size} selected`}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={selectAllForExport}
                     variant="outline"
                     size="sm"
                     disabled={paginatedBatches.length === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Select All ({paginatedBatches.length})
                   </Button>
@@ -1856,6 +1922,7 @@ const Batches: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={selectedBatchesForExport.size === 0}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
                     Clear Selection
                   </Button>
@@ -1863,15 +1930,15 @@ const Batches: React.FC = () => {
               </div>
 
               {/* Batches Selection Table */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Select Batches to Export
                 </h3>
-                <div className="max-h-60 overflow-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
+                <div className="max-h-48 sm:max-h-60 overflow-auto border rounded-lg">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium w-8 sm:w-12">
                           <input
                             type="checkbox"
                             checked={
@@ -1889,83 +1956,105 @@ const Batches: React.FC = () => {
                                 selectAllForExport();
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-3 w-3 sm:h-4 sm:w-4"
                           />
-                        </TableHead>
-                        <TableHead>Batch Name</TableHead>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>End Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium">
+                          Batch Name
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">
+                          Course
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden md:table-cell">
+                          Start Date
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden lg:table-cell">
+                          Duration
+                        </th>
+                        <th className="p-2 sm:p-3 text-left text-xs sm:text-sm font-medium hidden xl:table-cell">
+                          End Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {paginatedBatches.map((batch) => (
-                        <TableRow key={batch.id} className="hover:bg-muted/50">
-                          <TableCell>
+                        <tr
+                          key={batch.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="p-2 sm:p-3">
                             <input
                               type="checkbox"
                               checked={selectedBatchesForExport.has(batch.id!)}
                               onChange={() => toggleExportSelection(batch.id!)}
-                              className="h-4 w-4"
+                              className="h-3 w-3 sm:h-4 sm:w-4"
                             />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span>{batch.name}</span>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate">{batch.name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden sm:table-cell">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs sm:text-sm"
+                            >
                               {batch.course_name}
                             </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(batch.start_date)}</TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm hidden md:table-cell">
+                            {formatDate(batch.start_date)}
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {batch.duration_months
                               ? `${batch.duration_months} months`
                               : "-"}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground hidden xl:table-cell">
                             {batch.duration_months
                               ? getEndDate(
                                   batch.start_date,
                                   batch.duration_months
                                 )
                               : "-"}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setIsBulkExportDialogOpen(false);
                     setSelectedBatchesForExport(new Set());
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={exportSelectedToExcel}
                   disabled={selectedBatchesForExport.size === 0 || isExporting}
+                  className="w-full sm:w-auto"
                 >
                   {isExporting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Exporting...
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Exporting...</span>
                     </>
                   ) : (
                     <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export to Excel ({selectedBatchesForExport.size})
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">
+                        Export to Excel ({selectedBatchesForExport.size})
+                      </span>
                     </>
                   )}
                 </Button>
