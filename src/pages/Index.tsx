@@ -179,9 +179,24 @@ const Index = () => {
 
   return (
     <Layout onBulkCertificateClick={() => setBulkCertificateDialogOpen(true)}>
+      {/* Navbar for non-authenticated users */}
+      {!isAuthenticated && (
+        <nav className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center">
+              <div className="text-xs font-medium text-foreground font-['Poppins']">
+                result.kugoriental.com
+              </div>
+            </div>
+          </div>
+        </nav>
+      )}
+
       {/* Professional Header */}
       <header
-        className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden"
+        className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden ${
+          !isAuthenticated ? "pt-16" : ""
+        }`}
         role="banner"
         aria-label="KUG Oriental Academy Header"
       >
@@ -195,7 +210,7 @@ const Index = () => {
           ></div>
         </div>
 
-        <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
+        <div className="relative container mx-auto px-6 py-20 sm:py-24 md:py-28 lg:py-32">
           <div className="text-center max-w-6xl mx-auto">
             {/* Academy Name */}
             <div className="mb-8">
