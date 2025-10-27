@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Award } from "lucide-react";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { Student } from "@/types";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useToast } from "@/hooks/use-toast";
@@ -887,111 +886,435 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       // Wait for any animations to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Find the certificate element in the DOM
-      const certificateElement = document.querySelector(
-        ".certificate-container"
-      );
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
-      if (!certificateElement) {
-        throw new Error(
-          "Certificate element not found. Please make sure the certificate preview is visible."
+      // Load and add certificate template background with compression
+      try {
+        const templateImg = new Image();
+        templateImg.crossOrigin = "anonymous";
+        templateImg.src = "/Course Certificate Model WEB .jpg";
+
+        await new Promise((resolve, reject) => {
+          templateImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Use higher resolution for certificate template (300 DPI equivalent)
+            const maxWidth = 2480; // ~300 DPI for A4 width
+            const maxHeight = 3508; // ~300 DPI for A4 height
+            const imgWidth = templateImg.width;
+            const imgHeight = templateImg.height;
+
+            let newWidth = imgWidth;
+            let newHeight = imgHeight;
+
+            if (imgWidth > maxWidth) {
+              newWidth = maxWidth;
+              newHeight = (imgHeight * maxWidth) / imgWidth;
+            }
+
+            if (newHeight > maxHeight) {
+              newHeight = maxHeight;
+              newWidth = (imgWidth * maxHeight) / imgHeight;
+            }
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            ctx?.drawImage(templateImg, 0, 0, newWidth, newHeight);
+            // Use high quality (0.95) for certificate template to maintain crisp details
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              const scale = Math.min(
+                pdfWidth / compressedImg.width,
+                pdfHeight / compressedImg.height
+              );
+              const finalWidth = compressedImg.width * scale;
+              const finalHeight = compressedImg.height * scale;
+              const x = (pdfWidth - finalWidth) / 2;
+              const y = (pdfHeight - finalHeight) / 2;
+
+              pdf.addImage(
+                compressedImg,
+                "JPEG",
+                x,
+                y,
+                finalWidth,
+                finalHeight
+              );
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          templateImg.onerror = reject;
+        });
+      } catch (error) {
+        console.warn(
+          "Could not load certificate template, continuing without it:",
+          error
         );
       }
 
-      // Ensure template image is loaded before capturing
-      const templateImg = certificateElement.querySelector(
-        ".template-image"
-      ) as HTMLImageElement;
+      // Calculate positions based on Certificate.css percentages
+      // PDF dimensions: 210mm x 297mm (A4)
 
-      if (templateImg && !templateImg.complete) {
+      // Reference numbers: left: 8%, top: 45% -> x: 16.8mm, y: 133.65mm
+      const refX = 16.8;
+      const refStartY = 133.65;
+
+      // Student photo: right: 8%, top: 45% -> x: 193.2 - photoWidth, y: 133.65
+      const photoSize = 21; // 80px approximately = 21mm
+      const photoX = pdfWidth - 16.8 - photoSize;
+      const photoY = 133.65;
+
+      // Course conferred: center horizontally, top: 50% -> x: 105mm, y: 148.5mm
+      const courseX = pdfWidth / 2;
+      const courseStartY = 148.5;
+
+      // Student name: center horizontally, top: 60% -> x: 105mm, y: 178.2mm
+      const nameY = 185;
+
+      // Completion statement: positioned for better text wrapping
+      // Based on Certificate.css: left: 40%, top: 66%, translateX(-33%)
+      // This means text should start at left: 40% and width should be about 70% of page
+      const statementStartY = 196;
+
+      // Bottom signatures: bottom: 14% -> y: 255.42mm
+      const bottomY = 255.42;
+
+      // KUG seal: center horizontally (52%), bottom: 3% -> x: 109.2mm, y: 288mm
+      const sealSize = 15; // Reduced from 21mm for smaller seal
+      const sealX = pdfWidth * 0.52 - sealSize / 2;
+      const sealY = pdfHeight - 12.91 - sealSize;
+
+      // Load and add student photo
+      try {
+        if (student.Photo) {
+          const photoUrl = student.Photo.startsWith("http")
+            ? student.Photo
+            : `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}${
+                student.Photo
+              }`;
+
+          const photoImg = new Image();
+          photoImg.crossOrigin = "anonymous";
+          photoImg.src = photoUrl;
+
+          await new Promise((resolve, reject) => {
+            photoImg.onload = () => {
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              // Use higher resolution multiplier for photos (8x instead of 4x for 300 DPI quality)
+              canvas.width = photoSize * 8;
+              canvas.height = (photoSize * 8 * 90) / 80;
+              ctx?.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
+              // Use high quality (0.95) for student photos to maintain clarity
+              const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+              const compressedPhoto = new Image();
+              compressedPhoto.onload = () => {
+                // Match CSS: 80px x 90px aspect ratio
+                pdf.addImage(
+                  compressedPhoto,
+                  "JPEG",
+                  photoX,
+                  photoY - 5,
+                  photoSize,
+                  photoSize * 1.125
+                );
+                resolve(true);
+              };
+              compressedPhoto.src = compressedDataUrl;
+            };
+            photoImg.onerror = () => {
+              console.warn("Could not load student photo");
+              resolve(true);
+            };
+          });
+        }
+      } catch (error) {
+        console.warn("Could not load student photo:", error);
+      }
+
+      // Load and add chairman signature
+      try {
+        const chairmanImg = new Image();
+        chairmanImg.crossOrigin = "anonymous";
+        chairmanImg.src = "/UMMER SIR SIGN.png";
+
         await new Promise((resolve, reject) => {
-          templateImg.onload = resolve;
-          templateImg.onerror = reject;
-          // If already loaded, resolve immediately
-          if (templateImg.complete) resolve(true);
+          chairmanImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const signWidth = 21;
+            const signHeight = 15;
+            // Use higher resolution multiplier for signatures (8x for 300 DPI quality)
+            canvas.width = signWidth * 8;
+            canvas.height = signHeight * 8;
+            ctx?.drawImage(chairmanImg, 0, 0, canvas.width, canvas.height);
+            // Use maximum quality (1.0) for PNG signatures to maintain transparency and crisp edges
+            const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
+
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Chairman signature positioned at center with proper spacing
+              pdf.addImage(
+                compressedImg,
+                "PNG",
+                courseX - signWidth / 2,
+                bottomY - 20,
+                signWidth,
+                (signWidth * compressedImg.height) / compressedImg.width
+              );
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          chairmanImg.onerror = () => {
+            console.warn("Could not load chairman signature");
+            resolve(true);
+          };
         });
+      } catch (error) {
+        console.warn("Could not load chairman signature:", error);
       }
 
-      // Wait a bit more to ensure all images are rendered
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Load and add controller signature
+      try {
+        const controllerImg = new Image();
+        controllerImg.crossOrigin = "anonymous";
+        controllerImg.src = "/Nargees teacher Sign.png";
 
-      // Try capturing without modifying styles first
-      const certificateHTMLElement = certificateElement as HTMLElement;
+        await new Promise((resolve, reject) => {
+          controllerImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const signWidth = 24;
+            const signHeight = 15;
+            // Use higher resolution multiplier for signatures (8x for 300 DPI quality)
+            canvas.width = signWidth * 8;
+            canvas.height = signHeight * 8;
+            ctx?.drawImage(controllerImg, 0, 0, canvas.width, canvas.height);
+            // Use maximum quality (1.0) for PNG signatures to maintain transparency and crisp edges
+            const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
 
-      // Just add the PDF capture mode class
-      certificateHTMLElement.classList.add("pdf-capture-mode");
-
-      // Temporarily adjust KUG seal size for PDF generation
-      const sealElement = certificateElement.querySelector(
-        ".seal-image"
-      ) as HTMLElement;
-      const originalSealStyles = {
-        width: sealElement?.style.width,
-        height: sealElement?.style.height,
-      };
-
-      if (sealElement) {
-        sealElement.style.height = "95px";
-        sealElement.style.width = "75px";
-        sealElement.style.marginBottom = "10px";
-        sealElement.style.marginLeft = "0px";
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Controller signature positioned on right side
+              pdf.addImage(
+                compressedImg,
+                "PNG",
+                pdfWidth - refX - signWidth - 12,
+                bottomY - 22,
+                signWidth,
+                (signWidth * compressedImg.height) / compressedImg.width
+              );
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          controllerImg.onerror = () => {
+            console.warn("Could not load controller signature");
+            resolve(true);
+          };
+        });
+      } catch (error) {
+        console.warn("Could not load controller signature:", error);
       }
 
-      // Use html2canvas to capture the certificate component with working settings
-      const canvas = await html2canvas(certificateElement as HTMLElement, {
-        scale: 2, // Keep scale 2 for quality
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-        width: certificateElement.clientWidth,
-        height: certificateElement.clientHeight,
-        imageTimeout: 30000,
+      // Load and add KUG seal
+      try {
+        const sealImg = new Image();
+        sealImg.crossOrigin = "anonymous";
+        sealImg.src = "/kug seal.png";
+
+        await new Promise((resolve, reject) => {
+          sealImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            // Use higher resolution multiplier for seal (8x for 300 DPI quality)
+            canvas.width = sealSize * 8;
+            canvas.height = sealSize * 8;
+            ctx?.drawImage(sealImg, 0, 0, canvas.width, canvas.height);
+            // Use maximum quality (1.0) for PNG seal to maintain transparency and crisp details
+            const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
+
+            const compressedImg = new Image();
+            compressedImg.onload = () => {
+              // Use different width and height for rectangular seal if needed
+              const sealWidth = 17;
+              const sealHeight = 22;
+              pdf.addImage(
+                compressedImg,
+                "PNG",
+                sealX - 4,
+                sealY - 6.5,
+                sealWidth,
+                sealHeight
+              );
+              resolve(true);
+            };
+            compressedImg.src = compressedDataUrl;
+          };
+          sealImg.onerror = () => {
+            console.warn("Could not load KUG seal");
+            resolve(true);
+          };
+        });
+      } catch (error) {
+        console.warn("Could not load KUG seal:", error);
+      }
+
+      // Add reference numbers matching Certificate.tsx structure
+      pdf.setFontSize(11);
+      pdf.setFont("times", "bold");
+
+      // Register No.
+      pdf.setTextColor(139, 69, 19); // #8b4513 (brown)
+      pdf.text("Register No.", refX, refStartY);
+      pdf.setTextColor(198, 40, 40); // #c62828 (deep red)
+      pdf.text(`: ${student.RegiNo}`, refX + 22, refStartY);
+
+      // Certificate No.
+      pdf.setTextColor(139, 69, 19); // #8b4513 (brown)
+      pdf.text("Certificate No.", refX, refStartY + 8);
+      pdf.setTextColor(17, 17, 17); // #111 (dark gray)
+      pdf.text(
+        `: ${student.CertificateNumber || "2025" + student.RegiNo.slice(-4)}`,
+        refX + 25,
+        refStartY + 8
+      );
+
+      // Add course conferred section
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont("times", "normal");
+      pdf.text("The certificate of", courseX, courseStartY, {
+        align: "center",
       });
 
-      // Restore original styles
-      certificateHTMLElement.classList.remove("pdf-capture-mode");
+      pdf.setFontSize(20);
+      pdf.setFont("times", "bold");
+      pdf.text(student.Course, courseX, courseStartY + 10, { align: "center" });
 
-      // Restore original seal styles
-      if (sealElement) {
-        sealElement.style.width = originalSealStyles.width || "";
-        sealElement.style.height = originalSealStyles.height || "";
-      }
+      pdf.setFontSize(14);
+      pdf.setFont("times", "normal");
+      pdf.text("has been conferred upon", courseX, courseStartY + 20, {
+        align: "center",
+      });
 
-      // Create PDF from the canvas
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      // Add student name with letter-spacing matching CSS
+      pdf.setFontSize(30);
+      pdf.setFont("times", "bold");
+      pdf.setTextColor(0, 0, 0);
+      // Convert letter-spacing: 1px to PDF units (1px ≈ 0.264mm)
+      const nameWithSpacing = student.Name.toUpperCase();
+      pdf.text(nameWithSpacing, courseX, nameY, { align: "center" });
 
-      // Calculate the aspect ratio of the captured image
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const imgAspectRatio = imgWidth / imgHeight;
-      const pdfAspectRatio = pdfWidth / pdfHeight;
+      // Add completion statement
+      pdf.setFontSize(11);
+      pdf.setFont("times", "normal");
+      pdf.setTextColor(0, 0, 0);
 
-      let finalWidth, finalHeight;
+      const startDate = new Date(student.Batch.start_date);
+      const batchStartDate = startDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
 
-      if (imgAspectRatio > pdfAspectRatio) {
-        // Image is wider than PDF page
-        finalWidth = pdfWidth;
-        finalHeight = pdfWidth / imgAspectRatio;
-      } else {
-        // Image is taller than PDF page
-        finalHeight = pdfHeight;
-        finalWidth = pdfHeight * imgAspectRatio;
-      }
+      const getEndDate = (
+        startDate: string,
+        durationMonths?: number | null
+      ) => {
+        if (!durationMonths) return null;
+        const start = new Date(startDate);
+        const end = new Date(start);
+        end.setMonth(end.getMonth() + durationMonths);
+        return end.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+        });
+      };
 
-      // Center the image on the page
-      const x = (pdfWidth - finalWidth) / 2;
-      const y = (pdfHeight - finalHeight) / 2;
+      const endDate = getEndDate(
+        student.Batch.start_date,
+        student.Batch.duration_months
+      );
 
-      // Debug: Check canvas dimensions and content
+      // Add completion statement with text wrapping
+      pdf.setFontSize(11); // Match CSS font-size: 14px
+      pdf.setFont("times", "normal");
+      pdf.setTextColor(0, 0, 0);
 
-      // Convert canvas to image data URL with high quality
-      const imgData = canvas.toDataURL("image/png", 1.0);
+      const completionLines = [
+        "who successfully completed the course at the Kug Oriental Academy of",
+        "Alternative Medicines Allied Sciences Foundation from " +
+          batchStartDate +
+          " to ",
+        endDate + " " + "and passed the final examination administered by the",
+        "Central Board of Examinations of the Kug Oriental Academy of",
+        "Alternative Medicines Allied Sciences Foundation.",
+      ];
 
-      // Add the image to PDF
-      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+      // Add lines with proper spacing, using splitTextToSize for wrapping
+      // Match CSS line-height: 1.5 (14px * 1.5 = 21px ≈ 5.55mm)
+      const maxWidth = 140; // Maximum width in mm
+      let currentStatementY = statementStartY;
+
+      completionLines.forEach((line) => {
+        const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+        wrappedLines.forEach((wrappedLine, index) => {
+          pdf.text(wrappedLine, courseX, currentStatementY, {
+            align: "center",
+          });
+          currentStatementY += 3; // Line spacing matching line-height: 1.5
+        });
+        currentStatementY += 3; // Extra space between paragraphs
+      });
+
+      // Add date
+      pdf.setFontSize(10);
+      pdf.setFont("times", "bold");
+      pdf.setTextColor(0, 0, 0);
+
+      const displayDate = student.PublishedDate
+        ? new Date(student.PublishedDate)
+            .toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+            .replace(/\//g, "-")
+        : new Date()
+            .toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+            .replace(/\//g, "-");
+
+      pdf.text(`Date: ${displayDate}`, refX + 12, bottomY);
+
+      // Add chairman title below signature
+      pdf.setFontSize(10);
+      pdf.setFont("times", "bold");
+      pdf.text("Chairman", courseX, bottomY, { align: "center" });
+
+      // Add controller title below signature
+      pdf.setFontSize(10);
+      pdf.setFont("times", "bold");
+      pdf.text(
+        "Controller\nof Examination",
+        pdfWidth - refX - 25,
+        bottomY - 4,
+        {
+          align: "center",
+        }
+      );
 
       // Save the PDF
       pdf.save(
@@ -1048,7 +1371,6 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             size={isMobile ? "default" : "lg"}
             disabled={
               isGeneratingCertificate ||
-              !isDesktop ||
               (student.Result !== "Pass" &&
                 student.Result !== "PASS" &&
                 student.Result !== "pass")
@@ -1057,9 +1379,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               student.Result === "Pass" ||
               student.Result === "PASS" ||
               student.Result === "pass"
-                ? isDesktop
-                  ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 hover:shadow-elegant text-white"
-                  : "bg-gray-400 text-gray-600 cursor-not-allowed"
+                ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 hover:shadow-elegant text-white"
                 : "bg-gray-400 text-gray-600 cursor-not-allowed"
             }`}
           >
@@ -1078,39 +1398,20 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                   {student.Result === "Pass" ||
                   student.Result === "PASS" ||
                   student.Result === "pass"
-                    ? isDesktop
-                      ? "Generate Certificate"
-                      : "Use Desktop View"
+                    ? "Generate Certificate"
                     : "Certificate Not Available"}
                 </span>
                 <span className="sm:hidden">
                   {student.Result === "Pass" ||
                   student.Result === "PASS" ||
                   student.Result === "pass"
-                    ? isDesktop
-                      ? "Certificate"
-                      : "Desktop"
+                    ? "Certificate"
                     : "N/A"}
                 </span>
               </>
             )}
           </Button>
         )}
-
-        {/* Desktop requirement message for non-desktop users */}
-        {isAuthenticated &&
-          student &&
-          (student.Result === "Pass" ||
-            student.Result === "PASS" ||
-            student.Result === "pass") &&
-          !isDesktop && (
-            <div className="mt-3 text-center">
-              <p className="text-xs text-muted-foreground">
-                💡 Switch to desktop view for certificate preview and PDF
-                generation
-              </p>
-            </div>
-          )}
       </div>
     </div>
   );

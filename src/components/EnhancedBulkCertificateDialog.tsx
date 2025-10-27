@@ -22,16 +22,12 @@ import {
   Loader2,
   Search,
   Filter,
-  DownloadCloud,
 } from "lucide-react";
+import jsPDF from "jspdf";
 import { Student, Course, Batch } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useResponsive } from "@/hooks/use-responsive";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Certificate } from "@/components/Certificate";
-import { PrintPDFButtons } from "@/components/PrintPDFButtons";
-import DataService from "@/services/dataService";
 import api from "@/services/api";
 
 interface EnhancedBulkCertificateDialogProps {
@@ -54,10 +50,6 @@ export const EnhancedBulkCertificateDialog = ({
   const [courses, setCourses] = useState<Course[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [certificatePreviews, setCertificatePreviews] = useState<Student[]>([]);
-  const [showPreviews, setShowPreviews] = useState(false);
-  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
-  const { isDesktop } = useResponsive();
 
   // Filter states
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
@@ -265,7 +257,397 @@ export const EnhancedBulkCertificateDialog = ({
     });
   };
 
-  const generateCertificatePreviews = () => {
+  const clearFilters = () => {
+    setSelectedCourse("all");
+    setSelectedBatch("all");
+    setSearchTerm("");
+  };
+
+  const generateSingleCertificate = async (
+    student: Student,
+    pdf: jsPDF
+  ): Promise<void> => {
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Load and add certificate template background
+    try {
+      const templateImg = new Image();
+      templateImg.crossOrigin = "anonymous";
+      templateImg.src = "/Course Certificate Model WEB .jpg";
+
+      await new Promise((resolve, reject) => {
+        templateImg.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const maxWidth = 2480;
+          const maxHeight = 3508;
+          const imgWidth = templateImg.width;
+          const imgHeight = templateImg.height;
+
+          let newWidth = imgWidth;
+          let newHeight = imgHeight;
+
+          if (imgWidth > maxWidth) {
+            newWidth = maxWidth;
+            newHeight = (imgHeight * maxWidth) / imgWidth;
+          }
+
+          if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            newWidth = (imgWidth * maxHeight) / imgHeight;
+          }
+
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+
+          ctx?.drawImage(templateImg, 0, 0, newWidth, newHeight);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+          const compressedImg = new Image();
+          compressedImg.onload = () => {
+            const scale = Math.min(
+              pdfWidth / compressedImg.width,
+              pdfHeight / compressedImg.height
+            );
+            const finalWidth = compressedImg.width * scale;
+            const finalHeight = compressedImg.height * scale;
+            const x = (pdfWidth - finalWidth) / 2;
+            const y = (pdfHeight - finalHeight) / 2;
+
+            pdf.addImage(compressedImg, "JPEG", x, y, finalWidth, finalHeight);
+            resolve(true);
+          };
+          compressedImg.src = compressedDataUrl;
+        };
+        templateImg.onerror = reject;
+      });
+    } catch (error) {
+      console.warn("Could not load certificate template:", error);
+    }
+
+    const refX = 16.8;
+    const refStartY = 133.65;
+    const photoSize = 21;
+    const photoX = pdfWidth - 16.8 - photoSize;
+    const photoY = 133.65;
+    const courseX = pdfWidth / 2;
+    const courseStartY = 148.5;
+    const nameY = 185;
+    const statementStartY = 196;
+    const bottomY = 255.42;
+    const sealSize = 15;
+    const sealX = pdfWidth * 0.52 - sealSize / 2;
+    const sealY = pdfHeight - 12.91 - sealSize;
+
+    // Load and add student photo
+    try {
+      if (student.Photo) {
+        const photoUrl = student.Photo.startsWith("http")
+          ? student.Photo
+          : `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}${
+              student.Photo
+            }`;
+
+        const photoImg = new Image();
+        photoImg.crossOrigin = "anonymous";
+        photoImg.src = photoUrl;
+
+        await new Promise((resolve) => {
+          photoImg.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = photoSize * 8;
+            canvas.height = (photoSize * 8 * 90) / 80;
+            ctx?.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+
+            const compressedPhoto = new Image();
+            compressedPhoto.onload = () => {
+              pdf.addImage(
+                compressedPhoto,
+                "JPEG",
+                photoX,
+                photoY - 5,
+                photoSize,
+                photoSize * 1.125
+              );
+              resolve(true);
+            };
+            compressedPhoto.src = compressedDataUrl;
+          };
+          photoImg.onerror = () => {
+            console.warn("Could not load student photo");
+            resolve(true);
+          };
+        });
+      }
+    } catch (error) {
+      console.warn("Could not load student photo:", error);
+    }
+
+    // Load and add chairman signature
+    try {
+      const chairmanImg = new Image();
+      chairmanImg.crossOrigin = "anonymous";
+      chairmanImg.src = "/UMMER SIR SIGN.png";
+
+      await new Promise((resolve) => {
+        chairmanImg.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const signWidth = 21;
+          canvas.width = signWidth * 8;
+          canvas.height = 15 * 8;
+          ctx?.drawImage(chairmanImg, 0, 0, canvas.width, canvas.height);
+          const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
+
+          const compressedImg = new Image();
+          compressedImg.onload = () => {
+            pdf.addImage(
+              compressedImg,
+              "PNG",
+              courseX - signWidth / 2,
+              bottomY - 20,
+              signWidth,
+              (signWidth * compressedImg.height) / compressedImg.width
+            );
+            resolve(true);
+          };
+          compressedImg.src = compressedDataUrl;
+        };
+        chairmanImg.onerror = () => {
+          console.warn("Could not load chairman signature");
+          resolve(true);
+        };
+      });
+    } catch (error) {
+      console.warn("Could not load chairman signature:", error);
+    }
+
+    // Load and add controller signature
+    try {
+      const controllerImg = new Image();
+      controllerImg.crossOrigin = "anonymous";
+      controllerImg.src = "/Nargees teacher Sign.png";
+
+      await new Promise((resolve) => {
+        controllerImg.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const signWidth = 24;
+          canvas.width = signWidth * 8;
+          canvas.height = 15 * 8;
+          ctx?.drawImage(controllerImg, 0, 0, canvas.width, canvas.height);
+          const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
+
+          const compressedImg = new Image();
+          compressedImg.onload = () => {
+            pdf.addImage(
+              compressedImg,
+              "PNG",
+              pdfWidth - refX - signWidth - 12,
+              bottomY - 22,
+              signWidth,
+              (signWidth * compressedImg.height) / compressedImg.width
+            );
+            resolve(true);
+          };
+          compressedImg.src = compressedDataUrl;
+        };
+        controllerImg.onerror = () => {
+          console.warn("Could not load controller signature");
+          resolve(true);
+        };
+      });
+    } catch (error) {
+      console.warn("Could not load controller signature:", error);
+    }
+
+    // Load and add KUG seal
+    try {
+      const sealImg = new Image();
+      sealImg.crossOrigin = "anonymous";
+      sealImg.src = "/kug seal.png";
+
+      await new Promise((resolve) => {
+        sealImg.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = sealSize * 8;
+          canvas.height = sealSize * 8;
+          ctx?.drawImage(sealImg, 0, 0, canvas.width, canvas.height);
+          const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
+
+          const compressedImg = new Image();
+          compressedImg.onload = () => {
+            const sealWidth = 17;
+            const sealHeight = 22;
+            pdf.addImage(
+              compressedImg,
+              "PNG",
+              sealX - 4,
+              sealY - 6.5,
+              sealWidth,
+              sealHeight
+            );
+            resolve(true);
+          };
+          compressedImg.src = compressedDataUrl;
+        };
+        sealImg.onerror = () => {
+          console.warn("Could not load KUG seal");
+          resolve(true);
+        };
+      });
+    } catch (error) {
+      console.warn("Could not load KUG seal:", error);
+    }
+
+    // Add reference numbers
+    pdf.setFontSize(11);
+    pdf.setFont("times", "bold");
+
+    pdf.setTextColor(139, 69, 19);
+    pdf.text("Register No.", refX, refStartY);
+    pdf.setTextColor(198, 40, 40);
+    pdf.text(`: ${student.RegiNo}`, refX + 22, refStartY);
+
+    pdf.setTextColor(139, 69, 19);
+    pdf.text("Certificate No.", refX, refStartY + 8);
+    pdf.setTextColor(17, 17, 17);
+    pdf.text(
+      `: ${student.CertificateNumber || "2025" + student.RegiNo.slice(-4)}`,
+      refX + 25,
+      refStartY + 8
+    );
+
+    // Add course conferred section
+    pdf.setFontSize(14);
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont("times", "normal");
+    pdf.text("The certificate of", courseX, courseStartY, {
+      align: "center",
+    });
+
+    pdf.setFontSize(20);
+    pdf.setFont("times", "bold");
+    pdf.text(student.Course, courseX, courseStartY + 10, { align: "center" });
+
+    pdf.setFontSize(14);
+    pdf.setFont("times", "normal");
+    pdf.text("has been conferred upon", courseX, courseStartY + 20, {
+      align: "center",
+    });
+
+    // Add student name
+    pdf.setFontSize(30);
+    pdf.setFont("times", "bold");
+    pdf.setTextColor(0, 0, 0);
+    const nameWithSpacing = student.Name.toUpperCase();
+    pdf.text(nameWithSpacing, courseX, nameY, { align: "center" });
+
+    // Add completion statement
+    pdf.setFontSize(11);
+    pdf.setFont("times", "normal");
+    pdf.setTextColor(0, 0, 0);
+
+    const startDate = new Date(student.Batch.start_date);
+    const batchStartDate = startDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
+
+    const getEndDate = (startDate: string, durationMonths?: number | null) => {
+      if (!durationMonths) return null;
+      const start = new Date(startDate);
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + durationMonths);
+      return end.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
+    };
+
+    const endDate = getEndDate(
+      student.Batch.start_date,
+      student.Batch.duration_months
+    );
+
+    pdf.setFontSize(11);
+    pdf.setFont("times", "normal");
+    pdf.setTextColor(0, 0, 0);
+
+    const completionLines = [
+      "who successfully completed the course at the Kug Oriental Academy of",
+      "Alternative Medicines Allied Sciences Foundation from " +
+        batchStartDate +
+        " to ",
+      endDate + " " + "and passed the final examination administered by the",
+      "Central Board of Examinations of the Kug Oriental Academy of",
+      "Alternative Medicines Allied Sciences Foundation.",
+    ];
+
+    const maxWidth = 140;
+    let currentStatementY = statementStartY;
+
+    completionLines.forEach((line) => {
+      const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+      wrappedLines.forEach((wrappedLine) => {
+        pdf.text(wrappedLine, courseX, currentStatementY, {
+          align: "center",
+        });
+        currentStatementY += 3;
+      });
+      currentStatementY += 3;
+    });
+
+    // Add date
+    pdf.setFontSize(10);
+    pdf.setFont("times", "bold");
+    pdf.setTextColor(0, 0, 0);
+
+    const displayDate = student.PublishedDate
+      ? new Date(student.PublishedDate)
+          .toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+          .replace(/\//g, "-")
+      : new Date()
+          .toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+          .replace(/\//g, "-");
+
+    pdf.text(`Date: ${displayDate}`, refX + 12, bottomY);
+
+    // Add chairman title
+    pdf.setFontSize(10);
+    pdf.setFont("times", "bold");
+    pdf.text("Chairman", courseX, bottomY, { align: "center" });
+
+    // Add controller title
+    pdf.setFontSize(10);
+    pdf.setFont("times", "bold");
+    pdf.text("Controller\nof Examination", pdfWidth - refX - 25, bottomY - 4, {
+      align: "center",
+    });
+  };
+
+  const handleBulkDownload = async () => {
+    if (filteredStudents.length === 0) {
+      toast({
+        title: "No Students Available",
+        description: "No eligible students found for certificate generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const selectedStudents = filteredStudents.filter((s) =>
       selectedRegiNos.has(s.RegiNo)
     );
@@ -273,209 +655,59 @@ export const EnhancedBulkCertificateDialog = ({
     if (selectedStudents.length === 0) {
       toast({
         title: "No Students Selected",
-        description:
-          "Please select at least one student to generate certificate previews.",
+        description: "Please select at least one student to download.",
         variant: "destructive",
       });
       return;
     }
 
-    setCertificatePreviews(selectedStudents);
-    setShowPreviews(true);
-
-    toast({
-      title: "Certificate Previews Generated",
-      description: `Generated ${selectedStudents.length} certificate previews.`,
-    });
-  };
-
-  const handleBackToSelection = () => {
-    setShowPreviews(false);
-    setCertificatePreviews([]);
-  };
-
-  const clearFilters = () => {
-    setSelectedCourse("all");
-    setSelectedBatch("all");
-    setSearchTerm("");
-  };
-
-  const handleDownloadAll = async () => {
-    if (certificatePreviews.length === 0) {
-      toast({
-        title: "No Certificates to Download",
-        description: "There are no certificate previews to download.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsDownloadingAll(true);
+    setIsGenerating(true);
+    setProgress(0);
 
     try {
       toast({
-        title: "Starting Bulk Download",
-        description: `Preparing to download ${certificatePreviews.length} certificates...`,
+        title: "Generating Certificates",
+        description: `Starting bulk download for ${selectedStudents.length} certificates...`,
       });
 
-      // Import jsPDF and html2canvas dynamically
-      const { default: jsPDF } = await import("jspdf");
-      const { default: html2canvas } = await import("html2canvas");
+      for (let i = 0; i < selectedStudents.length; i++) {
+        const student = selectedStudents[i];
+        const pdf = new jsPDF("p", "mm", "a4");
 
-      let successCount = 0;
-      let errorCount = 0;
+        await generateSingleCertificate(student, pdf);
 
-      for (let i = 0; i < certificatePreviews.length; i++) {
-        const student = certificatePreviews[i];
+        pdf.save(
+          `${student.RegiNo}_${student.Name.replace(
+            /\s+/g,
+            "_"
+          )}_Certificate.pdf`
+        );
 
-        try {
-          // Wait a bit between downloads to avoid overwhelming the browser
-          if (i > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
+        const progressPercent = Math.round(
+          ((i + 1) / selectedStudents.length) * 100
+        );
+        setProgress(progressPercent);
 
-          // Find the certificate element for this student
-          const certificateElement = document.querySelector(
-            `[data-student-id="${student.RegiNo}"] .certificate-container`
-          );
-
-          if (!certificateElement) {
-            console.warn(
-              `Certificate element not found for student ${student.RegiNo}`
-            );
-            errorCount++;
-            continue;
-          }
-
-          // Ensure template image is loaded before capturing
-          const templateImg = certificateElement.querySelector(
-            ".template-image"
-          ) as HTMLImageElement;
-
-          if (templateImg && !templateImg.complete) {
-            await new Promise((resolve, reject) => {
-              templateImg.onload = resolve;
-              templateImg.onerror = reject;
-              if (templateImg.complete) resolve(true);
-            });
-          }
-
-          // Wait a bit to ensure all images are rendered
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          // Add PDF capture mode class
-          const certificateHTMLElement = certificateElement as HTMLElement;
-          certificateHTMLElement.classList.add("pdf-capture-mode");
-
-          // Temporarily adjust KUG seal size for PDF generation
-          const sealElement = certificateElement.querySelector(
-            ".seal-image"
-          ) as HTMLElement;
-          const originalSealStyles = {
-            width: sealElement?.style.width,
-            height: sealElement?.style.height,
-          };
-
-          if (sealElement) {
-            sealElement.style.height = "95px";
-            sealElement.style.width = "75px";
-            sealElement.style.marginBottom = "10px";
-            sealElement.style.marginLeft = "0px";
-          }
-
-          // Capture the certificate
-          const canvas = await html2canvas(certificateElement as HTMLElement, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null,
-            logging: false,
-            width: certificateElement.clientWidth,
-            height: certificateElement.clientHeight,
-            imageTimeout: 30000,
-          });
-
-          // Restore original styles
-          certificateHTMLElement.classList.remove("pdf-capture-mode");
-
-          if (sealElement) {
-            sealElement.style.width = originalSealStyles.width || "";
-            sealElement.style.height = originalSealStyles.height || "";
-          }
-
-          // Create PDF from the canvas
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-
-          // Calculate the aspect ratio of the captured image
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          const imgAspectRatio = imgWidth / imgHeight;
-          const pdfAspectRatio = pdfWidth / pdfHeight;
-
-          let finalWidth, finalHeight;
-
-          if (imgAspectRatio > pdfAspectRatio) {
-            finalWidth = pdfWidth;
-            finalHeight = pdfWidth / imgAspectRatio;
-          } else {
-            finalHeight = pdfHeight;
-            finalWidth = pdfHeight * imgAspectRatio;
-          }
-
-          // Center the image on the page
-          const x = (pdfWidth - finalWidth) / 2;
-          const y = (pdfHeight - finalHeight) / 2;
-
-          // Convert canvas to image data URL with high quality
-          const imgData = canvas.toDataURL("image/png", 1.0);
-
-          // Add the image to PDF
-          pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
-
-          // Save the PDF
-          pdf.save(
-            `${student.RegiNo}_${student.Name.replace(
-              /\s+/g,
-              "_"
-            )}_Certificate.pdf`
-          );
-
-          successCount++;
-        } catch (error) {
-          console.error(
-            `Error generating certificate for ${student.RegiNo}:`,
-            error
-          );
-          errorCount++;
-        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Show final results
-      if (successCount > 0) {
-        toast({
-          title: "Bulk Download Complete",
-          description: `Successfully downloaded ${successCount} certificates${
-            errorCount > 0 ? ` (${errorCount} failed)` : ""
-          }`,
-        });
-      } else {
-        toast({
-          title: "Bulk Download Failed",
-          description: "No certificates were downloaded successfully.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error in bulk download:", error);
       toast({
-        title: "Bulk Download Failed",
-        description: "An error occurred during the bulk download process.",
+        title: "Certificates Downloaded",
+        description: `Successfully generated ${selectedStudents.length} certificates.`,
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error generating certificates:", error);
+      toast({
+        title: "Generation Failed",
+        description:
+          "There was an error generating certificates. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsDownloadingAll(false);
+      setIsGenerating(false);
+      setProgress(0);
     }
   };
 
@@ -485,324 +717,197 @@ export const EnhancedBulkCertificateDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Award className="h-5 w-5 text-amber-600" />
-            {showPreviews
-              ? "Certificate Previews"
-              : "Bulk Certificate Download"}
+            Bulk Certificate Download
           </DialogTitle>
           <DialogDescription>
-            {showPreviews
-              ? "Review and download individual certificates"
-              : "Select students and generate certificate previews with filtering options"}
+            Select students and download certificates with filtering options
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 overflow-y-auto max-h-[calc(90vh-100px)]">
-          {showPreviews ? (
-            // Certificate Previews Section
-            <div className="space-y-3">
-              {/* Desktop requirement message for non-desktop users */}
-              {!isDesktop && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Award className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">
-                        Desktop View Required for Certificate Previews
-                      </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        Certificate previews require desktop view for proper
-                        display and PDF generation. Please switch to desktop
-                        view to view and download certificates.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+          <>
+            {/* Summary */}
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 rounded-lg p-3 sm:p-4 border border-emerald-200 dark:border-emerald-800">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
-                  <span className="font-semibold text-sm sm:text-base text-emerald-900 dark:text-emerald-100">
-                    {certificatePreviews.length} Certificate Previews
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                  <Button
-                    onClick={handleDownloadAll}
-                    disabled={isDownloadingAll}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 gap-2 w-full sm:w-auto"
-                  >
-                    {isDownloadingAll ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="hidden sm:inline">Downloading...</span>
-                        <span className="sm:hidden">Downloading...</span>
-                      </>
-                    ) : (
-                      <>
-                        <DownloadCloud className="h-4 w-4" />
-                        <span className="hidden sm:inline">Download All</span>
-                        <span className="sm:hidden">Download All</span>
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleBackToSelection}
-                    variant="outline"
-                    className="gap-2 w-full sm:w-auto"
-                  >
-                    ← Back to Selection
-                  </Button>
-                </div>
-              </div>
-
-              {/* Certificate Previews - Only for desktop users */}
-              {isDesktop && (
-                <ScrollArea className="h-[300px] sm:h-[400px] rounded-md border p-2 sm:p-4">
-                  <div className="space-y-3 sm:space-y-4">
-                    {certificatePreviews.map((student, index) => (
-                      <div
-                        key={student.RegiNo}
-                        data-student-id={student.RegiNo}
-                        className="space-y-2 sm:space-y-3"
-                      >
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 sm:p-3 bg-muted rounded-lg gap-2">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-sm sm:text-lg truncate">
-                              {student.Name}
-                            </h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                              {student.RegiNo} • {student.CertificateNumber}
-                            </p>
-                          </div>
-                          <div className="text-xs sm:text-sm text-muted-foreground shrink-0">
-                            Certificate {index + 1} of{" "}
-                            {certificatePreviews.length}
-                          </div>
-                        </div>
-
-                        {/* Certificate Preview */}
-                        <div className="border rounded-lg p-2 sm:p-4 bg-white">
-                          <Certificate student={student} />
-                          <div className="mt-2 sm:mt-4">
-                            <PrintPDFButtons student={student} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                    <span className="font-semibold text-sm sm:text-base text-emerald-900 dark:text-emerald-100">
+                      {filteredStudents.length} Eligible Students
+                    </span>
                   </div>
-                </ScrollArea>
-              )}
+                  <div className="flex items-center gap-2 pl-0 sm:pl-3 border-l-0 sm:border-l border-emerald-300/50 dark:border-emerald-700/50">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <span className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
+                      Select all ({selectedRegiNos.size}/
+                      {filteredStudents.length})
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleBulkDownload}
+                  disabled={
+                    filteredStudents.length === 0 ||
+                    selectedRegiNos.size === 0 ||
+                    isGenerating
+                  }
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {progress}%
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Selected
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          ) : (
-            // Student Selection Section
-            <>
-              {/* Summary */}
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 rounded-lg p-3 sm:p-4 border border-emerald-200 dark:border-emerald-800">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
-                      <span className="font-semibold text-sm sm:text-base text-emerald-900 dark:text-emerald-100">
-                        {filteredStudents.length} Eligible Students
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 pl-0 sm:pl-3 border-l-0 sm:border-l border-emerald-300/50 dark:border-emerald-700/50">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleSelectAll}
-                      />
-                      <span className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
-                        Select all ({selectedRegiNos.size}/
-                        {filteredStudents.length})
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={generateCertificatePreviews}
-                    disabled={
-                      filteredStudents.length === 0 ||
-                      selectedRegiNos.size === 0 ||
-                      !isDesktop
-                    }
-                    className={`w-full sm:w-auto ${
-                      isDesktop
-                        ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
-                        : "bg-gray-400 text-gray-600 cursor-not-allowed"
-                    }`}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isDesktop ? "Generate Previews" : "Use Desktop View"}
-                  </Button>
-                </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg border">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Course
+                </label>
+                <Select
+                  value={selectedCourse}
+                  onValueChange={setSelectedCourse}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Courses</SelectItem>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.name}>
+                        {course.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="PDA">PDA</SelectItem>
+                    <SelectItem value="DCP">DCP</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Desktop requirement message for non-desktop users */}
-              {!isDesktop && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Award className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">
-                        Desktop View Required
-                      </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        Certificate previews and bulk downloads work best on
-                        desktop screens. Please switch to desktop view for the
-                        full experience.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg border">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Course
-                  </label>
-                  <Select
-                    value={selectedCourse}
-                    onValueChange={setSelectedCourse}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Courses</SelectItem>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.name}>
-                          {course.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="PDA">PDA</SelectItem>
-                      <SelectItem value="DCP">DCP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Batch</label>
-                  <Select
-                    value={selectedBatch}
-                    onValueChange={setSelectedBatch}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select batch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Batches</SelectItem>
-                      {batches.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.name}>
-                          {batch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    Search
-                  </label>
-                  <Input
-                    placeholder="Search by name, register no..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="w-full"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batch</label>
+                <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Batches</SelectItem>
+                    {batches.map((batch) => (
+                      <SelectItem key={batch.id} value={batch.name}>
+                        {batch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Progress Bar */}
-              {isGenerating && (
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div
-                    className="bg-gradient-to-r from-amber-600 to-orange-600 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Search
+                </label>
+                <Input
+                  placeholder="Search by name, register no..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-              {/* Student List */}
-              <ScrollArea className="h-[300px] sm:h-[400px] rounded-md border p-2 sm:p-4">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Loading students and courses...</span>
-                    </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {isGenerating && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                <div
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            )}
+
+            {/* Student List */}
+            <ScrollArea className="h-[300px] sm:h-[400px] rounded-md border p-2 sm:p-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading students and courses...</span>
                   </div>
-                ) : (
-                  <div className="space-y-1 sm:space-y-2">
-                    {filteredStudents.map((student, index) => (
-                      <div
-                        key={student.RegiNo}
-                        className="flex items-center justify-between p-2 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <Checkbox
-                            checked={selectedRegiNos.has(student.RegiNo)}
-                            onCheckedChange={() => toggleOne(student.RegiNo)}
-                            className="shrink-0"
-                          />
-                          <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm shrink-0">
-                            {index + 1}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-xs sm:text-sm truncate">
-                              {student.Name}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              <span className="hidden sm:inline">Reg: </span>
-                              {student.RegiNo}
-                              <span className="hidden sm:inline">
-                                {" "}
-                                • Cert:{" "}
-                              </span>
-                              <span className="sm:hidden"> • </span>
-                              {student.CertificateNumber}
-                            </p>
-                          </div>
+                </div>
+              ) : (
+                <div className="space-y-1 sm:space-y-2">
+                  {filteredStudents.map((student, index) => (
+                    <div
+                      key={student.RegiNo}
+                      className="flex items-center justify-between p-2 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <Checkbox
+                          checked={selectedRegiNos.has(student.RegiNo)}
+                          onCheckedChange={() => toggleOne(student.RegiNo)}
+                          className="shrink-0"
+                        />
+                        <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm shrink-0">
+                          {index + 1}
                         </div>
-                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                          <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
-                            {student.Result}
-                          </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-xs sm:text-sm truncate">
+                            {student.Name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            <span className="hidden sm:inline">Reg: </span>
+                            {student.RegiNo}
+                            <span className="hidden sm:inline"> • Cert: </span>
+                            <span className="sm:hidden"> • </span>
+                            {student.CertificateNumber}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-
-              {!isLoading && filteredStudents.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No eligible students found.</p>
-                  <p className="text-sm mt-2">
-                    Try adjusting your filters or check if students have
-                    certificate numbers and PASS results.
-                  </p>
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+                          {student.Result}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </>
-          )}
+            </ScrollArea>
+
+            {!isLoading && filteredStudents.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No eligible students found.</p>
+                <p className="text-sm mt-2">
+                  Try adjusting your filters or check if students have
+                  certificate numbers and PASS results.
+                </p>
+              </div>
+            )}
+          </>
         </div>
       </DialogContent>
     </Dialog>
