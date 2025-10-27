@@ -475,12 +475,41 @@ const Students: React.FC = () => {
         }
       };
     } else if (file.type.startsWith("image/")) {
+      // Validate image file type
+      const validImageTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+      ];
+      if (!validImageTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description:
+            "Please upload a valid image file (JPEG, PNG, GIF, WebP, BMP)",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Handle image files
       setBulkImages((prev) => [...prev, file]);
-      toast({
-        title: "Image Added",
-        description: `Added ${file.name} to bulk import`,
-      });
+
+      // Show file size information for large files
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Large Image Added",
+          description: `Added ${file.name} (${fileSizeMB} MB) to bulk import. Upload may take time.`,
+        });
+      } else {
+        toast({
+          title: "Image Added",
+          description: `Added ${file.name} to bulk import`,
+        });
+      }
     }
   };
 
@@ -905,6 +934,35 @@ const Students: React.FC = () => {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate image file type
+      const validImageTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+      ];
+      if (!validImageTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description:
+            "Please upload a valid image file (JPEG, PNG, GIF, WebP, BMP)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Show warning for very large files (>10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Large File Detected",
+          description: `File size: ${(file.size / (1024 * 1024)).toFixed(
+            2
+          )} MB. Upload may take a moment.`,
+        });
+      }
+
       setFormData({ ...formData, photo: file });
     }
   };
@@ -2095,7 +2153,8 @@ const Students: React.FC = () => {
                 Export Students to Excel
               </DialogTitle>
               <DialogDescription className="text-sm sm:text-base">
-                Select students to export to Excel format then delete the data, then upload back the exported data for bulk updates.
+                Select students to export to Excel format then delete the data,
+                then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
