@@ -192,9 +192,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
             <div className="flex items-center justify-between p-4 border-b border-border/40">
               <div className="flex items-center justify-center flex-1">
                 <img
-                  src="/kug logo.jpg"
+                  src="/kug logo 2.png"
                   alt="KUG Logo"
-                  className="h-10 w-auto object-contain"
+                  className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
                 />
               </div>
               <Button
@@ -233,7 +233,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
               </div>
 
               {/* Bulk Certificate button */}
-              {isAuthenticated && location.pathname === "/" && (
+              {isAuthenticated && (
                 <div className="mt-6 space-y-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Quick Actions
