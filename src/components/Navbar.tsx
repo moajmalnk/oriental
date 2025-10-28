@@ -190,9 +190,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
           <div className="flex flex-col h-full">
             {/* Sidebar Header */}
             <div className="flex items-center justify-between p-4 border-b border-border/40">
-              <h2 className="text-sm font-semibold text-foreground font-['Poppins']">
-                result.kugoriental.com
-              </h2>
+              <div className="flex items-center justify-center flex-1">
+                <img
+                  src="/kug logo.jpg"
+                  alt="KUG Logo"
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="sm"

@@ -6,6 +6,9 @@ import { Student } from "@/types";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/services/api";
+import axios from "axios";
+import { ACCESS_TOKEN } from "@/services/constants";
 
 interface PrintPDFButtonsProps {
   student: Student;
@@ -1000,9 +1003,43 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                 student.Photo
               }`;
 
+          // Fetch image as blob - use axios directly for absolute URLs, api instance for relative
+          let response;
+          if (photoUrl.startsWith("http")) {
+            // For absolute URLs, use axios directly with auth token
+            const token = localStorage.getItem(ACCESS_TOKEN);
+            response = await axios.get(photoUrl, {
+              responseType: "blob",
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+          } else {
+            // For relative URLs, use the api instance
+            response = await api.get(photoUrl, {
+              responseType: "blob",
+            });
+          }
+
+          // Convert blob to base64
+          const blobToBase64 = (blob: Blob): Promise<string> => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                if (typeof reader.result === "string") {
+                  resolve(reader.result);
+                } else {
+                  reject(new Error("Failed to convert blob to base64"));
+                }
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          };
+
+          const base64Image = await blobToBase64(response.data);
+
+          // Create image from base64
           const photoImg = new Image();
-          photoImg.crossOrigin = "anonymous";
-          photoImg.src = photoUrl;
+          photoImg.src = base64Image;
 
           await new Promise((resolve, reject) => {
             photoImg.onload = () => {
@@ -1028,16 +1065,21 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                 );
                 resolve(true);
               };
+              compressedPhoto.onerror = () => {
+                console.warn("Could not process compressed photo");
+                resolve(true);
+              };
               compressedPhoto.src = compressedDataUrl;
             };
             photoImg.onerror = () => {
-              console.warn("Could not load student photo");
+              console.warn("Could not load student photo from base64");
               resolve(true);
             };
           });
         }
       } catch (error) {
         console.warn("Could not load student photo:", error);
+        // Continue without photo instead of failing
       }
 
       // Load and add chairman signature
