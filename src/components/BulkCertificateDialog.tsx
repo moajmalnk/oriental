@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import DataService from "@/services/dataService";
-import axios from "axios";
-import { ACCESS_TOKEN } from "@/services/constants";
 
 interface BulkCertificateDialogProps {
   open: boolean;
@@ -270,52 +268,15 @@ export const BulkCertificateDialog = ({
     // Add student photo using backend photo URL
     if (student.Photo) {
       try {
+        const photoImg = new Image();
+        photoImg.crossOrigin = "anonymous";
         // Use backend photo URL
         const photoUrl = student.Photo.startsWith("http")
           ? student.Photo
           : `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}${
               student.Photo
             }`;
-
-        // Fetch image as blob to handle CORS and authentication
-        let response;
-        if (photoUrl.startsWith("http")) {
-          const token = localStorage.getItem(ACCESS_TOKEN);
-          response = await axios.get(photoUrl, {
-            responseType: "blob",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-        } else {
-          // For relative URLs, construct full URL and fetch
-          const fullUrl = `${
-            import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
-          }${photoUrl}`;
-          const token = localStorage.getItem(ACCESS_TOKEN);
-          response = await axios.get(fullUrl, {
-            responseType: "blob",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-        }
-
-        // Convert blob to base64
-        const blobToBase64 = (blob: Blob): Promise<string> => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              if (typeof reader.result === "string") {
-                resolve(reader.result);
-              } else {
-                reject(new Error("Failed to convert blob to base64"));
-              }
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        };
-
-        const base64Image = await blobToBase64(response.data);
-        const photoImg = new Image();
-        photoImg.src = base64Image;
+        photoImg.src = photoUrl;
 
         await new Promise((resolve) => {
           photoImg.onload = () => {
@@ -344,12 +305,6 @@ export const BulkCertificateDialog = ({
                 photoY,
                 photoWidth,
                 photoHeight
-              );
-              resolve(true);
-            };
-            compressedPhotoImg.onerror = () => {
-              console.warn(
-                `Could not process compressed photo for ${student.RegiNo}`
               );
               resolve(true);
             };
