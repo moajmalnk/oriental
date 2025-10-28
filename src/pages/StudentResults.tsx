@@ -127,6 +127,104 @@ interface BulkCreationResult {
   }>;
 }
 
+// Utility function to parse various date formats and convert to YYYY-MM-DD
+const parseDateToYYYYMMDD = (dateString: string): string | null => {
+  if (!dateString || !dateString.trim()) {
+    return null;
+  }
+
+  const trimmed = dateString.trim();
+
+  // Remove any extra whitespace
+  const cleaned = trimmed.replace(/\s+/g, " ");
+
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+    const date = new Date(cleaned);
+    if (!isNaN(date.getTime())) {
+      return cleaned;
+    }
+  }
+
+  // Try DD-MM-YYYY format
+  if (/^\d{2}-\d{2}-\d{4}$/.test(cleaned)) {
+    const parts = cleaned.split("-");
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
+      const date = new Date(year, month - 1, day);
+      // Validate that the date was created correctly (handles invalid dates like Feb 30)
+      if (
+        !isNaN(date.getTime()) &&
+        date.getDate() === day &&
+        date.getMonth() === month - 1 &&
+        date.getFullYear() === year
+      ) {
+        return `${year}-${String(month).padStart(2, "0")}-${String(
+          day
+        ).padStart(2, "0")}`;
+      }
+    }
+  }
+
+  // Try DD/MM/YYYY format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleaned)) {
+    const parts = cleaned.split("/");
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
+      const date = new Date(year, month - 1, day);
+      // Validate that the date was created correctly (handles invalid dates like Feb 30)
+      if (
+        !isNaN(date.getTime()) &&
+        date.getDate() === day &&
+        date.getMonth() === month - 1 &&
+        date.getFullYear() === year
+      ) {
+        return `${year}-${String(month).padStart(2, "0")}-${String(
+          day
+        ).padStart(2, "0")}`;
+      }
+    }
+  }
+
+  // Try YYYY/MM/DD format
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(cleaned)) {
+    const parts = cleaned.split("/");
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
+      const date = new Date(year, month - 1, day);
+      // Validate that the date was created correctly (handles invalid dates like Feb 30)
+      if (
+        !isNaN(date.getTime()) &&
+        date.getDate() === day &&
+        date.getMonth() === month - 1 &&
+        date.getFullYear() === year
+      ) {
+        return `${year}-${String(month).padStart(2, "0")}-${String(
+          day
+        ).padStart(2, "0")}`;
+      }
+    }
+  }
+
+  // Fallback: Try JavaScript's native Date parsing
+  try {
+    const date = new Date(cleaned);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split("T")[0];
+    }
+  } catch (error) {
+    // Ignore error and return null
+  }
+
+  return null;
+};
+
 const StudentResults: React.FC = () => {
   const [studentResults, setStudentResults] = useState<StudentResult[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -785,18 +883,7 @@ const StudentResults: React.FC = () => {
             // Parse published_date properly - return null if empty/invalid
             let publishedDateStr: string | null = null;
             if (row[7]) {
-              try {
-                const dateValue = row[7].toString().trim();
-                if (dateValue) {
-                  const date = new Date(dateValue);
-                  if (!isNaN(date.getTime())) {
-                    publishedDateStr = date.toISOString().split("T")[0];
-                  }
-                }
-              } catch (error) {
-                // Leave as null if parsing fails
-                publishedDateStr = null;
-              }
+              publishedDateStr = parseDateToYYYYMMDD(row[7].toString());
             }
 
             return {
@@ -1248,22 +1335,10 @@ const StudentResults: React.FC = () => {
         });
 
         // Format published_date properly (YYYY-MM-DD format or null)
-        // Match the single result creation behavior: use null if no date, otherwise format it
-        let formattedPublishedDate: string | null = null;
-        if (
-          validation.data.published_date &&
-          validation.data.published_date.trim()
-        ) {
-          try {
-            const date = new Date(validation.data.published_date);
-            if (!isNaN(date.getTime())) {
-              formattedPublishedDate = date.toISOString().split("T")[0];
-            }
-          } catch (error) {
-            // If date parsing fails, leave it as null
-            formattedPublishedDate = null;
-          }
-        }
+        // Use the utility function to parse various date formats
+        const formattedPublishedDate = validation.data.published_date
+          ? parseDateToYYYYMMDD(validation.data.published_date)
+          : null;
 
         const payload = {
           student: validation.data.student_id,
@@ -1559,18 +1634,7 @@ const StudentResults: React.FC = () => {
             // Parse published_date properly - return null if empty/invalid
             let publishedDateStr: string | null = null;
             if (row[7]) {
-              try {
-                const dateValue = row[7].toString().trim();
-                if (dateValue) {
-                  const date = new Date(dateValue);
-                  if (!isNaN(date.getTime())) {
-                    publishedDateStr = date.toISOString().split("T")[0];
-                  }
-                }
-              } catch (error) {
-                // Leave as null if parsing fails
-                publishedDateStr = null;
-              }
+              publishedDateStr = parseDateToYYYYMMDD(row[7].toString());
             }
 
             return {
@@ -1759,7 +1823,7 @@ const StudentResults: React.FC = () => {
         "Unique certificate number",
         "Pass/Fail",
         "TRUE or FALSE",
-        "YYYY-MM-DD format",
+        "Date: YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY or YYYY/MM/DD",
         "Subject name",
         "theory or practical",
         "For theory subjects only",
@@ -1853,7 +1917,7 @@ const StudentResults: React.FC = () => {
         "Unique certificate number",
         "Pass/Fail",
         "TRUE or FALSE",
-        "YYYY-MM-DD format",
+        "Date: YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY or YYYY/MM/DD",
         "Subject name",
         "theory or practical",
         "For theory subjects only",
