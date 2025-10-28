@@ -233,7 +233,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
               </div>
 
               {/* Bulk Certificate button */}
-              {isAuthenticated && location.pathname === "/" && (
+              {isAuthenticated && (
                 <div className="mt-6 space-y-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Quick Actions

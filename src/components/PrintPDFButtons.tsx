@@ -150,20 +150,20 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Add MARK LIST title
-      pdf.setFontSize(24);
+      pdf.setFontSize(23);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("times", "bold");
       pdf.text("MARK LIST", pdfWidth / 2, 85, { align: "center" });
 
       // Add student information section
-      const startY = 100;
+      const startY = 96;
       pdf.setFontSize(12);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
 
-      pdf.text(`Register Number : ${student.RegiNo}`, 20, startY);
-      pdf.text(`Name of Candidate : ${student.Name}`, 20, startY + 8);
-      pdf.text(`Course Name : ${student.Course}`, 20, startY + 16);
+      pdf.text(`Register Number : ${student.RegiNo}`, 19, startY);
+      pdf.text(`Name of Candidate : ${student.Name}`, 19, startY + 8);
+      pdf.text(`Course Name : ${student.Course}`, 19, startY + 16);
 
       // Convert result to Qualified/Not Qualified
       const displayResult =
@@ -172,10 +172,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
         student.Result === "pass"
           ? "Qualified"
           : "Not Qualified";
-      pdf.text(`Result : ${displayResult}`, 20, startY + 24);
+      pdf.text(`Result : ${displayResult}`, 19, startY + 24);
 
       // Add marks table
-      const tableStartY = startY + 40;
+      const tableStartY = startY + 34;
       const colWidths = [80, 25, 25, 25]; // SUBJECT, TE, CE, TOTAL
       const totalTableWidth =
         colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]; // Total table width
@@ -469,7 +469,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       }
 
       // Add abbreviation
-      currentY += 15;
+      currentY += 14;
       pdf.setFontSize(8);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "normal");
@@ -481,7 +481,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       );
 
       // Add maximum scores section
-      currentY += 15;
+      currentY += 12;
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "bold");
       pdf.text("MAXIMUM SCORES", pdfWidth / 2, currentY, { align: "center" });
@@ -831,7 +831,7 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
               // Position at center bottom (matching CSS: left: 52%, bottom: 3%)
               const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
-              const sealY = pdfHeight - sealHeight - 16; // 3% from bottom edge
+              const sealY = pdfHeight - sealHeight - 9; // 3% from bottom edge
 
               // Add the seal image with original aspect ratio
               pdf.addImage(

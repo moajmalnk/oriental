@@ -1114,7 +1114,7 @@ const Courses: React.FC = () => {
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
               variant="outline"
-              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Delete</span>

@@ -67,6 +67,7 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 import { Student, StudentFormData } from "@/types";
 import * as XLSX from "xlsx";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 // Bulk creation interfaces
 interface BulkStudentData {
@@ -1017,7 +1018,7 @@ const Students: React.FC = () => {
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
               variant="outline"
-              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+              className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Delete</span>
@@ -1072,7 +1073,7 @@ const Students: React.FC = () => {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {student.photo ? (
-                        <img
+                        <OptimizedImage
                           src={student.photo}
                           alt={student.name}
                           className="w-10 h-10 rounded-full object-cover"
@@ -2021,7 +2022,7 @@ const Students: React.FC = () => {
                           <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
                             <div className="flex items-center gap-1 sm:gap-2">
                               {student.photo ? (
-                                <img
+                                <OptimizedImage
                                   src={student.photo}
                                   alt={student.name}
                                   className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
@@ -2264,7 +2265,7 @@ const Students: React.FC = () => {
                           <td className="p-2 sm:p-3 text-xs sm:text-sm font-medium">
                             <div className="flex items-center gap-1 sm:gap-2">
                               {student.photo ? (
-                                <img
+                                <OptimizedImage
                                   src={student.photo}
                                   alt={student.name}
                                   className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
