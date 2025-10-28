@@ -782,6 +782,23 @@ const StudentResults: React.FC = () => {
               }
             }
 
+            // Parse published_date properly - return null if empty/invalid
+            let publishedDateStr: string | null = null;
+            if (row[7]) {
+              try {
+                const dateValue = row[7].toString().trim();
+                if (dateValue) {
+                  const date = new Date(dateValue);
+                  if (!isNaN(date.getTime())) {
+                    publishedDateStr = date.toISOString().split("T")[0];
+                  }
+                }
+              } catch (error) {
+                // Leave as null if parsing fails
+                publishedDateStr = null;
+              }
+            }
+
             return {
               student_name: row[0]?.toString() || "",
               course_name: row[1]?.toString() || "",
@@ -791,8 +808,7 @@ const StudentResults: React.FC = () => {
               result: row[5]?.toString() || "",
               is_published:
                 row[6]?.toString().toLowerCase() === "true" || false,
-              published_date:
-                row[7]?.toString() || new Date().toISOString().split("T")[0],
+              published_date: publishedDateStr,
               marks,
             };
           });
@@ -1182,6 +1198,73 @@ const StudentResults: React.FC = () => {
       setBulkProgress(progress);
 
       try {
+        // Debug logging
+        console.log("Creating result for:", validation.data.register_number);
+        console.log("Subject IDs available:", validation.data.subject_ids);
+        console.log(
+          "Available keys in subject_ids:",
+          validation.data.subject_ids
+            ? Object.keys(validation.data.subject_ids)
+            : "none"
+        );
+        console.log("Marks:", validation.data.marks);
+
+        // Validate that all subjects have IDs before creating
+        const marksToCreate = validation.data.marks.map((mark) => {
+          // Try exact match first
+          let subjectId = validation.data.subject_ids?.[mark.subject_name];
+
+          // If no exact match, try case-insensitive lookup
+          if (!subjectId && validation.data.subject_ids) {
+            const keys = Object.keys(validation.data.subject_ids);
+            const matchedKey = keys.find(
+              (key) => key.toLowerCase() === mark.subject_name.toLowerCase()
+            );
+            if (matchedKey) {
+              subjectId = validation.data.subject_ids[matchedKey];
+            }
+          }
+
+          if (!subjectId) {
+            const availableKeys = validation.data.subject_ids
+              ? Object.keys(validation.data.subject_ids)
+              : [];
+            throw new Error(
+              `Subject ID not found for "${
+                mark.subject_name
+              }". Available keys: ${availableKeys.join(", ")}`
+            );
+          }
+          console.log(
+            `Mapping subject "${mark.subject_name}" to ID: ${subjectId}`
+          );
+          return {
+            subject: subjectId,
+            te_obtained: mark.te_obtained,
+            ce_obtained: mark.ce_obtained,
+            pe_obtained: mark.pe_obtained,
+            pw_obtained: mark.pw_obtained,
+          };
+        });
+
+        // Format published_date properly (YYYY-MM-DD format or null)
+        // Match the single result creation behavior: use null if no date, otherwise format it
+        let formattedPublishedDate: string | null = null;
+        if (
+          validation.data.published_date &&
+          validation.data.published_date.trim()
+        ) {
+          try {
+            const date = new Date(validation.data.published_date);
+            if (!isNaN(date.getTime())) {
+              formattedPublishedDate = date.toISOString().split("T")[0];
+            }
+          } catch (error) {
+            // If date parsing fails, leave it as null
+            formattedPublishedDate = null;
+          }
+        }
+
         const payload = {
           student: validation.data.student_id,
           course: validation.data.course_id,
@@ -1189,27 +1272,31 @@ const StudentResults: React.FC = () => {
           register_number: validation.data.register_number,
           certificate_number: validation.data.certificate_number,
           result: validation.data.result || null,
-          marks: validation.data.marks.map((mark) => ({
-            subject: validation.data.subject_ids?.[mark.subject_name] || 0,
-            te_obtained: mark.te_obtained,
-            ce_obtained: mark.ce_obtained,
-            pe_obtained: mark.pe_obtained,
-            pw_obtained: mark.pw_obtained,
-          })),
+          marks: marksToCreate,
           is_published: validation.data.is_published || false,
-          published_date:
-            validation.data.published_date ||
-            new Date().toISOString().split("T")[0],
+          published_date: formattedPublishedDate || null,
         };
+
+        console.log("Payload being sent:", payload);
 
         await api.post("/api/students/student-results/create/", payload);
         result.success++;
       } catch (error: any) {
+        console.error(
+          "Error creating result for:",
+          validation.data.register_number,
+          error
+        );
         result.failed++;
+        const errorMessage = error.response?.data
+          ? typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data)
+          : "Failed to create result";
         result.errors.push({
           row: validation.row,
           registerNumber: validation.data.register_number,
-          error: error.response?.data?.message || "Failed to create result",
+          error: errorMessage,
         });
       }
     }
@@ -1276,6 +1363,41 @@ const StudentResults: React.FC = () => {
           continue;
         }
 
+        // Validate that all subjects have IDs before updating
+        const marksToCreate = validation.data.marks.map((mark) => {
+          // Try exact match first
+          let subjectId = validation.data.subject_ids?.[mark.subject_name];
+
+          // If no exact match, try case-insensitive lookup
+          if (!subjectId && validation.data.subject_ids) {
+            const keys = Object.keys(validation.data.subject_ids);
+            const matchedKey = keys.find(
+              (key) => key.toLowerCase() === mark.subject_name.toLowerCase()
+            );
+            if (matchedKey) {
+              subjectId = validation.data.subject_ids[matchedKey];
+            }
+          }
+
+          if (!subjectId) {
+            const availableKeys = validation.data.subject_ids
+              ? Object.keys(validation.data.subject_ids)
+              : [];
+            throw new Error(
+              `Subject ID not found for "${
+                mark.subject_name
+              }". Available keys: ${availableKeys.join(", ")}`
+            );
+          }
+          return {
+            subject: subjectId,
+            te_obtained: mark.te_obtained,
+            ce_obtained: mark.ce_obtained,
+            pe_obtained: mark.pe_obtained,
+            pw_obtained: mark.pw_obtained,
+          };
+        });
+
         const payload = {
           student: validation.data.student_id,
           course: validation.data.course_id,
@@ -1283,13 +1405,7 @@ const StudentResults: React.FC = () => {
           register_number: validation.data.register_number,
           certificate_number: validation.data.certificate_number,
           result: validation.data.result || null,
-          marks: validation.data.marks.map((mark) => ({
-            subject: validation.data.subject_ids?.[mark.subject_name] || 0,
-            te_obtained: mark.te_obtained,
-            ce_obtained: mark.ce_obtained,
-            pe_obtained: mark.pe_obtained,
-            pw_obtained: mark.pw_obtained,
-          })),
+          marks: marksToCreate,
           is_published: validation.data.is_published || false,
         };
 
@@ -1299,11 +1415,21 @@ const StudentResults: React.FC = () => {
         );
         result.success++;
       } catch (error: any) {
+        console.error(
+          "Error updating result for:",
+          validation.data.register_number,
+          error
+        );
         result.failed++;
+        const errorMessage = error.response?.data
+          ? typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data)
+          : "Failed to update result";
         result.errors.push({
           row: validation.row,
           registerNumber: validation.data.register_number,
-          error: error.response?.data?.message || "Failed to update result",
+          error: errorMessage,
         });
       }
     }
@@ -1430,6 +1556,23 @@ const StudentResults: React.FC = () => {
               }
             }
 
+            // Parse published_date properly - return null if empty/invalid
+            let publishedDateStr: string | null = null;
+            if (row[7]) {
+              try {
+                const dateValue = row[7].toString().trim();
+                if (dateValue) {
+                  const date = new Date(dateValue);
+                  if (!isNaN(date.getTime())) {
+                    publishedDateStr = date.toISOString().split("T")[0];
+                  }
+                }
+              } catch (error) {
+                // Leave as null if parsing fails
+                publishedDateStr = null;
+              }
+            }
+
             return {
               student_name: row[0]?.toString() || "",
               course_name: row[1]?.toString() || "",
@@ -1439,6 +1582,7 @@ const StudentResults: React.FC = () => {
               result: row[5]?.toString() || "",
               is_published:
                 row[6]?.toString().toLowerCase() === "true" || false,
+              published_date: publishedDateStr,
               marks,
             };
           });
@@ -1587,6 +1731,7 @@ const StudentResults: React.FC = () => {
         "CERT001",
         "Pass",
         "TRUE",
+        "2024-12-15",
         "Programming",
         "theory",
         "80",
@@ -1614,6 +1759,7 @@ const StudentResults: React.FC = () => {
         "Unique certificate number",
         "Pass/Fail",
         "TRUE or FALSE",
+        "YYYY-MM-DD format",
         "Subject name",
         "theory or practical",
         "For theory subjects only",
@@ -1679,6 +1825,7 @@ const StudentResults: React.FC = () => {
         "CERT001",
         "Pass",
         "TRUE",
+        "2024-12-15",
         "Programming",
         "theory",
         "80",
@@ -1706,6 +1853,7 @@ const StudentResults: React.FC = () => {
         "Unique certificate number",
         "Pass/Fail",
         "TRUE or FALSE",
+        "YYYY-MM-DD format",
         "Subject name",
         "theory or practical",
         "For theory subjects only",
@@ -2794,7 +2942,8 @@ const StudentResults: React.FC = () => {
                 Bulk Export Student Results
               </DialogTitle>
               <DialogDescription className="text-sm sm:text-base">
-                Select student results to export to Excel,then delete the data, then upload back the exported data for bulk updates.
+                Select student results to export to Excel,then delete the data,
+                then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 
