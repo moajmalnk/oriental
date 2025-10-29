@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +69,23 @@ const Announcements: React.FC = () => {
   });
   const [expiryDate, setExpiryDate] = useState("");
   const [expiryTime, setExpiryTime] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [includeExpired, setIncludeExpired] = useState(false);
   const { toast } = useToast();
+  const todayString = useMemo(() => {
+    const today = new Date();
+
+    // Set to midnight (local time) to ensure "today" is selectable
+    today.setHours(0, 0, 0, 0);
+
+    // Format it to 'YYYY-MM-DD' to match what your
+    // date picker's 'parseISOLocal' function expects.
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }, []);
 
   // Load announcements
   const loadAnnouncements = async () => {
@@ -97,18 +113,41 @@ const Announcements: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Combine date and time - use simple format without timezone manipulation
     let combinedDateTime = formData.expires_by;
 
     if (expiryDate) {
+      // e.g., "2024-10-30"
+      const dateParts = expiryDate.split("-").map(Number); // [2024, 10, 30]
+      let hour = 0;
+      let minute = 0;
+
       if (expiryTime) {
-        // Both date and time provided - use simple format
-        combinedDateTime = `${expiryDate}T${expiryTime}:00`;
+        // e.g., "03:00"
+        const timeParts = expiryTime.split(":").map(Number); // [3, 0]
+        hour = timeParts[0];
+        minute = timeParts[1];
       } else {
         // Only date provided, use current time
-        const currentTime = new Date().toTimeString().slice(0, 5); // HH:MM format
-        combinedDateTime = `${expiryDate}T${currentTime}:00`;
+        const now = new Date();
+        hour = now.getHours();
+        minute = now.getMinutes();
       }
+
+      // Create a LOCAL Date object
+      // new Date(year, monthIndex, day, hour, minute)
+      // Note: dateParts[1] - 1 because JS months are 0-indexed
+      const localDate = new Date(
+        dateParts[0],
+        dateParts[1] - 1,
+        dateParts[2],
+        hour,
+        minute
+      );
+
+      // Convert to full ISO string. This will be like:
+      // "2024-10-30T03:00:00.000+05:30"
+      // This tells the backend *exactly* what timezone this time is in.
+      combinedDateTime = localDate.toISOString();
     }
 
     const submitData = {
@@ -163,20 +202,27 @@ const Announcements: React.FC = () => {
 
     if (dateTime && typeof dateTime === "string" && dateTime.includes("T")) {
       try {
-        // Parse the datetime string directly without timezone conversion
-        // Split the datetime to get date and time parts
-        const [datePart, timePart] = dateTime.split("T");
+        // --- START OF FIX ---
 
-        if (datePart) {
-          setExpiryDate(datePart);
-        }
+        // 1. Create a Date object from the UTC string.
+        // This object correctly represents the single point in time.
+        const date = new Date(dateTime);
 
-        if (timePart) {
-          // Remove seconds and timezone info if present
-          const timeOnly =
-            timePart.split(":")[0] + ":" + timePart.split(":")[1];
-          setExpiryTime(timeOnly);
-        }
+        // 2. Extract the LOCAL date part (YYYY-MM-DD)
+        const localYear = date.getFullYear();
+        const localMonth = String(date.getMonth() + 1).padStart(2, "0");
+        const localDay = String(date.getDate()).padStart(2, "0");
+        setExpiryDate(`${localYear}-${localMonth}-${localDay}`);
+
+        // 3. Extract the LOCAL time part (HH:mm)
+        // .getHours() and .getMinutes() get the time in the user's local timezone.
+        const localHours = date.getHours().toString().padStart(2, "0");
+        const localMinutes = date.getMinutes().toString().padStart(2, "0");
+
+        // This will be "12:00" in your timezone
+        setExpiryTime(`${localHours}:${localMinutes}`);
+
+        // --- END OF FIX ---
       } catch (error) {
         console.error("Error parsing datetime:", error);
         setExpiryDate("");
@@ -259,6 +305,17 @@ const Announcements: React.FC = () => {
     return announcement.is_active && !isExpired(announcement.expires_by);
   };
 
+  const filteredAnnouncements = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return announcements.filter((a) => {
+      const matchesQuery =
+        q === "" || (a.message || "").toLowerCase().includes(q);
+      const expired = isExpired(a.expires_by);
+      const passesExpiry = includeExpired ? true : !expired;
+      return matchesQuery && passesExpiry;
+    });
+  }, [announcements, searchQuery, includeExpired]);
+
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6">
@@ -311,6 +368,7 @@ const Announcements: React.FC = () => {
                         value={expiryDate}
                         onChange={(value) => setExpiryDate(value)}
                         placeholder="Select date"
+                        minDate={todayString}
                       />
                       <TimePicker
                         value={expiryTime}
@@ -348,6 +406,23 @@ const Announcements: React.FC = () => {
           </Dialog>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center mb-4">
+          <Input
+            placeholder="Search by title"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="sm:max-w-xs"
+          />
+          <Button
+            variant="outline"
+            onClick={() => setIncludeExpired((v) => !v)}
+            className="w-full sm:w-auto"
+          >
+            {includeExpired ? "Hide expired" : "Show expired"}
+          </Button>
+        </div>
+
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpen}>
           <DialogContent className="max-w-[95vw] sm:max-w-[425px] mx-2 sm:mx-4">
@@ -380,12 +455,13 @@ const Announcements: React.FC = () => {
                     <DatePicker
                       value={expiryDate}
                       onChange={(value) => setExpiryDate(value)}
-                      placeholder="Select date"
+                      placeholder="Select Expiry Date"
+                      minDate={todayString}
                     />
                     <TimePicker
                       value={expiryTime}
                       onChange={(value) => setExpiryTime(value)}
-                      placeholder="Select time"
+                      placeholder="Select Expiry Time"
                     />
                   </div>
                 </div>
@@ -454,19 +530,29 @@ const Announcements: React.FC = () => {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : announcements.length === 0 ? (
+        ) : filteredAnnouncements.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No announcements</h3>
-              <p className="text-muted-foreground text-center">
-                Create your first announcement to get started.
-              </p>
+              <h3 className="text-lg font-semibold mb-2">
+                {announcements.length === 0
+                  ? "No announcements"
+                  : "No announcements match your filters"}
+              </h3>
+              {announcements.length === 0 ? (
+                <p className="text-muted-foreground text-center">
+                  Create your first announcement to get started.
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-center">
+                  Try adjusting your search or showing expired.
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
-            {announcements.map((announcement) => (
+            {filteredAnnouncements.map((announcement) => (
               <Card key={announcement.id} className="relative">
                 <CardHeader className="pb-3">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">

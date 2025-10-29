@@ -1161,7 +1161,7 @@ const Batches: React.FC = () => {
 
         {/* Batch Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-6">
+          <DialogContent className="max-w-2xl max-h-[90vh] mx-2 sm:mx-4 md:mx-6 overflow-visible">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingBatch ? "Edit Batch" : "Create New Batch"}
@@ -1887,7 +1887,8 @@ const Batches: React.FC = () => {
                 Export Batches to Excel
               </DialogTitle>
               <DialogDescription className="text-sm sm:text-base">
-                Select batches to export to Excel format then delete the data, then upload back the exported data for bulk updates.
+                Select batches to export to Excel format then delete the data,
+                then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 

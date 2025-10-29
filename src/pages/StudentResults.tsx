@@ -127,102 +127,144 @@ interface BulkCreationResult {
   }>;
 }
 
-// Utility function to parse various date formats and convert to YYYY-MM-DD
-const parseDateToYYYYMMDD = (dateString: string): string | null => {
-  if (!dateString || !dateString.trim()) {
+/**
+ * Converts an Excel serial number (days since 1900-01-01) to a YYYY-MM-DD string.
+ */
+const excelSerialToYYYYMMDD = (serial: number): string => {
+  // Excel's epoch is 1900-01-01, but it incorrectly thinks 1900 is a leap year.
+  // JavaScript's epoch is 1970-01-01.
+  // The magic number 25569 is the days between 1900-01-01 and 1970-01-01 (with Excel's leap year bug).
+  const date = new Date(Date.UTC(0, 0, serial - 1, 0, 0, 0) - 25569 * 86400000);
+
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1; // getUTCMonth() is 0-indexed
+  const day = date.getUTCDate();
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+    2,
+    "0"
+  )}`;
+};
+
+/**
+ * Parses various date formats into a YYYY-MM-DD string,
+ * correctly handling strings, Date objects, and Excel serial numbers.
+ */
+const parseDateToYYYYMMDD = (
+  dateInput: string | Date | number | null | undefined
+): string | null => {
+  if (!dateInput) {
     return null;
   }
 
-  const trimmed = dateString.trim();
-
-  // Remove any extra whitespace
-  const cleaned = trimmed.replace(/\s+/g, " ");
-
-  // Already in YYYY-MM-DD format
-  if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
-    const date = new Date(cleaned);
-    if (!isNaN(date.getTime())) {
-      return cleaned;
+  // --- 1. Handle Date Object ---
+  // This is common if the Excel parser (like sheetjs) uses { cellDates: true }
+  if (dateInput instanceof Date) {
+    if (isNaN(dateInput.getTime())) {
+      return null; // Invalid Date object
     }
+    // Use local components to avoid timezone shift
+    const year = dateInput.getFullYear();
+    const month = dateInput.getMonth() + 1; // .getMonth() is 0-indexed
+    const day = dateInput.getDate();
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+      2,
+      "0"
+    )}`;
   }
 
-  // Try DD-MM-YYYY format
+  // --- 2. Handle Excel Serial Number ---
+  if (typeof dateInput === "number") {
+    // Assume numbers > 10000 are Excel dates (adjust as needed)
+    if (dateInput > 10000 && dateInput < 100000) {
+      return excelSerialToYYYYMMDD(dateInput);
+    }
+    // Otherwise, it might be a year or timestamp, treat as invalid for now
+    return null;
+  }
+
+  // --- 3. Handle String Input ---
+  if (typeof dateInput !== "string") {
+    return null; // Not a string, date, or number
+  }
+
+  const cleaned = dateInput.trim().replace(/\s+/g, " ");
+
+  if (!cleaned) {
+    return null;
+  }
+
+  // --- Your existing regex checks (which are good) ---
+
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+    const date = new Date(cleaned);
+    if (!isNaN(date.getTime())) return cleaned;
+  }
+
+  // DD-MM-YYYY
   if (/^\d{2}-\d{2}-\d{4}$/.test(cleaned)) {
     const parts = cleaned.split("-");
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10);
     const year = parseInt(parts[2], 10);
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
-      const date = new Date(year, month - 1, day);
-      // Validate that the date was created correctly (handles invalid dates like Feb 30)
-      if (
-        !isNaN(date.getTime()) &&
-        date.getDate() === day &&
-        date.getMonth() === month - 1 &&
-        date.getFullYear() === year
-      ) {
-        return `${year}-${String(month).padStart(2, "0")}-${String(
-          day
-        ).padStart(2, "0")}`;
-      }
+    const date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getDate() === day) {
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0"
+      )}`;
     }
   }
 
-  // Try DD/MM/YYYY format
+  // DD/MM/YYYY
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleaned)) {
     const parts = cleaned.split("/");
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10);
     const year = parseInt(parts[2], 10);
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
-      const date = new Date(year, month - 1, day);
-      // Validate that the date was created correctly (handles invalid dates like Feb 30)
-      if (
-        !isNaN(date.getTime()) &&
-        date.getDate() === day &&
-        date.getMonth() === month - 1 &&
-        date.getFullYear() === year
-      ) {
-        return `${year}-${String(month).padStart(2, "0")}-${String(
-          day
-        ).padStart(2, "0")}`;
-      }
+    const date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getDate() === day) {
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0"
+      )}`;
     }
   }
 
-  // Try YYYY/MM/DD format
+  // YYYY/MM/DD
   if (/^\d{4}\/\d{2}\/\d{2}$/.test(cleaned)) {
     const parts = cleaned.split("/");
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10);
     const day = parseInt(parts[2], 10);
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
-      const date = new Date(year, month - 1, day);
-      // Validate that the date was created correctly (handles invalid dates like Feb 30)
-      if (
-        !isNaN(date.getTime()) &&
-        date.getDate() === day &&
-        date.getMonth() === month - 1 &&
-        date.getFullYear() === year
-      ) {
-        return `${year}-${String(month).padStart(2, "0")}-${String(
-          day
-        ).padStart(2, "0")}`;
-      }
+    const date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getDate() === day) {
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0"
+      )}`;
     }
   }
 
-  // Fallback: Try JavaScript's native Date parsing
+  // --- 4. Fallback for other string formats (e.g., "Oct 29 2025" or "10/29/2025") ---
   try {
     const date = new Date(cleaned);
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split("T")[0];
+      // **THE FIX IS HERE:** Use local components, not toISOString()
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0"
+      )}`;
     }
   } catch (error) {
-    // Ignore error and return null
+    // ignore
   }
 
-  return null;
+  return null; // Failed to parse
 };
 
 const StudentResults: React.FC = () => {
@@ -823,7 +865,7 @@ const StudentResults: React.FC = () => {
         } else {
           // Parse Excel file
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" });
+          const workbook = XLSX.read(data, { type: "array" , cellDates: true});
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -881,10 +923,7 @@ const StudentResults: React.FC = () => {
             }
 
             // Parse published_date properly - return null if empty/invalid
-            let publishedDateStr: string | null = null;
-            if (row[7]) {
-              publishedDateStr = parseDateToYYYYMMDD(row[7].toString());
-            }
+            const publishedDateStr = parseDateToYYYYMMDD(row[7]);
 
             return {
               student_name: row[0]?.toString() || "",
@@ -1333,7 +1372,12 @@ const StudentResults: React.FC = () => {
             pw_obtained: mark.pw_obtained,
           };
         });
-
+        console.log(
+          "RAW DATE VALUE:",
+          validation.data.published_date,
+          "TYPE:",
+          typeof validation.data.published_date
+        );
         // Format published_date properly (YYYY-MM-DD format or null)
         // Use the utility function to parse various date formats
         const formattedPublishedDate = validation.data.published_date
@@ -1765,7 +1809,7 @@ const StudentResults: React.FC = () => {
         "Batch Name",
         "Register Number",
         "Certificate Number",
-        "Result",
+        "Result (Pass/Fail/Absent)",
         "Is Published",
         "Published Date",
         "Subject 1",
@@ -1821,7 +1865,7 @@ const StudentResults: React.FC = () => {
         "Use exact batch name",
         "Unique register number",
         "Unique certificate number",
-        "Pass/Fail",
+        "Pass/Fail/Absent",
         "TRUE or FALSE",
         "Date: YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY or YYYY/MM/DD",
         "Subject name",
@@ -1915,7 +1959,7 @@ const StudentResults: React.FC = () => {
         "Use exact batch name",
         "Unique register number",
         "Unique certificate number",
-        "Pass/Fail",
+        "Pass/Fail/Absent",
         "TRUE or FALSE",
         "Date: YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY or YYYY/MM/DD",
         "Subject name",
@@ -2238,8 +2282,9 @@ const StudentResults: React.FC = () => {
                 <SelectItem value="all">All Results</SelectItem>
                 <SelectItem value="pass">Pass</SelectItem>
                 <SelectItem value="fail">Fail</SelectItem>
-                <SelectItem value="distinction">Distinction</SelectItem>
-                <SelectItem value="no_result">No Result</SelectItem>
+                {/* <SelectItem value="distinction">Distinction</SelectItem> */}
+                <SelectItem value="absent">Absent</SelectItem>
+                {/* <SelectItem value="no_result">No Result</SelectItem> */}
               </SelectContent>
             </Select>
 
@@ -2676,6 +2721,7 @@ const StudentResults: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="Pass">Pass</SelectItem>
                       <SelectItem value="Fail">Fail</SelectItem>
+                      <SelectItem value="Absent">Absent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
