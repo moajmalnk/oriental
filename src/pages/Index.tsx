@@ -10,7 +10,6 @@ import {
   ProfessionalLoader,
   AcademicLoader,
 } from "@/components/ProfessionalLoader";
-import { EnhancedBulkCertificateDialog } from "@/components/EnhancedBulkCertificateDialog";
 import AnnouncementSlideshow from "@/components/AnnouncementSlideshow";
 import { Layout } from "@/components/Layout";
 import { type Student } from "@/types";
@@ -37,8 +36,6 @@ const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isResultAvailable, setIsResultAvailable] = useState(false);
   const [timeUntilAvailable, setTimeUntilAvailable] = useState<string>("");
-  const [bulkCertificateDialogOpen, setBulkCertificateDialogOpen] =
-    useState(false);
   const { toast } = useToast();
   const { isMobile, isTablet, isDesktop } = useResponsive();
   const { logout, user, isAuthenticated } = useAuth();
@@ -167,7 +164,7 @@ const Index = () => {
 
   if (isPageLoading) {
     return (
-      <Layout onBulkCertificateClick={() => setBulkCertificateDialogOpen(true)}>
+      <Layout>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
           <div className="relative container mx-auto px-6 py-16 sm:py-20 md:py-24 lg:py-28">
             <SkeletonHeader />
@@ -178,7 +175,7 @@ const Index = () => {
   }
 
   return (
-    <Layout onBulkCertificateClick={() => setBulkCertificateDialogOpen(true)}>
+    <Layout>
       {/* Professional Header */}
       <header
         className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden"
@@ -560,14 +557,6 @@ const Index = () => {
           )}
         </div>
       </main>
-
-      {/* Enhanced Bulk Certificate Dialog - Only for authenticated users */}
-      {isAuthenticated && (
-        <EnhancedBulkCertificateDialog
-          open={bulkCertificateDialogOpen}
-          onOpenChange={setBulkCertificateDialogOpen}
-        />
-      )}
 
       {/* Professional Footer */}
       <footer
