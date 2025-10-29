@@ -1055,10 +1055,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               pdf.addImage(
                 compressedImg,
                 "PNG",
-                courseX - signWidth / 2,
-                bottomY - 22,
-                signWidth + 2,
-                ((signWidth * compressedImg.height) / compressedImg.width) + 2
+                courseX - signWidth / 2 -5,
+                bottomY - 25,
+                signWidth + 12,
+                ((signWidth * compressedImg.height) / compressedImg.width) + 12
               );
               resolve(true);
             };
@@ -1098,10 +1098,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               pdf.addImage(
                 compressedImg,
                 "PNG",
-                pdfWidth - refX - signWidth - 12,
-                bottomY - 23,
-                signWidth +2,
-                ((signWidth * compressedImg.height) / compressedImg.width) +2
+                pdfWidth - refX - signWidth - 15,
+                bottomY - 26,
+                signWidth + 12,
+                ((signWidth * compressedImg.height) / compressedImg.width) + 12
               );
               resolve(true);
             };
@@ -1136,13 +1136,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Use different width and height for rectangular seal if needed
-              const sealWidth = 21;
-              const sealHeight = 30;
+              const sealWidth = 23;
+              const sealHeight = 33;
               pdf.addImage(
                 compressedImg,
                 "PNG",
                 sealX - 4,
-                sealY - 11,
+                sealY - 13,
                 sealWidth,
                 sealHeight
               );
