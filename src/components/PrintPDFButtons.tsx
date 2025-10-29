@@ -85,8 +85,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const ctx = canvas.getContext("2d");
 
             // Set canvas size to a reasonable resolution (max 1200px width)
-            const maxWidth = 1200;
-            const maxHeight = 1600;
+            const maxWidth = 3000; // ~300 DPI for A4 width
+            const maxHeight = 4243.55;
             const imgWidth = letterheadImg.width;
             const imgHeight = letterheadImg.height;
 
@@ -795,7 +795,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
       pdf.text(`DATE: ${displayDate}`, rightCenterX, currentY, {
         align: "center",
       });
-
+      const sealSize = 15; // Reduced from 21mm for smaller seal
+      const sealX = pdfWidth * 0.52 - sealSize / 2;
+      const sealY = pdfHeight - 12.91 - sealSize;
       // Add KUG seal - positioned below signatures
       // Based on CSS: .kug-seal left: 52%, bottom: 3% - 80px x 80px (90px on larger screens)
       try {
@@ -805,40 +807,25 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
 
         await new Promise((resolve, reject) => {
           sealImg.onload = () => {
-            // Create a canvas to compress the image
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
+            // Use higher resolution multiplier for seal (8x for 300 DPI quality)
+            canvas.width = sealSize * 24;
+            canvas.height = sealSize * 24;
+            ctx?.drawImage(sealImg, 0, 0, canvas.width, canvas.height);
+            // Use maximum quality (1.0) for PNG seal to maintain transparency and crisp details
+            const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
 
-            // Set canvas size to match CSS .seal-image (80px x 80px)
-            const sealWidth = 75;
-            const sealHeight = 95;
-            canvas.width = sealWidth;
-            canvas.height = sealHeight;
-
-            // Draw and compress the image
-            ctx?.drawImage(sealImg, 0, 0, sealWidth, sealHeight);
-
-            // Convert to compressed data URL (PNG for seal to maintain transparency)
-            const compressedDataUrl = canvas.toDataURL("image/png", 0.7); // 70% quality for better compression
-
-            // Create new image from compressed data
             const compressedImg = new Image();
             compressedImg.onload = () => {
-              // Calculate seal size maintaining aspect ratio
-              const sealWidth = 20; // Convert 80px to mm (approximately 20mm)
-              const aspectRatio = compressedImg.height / compressedImg.width;
-              const sealHeight = sealWidth * aspectRatio; // Maintain original aspect ratio
-
-              // Position at center bottom (matching CSS: left: 52%, bottom: 3%)
-              const sealX = (pdfWidth - sealWidth) / 2; // Center horizontally (52% from CSS)
-              const sealY = pdfHeight - sealHeight - 9; // 3% from bottom edge
-
-              // Add the seal image with original aspect ratio
+              // Use different width and height for rectangular seal if needed
+              const sealWidth = 21;
+              const sealHeight = 28;
               pdf.addImage(
                 compressedImg,
                 "PNG",
-                sealX,
-                sealY,
+                sealX - 4,
+                sealY - 9.5,
                 sealWidth,
                 sealHeight
               );
@@ -846,10 +833,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             };
             compressedImg.src = compressedDataUrl;
           };
-          sealImg.onerror = reject;
+          sealImg.onerror = () => {
+            console.warn("Could not load KUG seal");
+            resolve(true);
+          };
         });
       } catch (error) {
-        console.warn("Could not load KUG seal image:", error);
+        console.warn("Could not load KUG seal:", error);
       }
 
       // Save the PDF
@@ -902,8 +892,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const ctx = canvas.getContext("2d");
 
             // Use higher resolution for certificate template (300 DPI equivalent)
-            const maxWidth = 2480; // ~300 DPI for A4 width
-            const maxHeight = 3508; // ~300 DPI for A4 height
+            const maxWidth = 3000; // ~300 DPI for A4 width
+            const maxHeight = 4243.55; // ~300 DPI for A4 height
             const imgWidth = templateImg.width;
             const imgHeight = templateImg.height;
 
@@ -1009,8 +999,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
               const canvas = document.createElement("canvas");
               const ctx = canvas.getContext("2d");
               // Use higher resolution multiplier for photos (8x instead of 4x for 300 DPI quality)
-              canvas.width = photoSize * 8;
-              canvas.height = (photoSize * 8 * 90) / 80;
+              canvas.width = photoSize * 16;
+              canvas.height = (photoSize * 16 * 90) / 80;
               ctx?.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
               // Use high quality (0.95) for student photos to maintain clarity
               const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
@@ -1021,10 +1011,10 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                 pdf.addImage(
                   compressedPhoto,
                   "JPEG",
-                  photoX,
-                  photoY - 5,
+                  photoX - 2,
+                  photoY - 8,
                   photoSize,
-                  photoSize * 1.125
+                  photoSize * 1.200
                 );
                 resolve(true);
               };
@@ -1053,8 +1043,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const signWidth = 21;
             const signHeight = 15;
             // Use higher resolution multiplier for signatures (8x for 300 DPI quality)
-            canvas.width = signWidth * 8;
-            canvas.height = signHeight * 8;
+            canvas.width = signWidth * 24;
+            canvas.height = signHeight * 24;
             ctx?.drawImage(chairmanImg, 0, 0, canvas.width, canvas.height);
             // Use maximum quality (1.0) for PNG signatures to maintain transparency and crisp edges
             const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
@@ -1066,9 +1056,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                 compressedImg,
                 "PNG",
                 courseX - signWidth / 2,
-                bottomY - 20,
-                signWidth,
-                (signWidth * compressedImg.height) / compressedImg.width
+                bottomY - 22,
+                signWidth + 2,
+                ((signWidth * compressedImg.height) / compressedImg.width) + 2
               );
               resolve(true);
             };
@@ -1096,8 +1086,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const signWidth = 24;
             const signHeight = 15;
             // Use higher resolution multiplier for signatures (8x for 300 DPI quality)
-            canvas.width = signWidth * 8;
-            canvas.height = signHeight * 8;
+            canvas.width = signWidth * 24;
+            canvas.height = signHeight * 24;
             ctx?.drawImage(controllerImg, 0, 0, canvas.width, canvas.height);
             // Use maximum quality (1.0) for PNG signatures to maintain transparency and crisp edges
             const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
@@ -1109,9 +1099,9 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
                 compressedImg,
                 "PNG",
                 pdfWidth - refX - signWidth - 12,
-                bottomY - 22,
-                signWidth,
-                (signWidth * compressedImg.height) / compressedImg.width
+                bottomY - 23,
+                signWidth +2,
+                ((signWidth * compressedImg.height) / compressedImg.width) +2
               );
               resolve(true);
             };
@@ -1137,8 +1127,8 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             // Use higher resolution multiplier for seal (8x for 300 DPI quality)
-            canvas.width = sealSize * 8;
-            canvas.height = sealSize * 8;
+            canvas.width = sealSize * 24;
+            canvas.height = sealSize * 24;
             ctx?.drawImage(sealImg, 0, 0, canvas.width, canvas.height);
             // Use maximum quality (1.0) for PNG seal to maintain transparency and crisp details
             const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
@@ -1146,13 +1136,13 @@ export const PrintPDFButtons = ({ student }: PrintPDFButtonsProps) => {
             const compressedImg = new Image();
             compressedImg.onload = () => {
               // Use different width and height for rectangular seal if needed
-              const sealWidth = 17;
-              const sealHeight = 22;
+              const sealWidth = 21;
+              const sealHeight = 30;
               pdf.addImage(
                 compressedImg,
                 "PNG",
                 sealX - 4,
-                sealY - 6.5,
+                sealY - 11,
                 sealWidth,
                 sealHeight
               );
