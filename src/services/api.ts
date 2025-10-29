@@ -84,7 +84,8 @@ export const announcementAPI = {
   ) => api.put(`/api/users/announcements/${id}/`, data),
 
   // Delete announcement
-  deleteAnnouncement: (id: number) => api.delete(`/api/users/announcements/${id}/`),
+  deleteAnnouncement: (id: number) =>
+    api.delete(`/api/users/announcements/${id}/`),
 };
 
 export default api;

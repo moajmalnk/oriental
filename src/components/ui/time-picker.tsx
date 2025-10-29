@@ -66,9 +66,17 @@ const TimePicker: React.FC<TimePickerProps> = ({
   const handleInputBlur = () => {
     const parsed = parseTime(inputValue);
     if (parsed) {
+      // Valid time: Format it correctly
       const formatted = formatTimeForInput(parsed.hours, parsed.minutes);
       setInputValue(formatted);
       onChange?.(formatted);
+    } else if (inputValue === "") {
+      // Input is empty: Clear it
+      onChange?.("");
+    } else {
+      // Invalid text: Reset to the last known good value
+      // The `value` prop holds the last valid time from the parent.
+      setInputValue(value);
     }
   };
 
@@ -106,11 +114,30 @@ const TimePicker: React.FC<TimePickerProps> = ({
         hours: new Date().getHours(),
         minutes: new Date().getMinutes(),
       },
+      { label: "0:00", hours: 0, minutes: 0 },
+      { label: "1:00", hours: 1, minutes: 0 },
+      { label: "2:00", hours: 2, minutes: 0 },
+      { label: "3:00", hours: 3, minutes: 0 },
+      { label: "4:00", hours: 4, minutes: 0 },
+      { label: "5:00", hours: 5, minutes: 0 },
+      { label: "6:00", hours: 6, minutes: 0 },
+      { label: "7:00", hours: 7, minutes: 0 },
+      { label: "8:00", hours: 8, minutes: 0 },
       { label: "9:00", hours: 9, minutes: 0 },
+      { label: "10:00", hours: 10, minutes: 0 },
+      { label: "11:00", hours: 11, minutes: 0 },
       { label: "12:00", hours: 12, minutes: 0 },
+      { label: "13:00", hours: 13, minutes: 0 },
+      { label: "14:00", hours: 14, minutes: 0 },
       { label: "15:00", hours: 15, minutes: 0 },
+      { label: "16:00", hours: 16, minutes: 0 },
+      { label: "17:00", hours: 17, minutes: 0 },
       { label: "18:00", hours: 18, minutes: 0 },
+      { label: "19:00", hours: 19, minutes: 0 },
+      { label: "20:00", hours: 20, minutes: 0 },
       { label: "21:00", hours: 21, minutes: 0 },
+      { label: "22:00", hours: 22, minutes: 0 },
+      { label: "23:00", hours: 23, minutes: 0 },
     ];
 
     return commonTimes.map((time, index) => (
@@ -136,7 +163,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
         <Input
-          type="time"
+          type="text"
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
@@ -180,7 +207,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             <div className="text-xs font-medium text-muted-foreground">
               Quick Select
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
               {generateQuickTimeOptions()}
             </div>
           </div>

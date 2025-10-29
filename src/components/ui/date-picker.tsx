@@ -3,6 +3,13 @@ import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
 
 interface DatePickerProps {
   value?: string;
@@ -13,6 +20,24 @@ interface DatePickerProps {
   minDate?: string;
   maxDate?: string;
 }
+
+// This is the key to fixing the root cause.
+const parseISOLocal = (dateString: string): Date | null => {
+  if (!dateString) return null;
+  // Split the string and create date with new Date(year, monthIndex, day)
+  // This constructor ALWAYS uses local time.
+  const parts = dateString.split("-").map(Number);
+  if (
+    parts.length === 3 &&
+    !isNaN(parts[0]) &&
+    !isNaN(parts[1]) &&
+    !isNaN(parts[2])
+  ) {
+    // parts[1] - 1 because month is 0-indexed
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return null; // Invalid format
+};
 
 const DatePicker: React.FC<DatePickerProps> = ({
   value = "",
@@ -25,8 +50,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(
-    value ? new Date(value) : null
+    value ? parseISOLocal(value) : null // USE NEW PARSER
   );
+
   const [currentMonth, setCurrentMonth] = useState<Date>(
     selectedDate || new Date()
   );
@@ -52,7 +78,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   // Format date for display
   const formatDate = (date: Date): string => {
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // month is 0-indexed
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   // Format date for input display
@@ -64,9 +93,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
     });
   };
 
-  // Parse input date
   const parseInputDate = (dateString: string): Date | null => {
-    const date = new Date(dateString);
+    // Try our YYYY-MM-DD parser first
+    let date = parseISOLocal(dateString);
+    if (date) return date;
+
+    // Fallback for other user inputs (e.g., "12/20/2024")
+    date = new Date(dateString);
     return isNaN(date.getTime()) ? null : date;
   };
 
@@ -83,12 +116,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
   // Check if date is disabled
   const isDateDisabled = (date: Date): boolean => {
     if (minDate) {
-      const min = new Date(minDate);
-      if (date < min) return true;
+      const min = parseISOLocal(minDate); // USE NEW PARSER
+      if (min && date < min) return true;
     }
     if (maxDate) {
-      const max = new Date(maxDate);
-      if (date > max) return true;
+      const max = parseISOLocal(maxDate); // USE NEW PARSER
+      if (max && date > max) return true;
     }
     return false;
   };
@@ -133,7 +166,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
     if (date && !isDateDisabled(date)) {
       setSelectedDate(date);
       setCurrentMonth(date);
-      onChange?.(value);
+      onChange?.(formatDate(date)); // <-- Send the formatted string
+    } else if (!value) {
+      // Handle clearing the input
+      setSelectedDate(null);
+      onChange?.("");
     }
   };
 
@@ -164,18 +201,19 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+    if (value) {
+      const date = parseISOLocal(value); // USE NEW PARSER
+      if (date) {
+        setSelectedDate(date);
+        setCurrentMonth(date);
+        // Ensure input value is also in sync if it's different
+        setInputValue(formatDate(date));
       }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    } else {
+      setSelectedDate(null);
+      setInputValue("");
+    }
+  }, [value]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -302,6 +340,33 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return days;
   };
 
+  const currentYear = currentMonth.getFullYear();
+
+  // Generate year options for the dropdown
+  const yearOptions = [];
+  // You can adjust this range.
+  // Let's go from 10 years in the future to 100 years in the past.
+  const startYear = new Date().getFullYear() + 10;
+  const endYear = startYear - 100;
+
+  for (let i = startYear; i >= endYear; i--) {
+    yearOptions.push(i);
+  }
+
+  // Handler for Month dropdown
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(parseInt(e.target.value));
+    setCurrentMonth(newMonth);
+  };
+
+  // Handler for Year dropdown
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setFullYear(parseInt(e.target.value));
+    setCurrentMonth(newMonth);
+  };
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
@@ -314,7 +379,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="pr-20"
+          className="h-8 pr-16 text-xs"
           role="combobox"
           aria-expanded={isOpen}
           aria-haspopup="dialog"
@@ -327,7 +392,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               variant="ghost"
               size="sm"
               onClick={clearDate}
-              className="h-6 w-6 p-0 hover:bg-muted"
+              className="h-5 w-5 p-0 hover:bg-muted"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -338,7 +403,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
             disabled={disabled}
-            className="h-6 w-6 p-0 hover:bg-muted"
+            className="h-5 w-5 p-0 hover:bg-muted"
           >
             <Calendar className="h-3 w-3" />
           </Button>
@@ -347,26 +412,84 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 z-50 mt-1 bg-background border border-border rounded-lg shadow-lg p-2 sm:p-3 w-64 sm:w-72 md:w-80 max-w-[calc(100vw-2rem)] sm:max-w-none"
+          className="absolute top-full left-0 z-50 mt-1 bg-background border border-border rounded-lg shadow-lg p-2 w-56 sm:w-64 max-w-[calc(100vw-2rem)]"
           role="dialog"
           aria-label="Calendar"
           aria-modal="true"
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <div className="flex items-center justify-between mb-2">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => navigateMonth("prev")}
-              className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+              className="h-5 w-5 sm:h-6 sm:w-6 p-0"
               aria-label="Previous month"
             >
               <ChevronLeft className="h-3 w-3" />
             </Button>
 
-            <div className="text-xs sm:text-sm font-medium text-center flex-1">
-              {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            <div className="flex-1 flex justify-center gap-1 sm:gap-2">
+              {/* Month Dropdown */}
+              <Select
+                value={String(currentMonth.getMonth())}
+                onValueChange={(val) => {
+                  const newMonth = new Date(currentMonth);
+                  newMonth.setMonth(parseInt(val));
+                  setCurrentMonth(newMonth);
+                }}
+              >
+                <SelectTrigger
+                  className={cn(
+                    "h-5 sm:h-6 text-xs font-medium w-24 px-1",
+                    "bg-transparent"
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  {months.map((month, index) => (
+                    <SelectItem
+                      key={month}
+                      value={String(index)}
+                      className="py-1 text-xs"
+                    >
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Year Dropdown */}
+              <Select
+                value={String(currentYear)}
+                onValueChange={(val) => {
+                  const newMonth = new Date(currentMonth);
+                  newMonth.setFullYear(parseInt(val));
+                  setCurrentMonth(newMonth);
+                }}
+              >
+                <SelectTrigger
+                  className={cn(
+                    "h-5 sm:h-6 text-xs font-medium w-20 px-1",
+                    "bg-transparent"
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  {yearOptions.map((year) => (
+                    <SelectItem
+                      key={year}
+                      value={String(year)}
+                      className="py-1 text-xs"
+                    >
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button
@@ -374,7 +497,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => navigateMonth("next")}
-              className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+              className="h-5 w-5 sm:h-6 sm:w-6 p-0"
               aria-label="Next month"
             >
               <ChevronRight className="h-3 w-3" />
@@ -382,11 +505,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
           </div>
 
           {/* Week days */}
-          <div className="grid grid-cols-7 gap-0.5 mb-1 sm:mb-2">
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="h-5 sm:h-6 flex items-center justify-center text-xs font-medium text-muted-foreground"
+                className="h-4 sm:h-5 flex items-center justify-center text-[10px] font-medium text-muted-foreground"
               >
                 {day}
               </div>
@@ -399,13 +522,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
           </div>
 
           {/* Today button */}
-          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t">
+          <div className="mt-2 pt-2 border-t">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => handleDateSelect(new Date())}
-              className="w-full h-7 sm:h-8 text-xs"
+              className="w-full h-6 sm:h-7 text-xs"
             >
               Today
             </Button>
