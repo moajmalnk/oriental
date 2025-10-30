@@ -357,8 +357,8 @@ export const EnhancedBulkCertificateDialog = ({
           photoImg.onload = () => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            canvas.width = photoSize * 8;
-            canvas.height = (photoSize * 8 * 90) / 80;
+            canvas.width = photoSize * 16;
+            canvas.height = (photoSize * 16 * 90) / 80;
             ctx?.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
             const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
 
@@ -367,10 +367,10 @@ export const EnhancedBulkCertificateDialog = ({
               pdf.addImage(
                 compressedPhoto,
                 "JPEG",
-                photoX,
-                photoY - 5,
+                photoX - 2,
+                photoY - 8,
                 photoSize,
-                photoSize * 1.125
+                photoSize * 1.200
               );
               resolve(true);
             };
@@ -397,8 +397,9 @@ export const EnhancedBulkCertificateDialog = ({
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
           const signWidth = 21;
-          canvas.width = signWidth * 8;
-          canvas.height = 15 * 8;
+          const signHeight = 15;
+          canvas.width = signWidth * 24;
+          canvas.height = signHeight * 24;
           ctx?.drawImage(chairmanImg, 0, 0, canvas.width, canvas.height);
           const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
 
@@ -407,10 +408,10 @@ export const EnhancedBulkCertificateDialog = ({
             pdf.addImage(
               compressedImg,
               "PNG",
-              courseX - signWidth / 2,
-              bottomY - 20,
-              signWidth,
-              (signWidth * compressedImg.height) / compressedImg.width
+              courseX - signWidth / 2 -5,
+              bottomY - 25,
+              signWidth + 12,
+              ((signWidth * compressedImg.height) / compressedImg.width) + 12
             );
             resolve(true);
           };
@@ -436,8 +437,9 @@ export const EnhancedBulkCertificateDialog = ({
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
           const signWidth = 24;
-          canvas.width = signWidth * 8;
-          canvas.height = 15 * 8;
+          const signHeight = 15;
+          canvas.width = signWidth * 24;
+          canvas.height = signHeight * 24;
           ctx?.drawImage(controllerImg, 0, 0, canvas.width, canvas.height);
           const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
 
@@ -446,10 +448,10 @@ export const EnhancedBulkCertificateDialog = ({
             pdf.addImage(
               compressedImg,
               "PNG",
-              pdfWidth - refX - signWidth - 12,
-              bottomY - 22,
-              signWidth,
-              (signWidth * compressedImg.height) / compressedImg.width
+              pdfWidth - refX - signWidth - 15,
+              bottomY - 26,
+              signWidth + 12,
+              ((signWidth * compressedImg.height) / compressedImg.width) + 12
             );
             resolve(true);
           };
@@ -474,20 +476,20 @@ export const EnhancedBulkCertificateDialog = ({
         sealImg.onload = () => {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
-          canvas.width = sealSize * 8;
-          canvas.height = sealSize * 8;
+          canvas.width = sealSize * 24;
+          canvas.height = sealSize * 24;
           ctx?.drawImage(sealImg, 0, 0, canvas.width, canvas.height);
           const compressedDataUrl = canvas.toDataURL("image/png", 1.0);
 
           const compressedImg = new Image();
           compressedImg.onload = () => {
-            const sealWidth = 17;
-            const sealHeight = 22;
+            const sealWidth = 23;
+            const sealHeight = 33;
             pdf.addImage(
               compressedImg,
               "PNG",
               sealX - 4,
-              sealY - 6.5,
+              sealY - 13,
               sealWidth,
               sealHeight
             );
