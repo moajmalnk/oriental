@@ -42,7 +42,7 @@ const StudentView: React.FC = () => {
   const refreshResults = async () => {
     try {
       const studentResultsResponse = await api.get(
-        `/api/students/student-result-view/${id}/`
+        `/api/students/student-result-view-by-student-id/${id}/`
       );
       setStudentResults(studentResultsResponse.data);
     } catch (error) {
@@ -176,7 +176,7 @@ const StudentView: React.FC = () => {
 
         {/* Tabs and content container */}
         <div className="border-b border-border">
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center">
             <NavLink to="details" className={tabLinkClass} end>
               Personal Details
             </NavLink>
