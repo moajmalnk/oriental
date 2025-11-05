@@ -2330,7 +2330,7 @@ const StudentResults: React.FC = () => {
                 <TableHead>Result</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Subjects</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -2413,26 +2413,11 @@ const StudentResults: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDialog(result)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteConfirmation(result)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/student-result-view/${result.id}`)}>
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
+                    
                   </TableCell>
                 </TableRow>
               ))}
