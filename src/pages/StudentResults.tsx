@@ -85,6 +85,7 @@ import {
   StudentMark,
 } from "@/types";
 import * as XLSX from "xlsx";
+import { DatePicker } from "@/components/ui/date-picker";
 
 // Bulk creation interfaces
 interface BulkStudentResultData {
@@ -2754,15 +2755,10 @@ const StudentResults: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="published_date">Published Date</Label>
-                  <Input
-                    id="published_date"
-                    type="date"
+                  <DatePicker
                     value={formData.published_date || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        published_date: e.target.value || null,
-                      })
+                    onChange={(value) =>
+                      setFormData({ ...formData, published_date: value })
                     }
                   />
                   <p className="text-xs text-muted-foreground">

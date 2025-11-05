@@ -399,16 +399,13 @@ const Index = () => {
                                   Certificate Preview Available
                                 </h3>
                                 <p className="text-muted-foreground leading-relaxed mb-4">
-                                  To view the certificate preview and generate
-                                  PDF certificates, please switch to desktop
-                                  view (full screen) for the best experience and
-                                  proper PDF generation.
+                                  To view the certificate preview, please switch to desktop
+                                  view (full screen) for the best experience.
                                 </p>
                                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                   <span>
-                                    Desktop view recommended for certificate
-                                    operations
+                                    Desktop view recommended for certificate preview
                                   </span>
                                 </div>
                               </div>

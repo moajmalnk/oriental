@@ -14,6 +14,11 @@ import Batches from "./pages/Batches";
 import Students from "./pages/Students";
 import StudentResults from "./pages/StudentResults";
 import Announcements from "./pages/Announcements";
+import StudentView from "./pages/StudentView";
+import StudentPersonalDetails from "./pages/StudentPersonalDetails";
+import StudentResultsTab from "./pages/StudentResultsTab";
+import StudentCertificatesTab from "./pages/StudentCertificatesTab";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +80,19 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/student-view/:id"
+              element={
+                <ProtectedRoute>
+                  <StudentView />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="details" replace />} />
+              <Route path="details" element={<StudentPersonalDetails />} />
+              <Route path="results" element={<StudentResultsTab />} />
+              <Route path="certificates" element={<StudentCertificatesTab />} />
+            </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

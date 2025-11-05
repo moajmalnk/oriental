@@ -68,6 +68,7 @@ import api from "@/services/api";
 import { Student, StudentFormData } from "@/types";
 import * as XLSX from "xlsx";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import { useNavigate } from "react-router-dom";
 
 // Bulk creation interfaces
 interface BulkStudentData {
@@ -152,7 +153,7 @@ const Students: React.FC = () => {
   const [itemsPerPage] = useState(10);
 
   const { toast } = useToast();
-
+  const navigate = useNavigate();
   // Fetch students
   const fetchStudents = async () => {
     try {
@@ -1064,12 +1065,12 @@ const Students: React.FC = () => {
                 <TableHead>Phone</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>Created Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedStudents.map((student) => (
-                <TableRow key={student.id} className="hover:bg-muted/50">
+                <TableRow key={student.id} className="hover:bg-muted/50" onClick={() => navigate(`/student-view/${student.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {student.photo ? (
@@ -1119,7 +1120,7 @@ const Students: React.FC = () => {
                         : "-"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -1140,7 +1141,7 @@ const Students: React.FC = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
@@ -1367,7 +1368,7 @@ const Students: React.FC = () => {
                 </div>
                 {formData.photo && (
                   <div className="mt-2">
-                    <img
+                    <OptimizedImage
                       src={URL.createObjectURL(formData.photo)}
                       alt="Preview"
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover"
