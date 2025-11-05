@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Image,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1065,12 +1066,12 @@ const Students: React.FC = () => {
                 <TableHead>Phone</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>Created Date</TableHead>
-                {/* <TableHead className="text-right">Actions</TableHead> */}
+                {/* <TableHead>View Details</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedStudents.map((student) => (
-                <TableRow key={student.id} className="hover:bg-muted/50" onClick={() => navigate(`/student-view/${student.id}`)}>
+                <TableRow key={student.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/student-view/${student.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {student.photo ? (
@@ -1119,6 +1120,12 @@ const Students: React.FC = () => {
                         ? new Date(student.created_at).toLocaleDateString()
                         : "-"}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/student-view/${student.id}`)}>
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
                   </TableCell>
                   {/* <TableCell className="text-right">
                     <DropdownMenu>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import {
   Plus,
@@ -17,6 +18,7 @@ import {
   CheckCircle,
   Loader2,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +104,7 @@ interface BulkCreationResult {
 }
 
 const Batches: React.FC = () => {
+  const navigate = useNavigate();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
@@ -991,12 +994,16 @@ const Batches: React.FC = () => {
                 <TableHead>Start Date</TableHead>
                 <TableHead>Duration</TableHead>
                 <TableHead>End Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedBatches.map((batch) => (
-                <TableRow key={batch.id} className="hover:bg-muted/50">
+                <TableRow
+                  key={batch.id}
+                  className="hover:bg-muted/50 cursor-pointer"
+                  onClick={() => navigate(`/batch-view/${batch.id}`)}
+                >
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
@@ -1039,26 +1046,17 @@ const Batches: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDialog(batch)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteConfirmation(batch)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/batch-view/${batch.id}`);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

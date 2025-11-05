@@ -86,6 +86,7 @@ import {
 } from "@/types";
 import * as XLSX from "xlsx";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useNavigate } from "react-router-dom";
 
 // Bulk creation interfaces
 interface BulkStudentResultData {
@@ -269,6 +270,7 @@ const parseDateToYYYYMMDD = (
 };
 
 const StudentResults: React.FC = () => {
+  const navigate = useNavigate();
   const [studentResults, setStudentResults] = useState<StudentResult[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -2333,7 +2335,7 @@ const StudentResults: React.FC = () => {
             </TableHeader>
             <TableBody>
               {paginatedResults.map((result) => (
-                <TableRow key={result.id} className="hover:bg-muted/50">
+                <TableRow key={result.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/student-result-view/${result.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {/* <User className="h-4 w-4 text-muted-foreground" /> */}
