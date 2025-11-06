@@ -76,6 +76,7 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 import { Batch, BatchFormData, Course } from "@/types";
 import * as XLSX from "xlsx";
+import { BatchPageSkeleton } from "@/components/skeletons/BatchPageSkeleton";
 
 // Bulk creation interfaces
 interface BulkBatchData {
@@ -900,17 +901,14 @@ const Batches: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (loading && batches.length === 0) {
+    return <BatchPageSkeleton />;
   }
 
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Batch Management</h1>
@@ -918,13 +916,13 @@ const Batches: React.FC = () => {
               Manage batches and their course assignments
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <Button
               onClick={() => openDialog()}
               className="gap-2 flex-1 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Batch</span>
+              <span>Add Batch</span>
             </Button>
             <Button
               onClick={() => {
@@ -935,7 +933,7 @@ const Batches: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Import</span>
+              <span className="hidden md:inline">Bulk Import</span>
             </Button>
             <Button
               onClick={() => setIsBulkExportDialogOpen(true)}
@@ -943,7 +941,7 @@ const Batches: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span className="hidden sm:inline">Convert to Excel</span>
+              <span className="hidden md:inline">Export</span>
             </Button>
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
@@ -951,117 +949,219 @@ const Batches: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Delete</span>
+              <span className="hidden md:inline">Delete</span>
             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="relative flex-1 w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search batches by name, course, or date..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="pl-10 pr-10 w-full"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {searchQuery && (
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredBatches.length} of {batches.length} batches
-            </div>
-          )}
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Batches
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{batches.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Active batches
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Courses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {new Set(batches.map((b) => b.course)).size}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Unique courses
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Avg Duration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Clock className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {batches.filter((b) => b.duration_months).length > 0
+                      ? Math.round(
+                          batches
+                            .filter((b) => b.duration_months)
+                            .reduce(
+                              (sum, b) => sum + (b.duration_months || 0),
+                              0
+                            ) / batches.filter((b) => b.duration_months).length
+                        )
+                      : 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Months average
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Filtered Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Search className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{filteredBatches.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {searchQuery ? "Search results" : "All batches"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Batches Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Batch Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>End Date</TableHead>
-                {/* <TableHead className="text-right">Actions</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedBatches.map((batch) => (
-                <TableRow
-                  key={batch.id}
-                  className="hover:bg-muted/50 cursor-pointer"
-                  onClick={() => navigate(`/batch-view/${batch.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
-                      <span>{batch.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
-                      <Badge variant="secondary">{batch.course_name}</Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <Calendar className="h-4 w-4 text-muted-foreground" /> */}
-                      <span className="text-sm">
-                        {formatDate(batch.start_date)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {batch.duration_months ? (
-                      <div className="flex items-center gap-2">
-                        {/* <Clock className="h-4 w-4 text-muted-foreground" /> */}
-                        <span className="text-sm">
-                          {batch.duration_months} months
-                        </span>
+        {/* Search Bar */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search batches by name, course, or date..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-10 w-full"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {searchQuery && (
+                <Badge variant="secondary" className="whitespace-nowrap">
+                  {filteredBatches.length} of {batches.length} batches
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Batches Grid/List */}
+        <div className="grid grid-cols-1 gap-4">
+          {paginatedBatches.map((batch) => (
+            <Card
+              key={batch.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/batch-view/${batch.id}`)}
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Left Section - Batch Info */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                        <Users className="h-5 w-5 text-primary" />
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold mb-1 truncate">
+                          {batch.name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {batch.course_name}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {formatDate(batch.start_date)}
+                          </Badge>
+                          {batch.duration_months && (
+                            <Badge variant="outline" className="text-xs">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {batch.duration_months} months
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Info */}
+                    {batch.duration_months && (
+                      <div className="pl-14 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          End Date:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="outline" className="text-xs">
+                            {getEndDate(
+                              batch.start_date,
+                              batch.duration_months
+                            )}
+                          </Badge>
+                        </div>
+                      </div>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {batch.duration_months ? (
-                      <span className="text-sm text-muted-foreground">
-                        {getEndDate(batch.start_date, batch.duration_months)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </div>
+
+                  {/* Right Section - Action Button */}
+                  <div className="flex sm:flex-col items-center gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="gap-2 w-full sm:w-auto"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/batch-view/${batch.id}`);
                       }}
                     >
                       <Eye className="h-4 w-4" />
-                      View Details
+                      <span className="hidden sm:inline">View Details</span>
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Pagination Controls */}
@@ -1131,7 +1231,7 @@ const Batches: React.FC = () => {
 
         {filteredBatches.length === 0 && (
           <div className="text-center py-12">
-            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             {searchQuery ? (
               <>
                 <h3 className="text-lg font-semibold mb-2">No batches found</h3>

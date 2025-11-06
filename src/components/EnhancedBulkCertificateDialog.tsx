@@ -70,14 +70,17 @@ export const EnhancedBulkCertificateDialog = ({
           coursesResponse,
           batchesResponse,
         ] = await Promise.all([
-          api.get("/api/students/students/"),
-          api.get("/api/students/student-results/"),
+          // Fetch a large page to cover all students for accurate mapping
+          api.get("/api/students/students/", { params: { page: 1, page_size: 10000 } }),
+          // Fetch a large page of results as well to cover mapping needs
+          api.get("/api/students/student-results/", { params: { page: 1, page_size: 10000 } }),
           api.get("/api/course/list/"),
           api.get("/api/students/batches/"),
         ]);
 
-        const fetchedStudents = studentsResponse.data;
-        const fetchedStudentResults = studentResultsResponse.data;
+        // Handle paginated responses
+        const fetchedStudents = studentsResponse.data.results || studentsResponse.data;
+        const fetchedStudentResults = studentResultsResponse.data.results || studentResultsResponse.data;
         const fetchedCourses: Course[] = coursesResponse.data;
         const fetchedBatches: Batch[] = batchesResponse.data;
 
@@ -100,7 +103,7 @@ export const EnhancedBulkCertificateDialog = ({
             return {
               id: result.id,
               Name:
-                actualStudent?.name || actualStudent?.Name || "Unknown Student",
+                actualStudent?.name || actualStudent?.Name || result.student_name || "Unknown Student",
               RegiNo: result.register_number,
               Course: relatedCourse?.name || "Course " + result.course,
               Batch: {
@@ -114,6 +117,7 @@ export const EnhancedBulkCertificateDialog = ({
               },
               CertificateNumber: result.certificate_number,
               Result: result.result || "PENDING",
+              IsPublished: result.is_published || false,
               Email: actualStudent?.email || actualStudent?.Email || "",
               Phone: actualStudent?.phone || actualStudent?.Phone || "",
               WhatsApp:
@@ -136,14 +140,15 @@ export const EnhancedBulkCertificateDialog = ({
         setCourses(fetchedCourses);
         setBatches(fetchedBatches);
 
-        // Filter students who are eligible for certificates (have certificate numbers)
+        // Filter students who are eligible for certificates (have certificate numbers, are published, and passed)
         const eligibleStudents = transformedStudents.filter((student) => {
           const hasCertificate =
             student.CertificateNumber &&
             student.CertificateNumber.trim() !== "";
-          // For now, include all students with certificate numbers regardless of result
-          // You can modify this to be more specific if needed
-          return hasCertificate;
+          const isPublished = (student as any).IsPublished === true;
+          const hasPassed = student.Result?.toLowerCase() === "pass";
+          
+          return hasCertificate && isPublished && hasPassed;
         });
 
         setFilteredStudents(eligibleStudents);
@@ -187,9 +192,13 @@ export const EnhancedBulkCertificateDialog = ({
   // Apply filters when filter states change
   useEffect(() => {
     let filtered = students.filter((student) => {
+      // Only show published and passed results
       const hasCertificate =
         student.CertificateNumber && student.CertificateNumber.trim() !== "";
-      if (!hasCertificate) return false;
+      const isPublished = (student as any).IsPublished === true;
+      const hasPassed = student.Result?.toLowerCase() === "pass";
+      
+      if (!hasCertificate || !isPublished || !hasPassed) return false;
 
       // Course filter
       if (selectedCourse !== "all") {

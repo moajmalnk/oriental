@@ -135,7 +135,8 @@ const StudentResultView: React.FC = () => {
           api.get("/api/students/batches/"),
         ]);
 
-      setStudents(studentsResponse.data);
+      // Handle paginated students response
+      setStudents(studentsResponse.data.results || studentsResponse.data);
       setCourses(coursesResponse.data);
       setBatches(batchesResponse.data);
     } catch (error) {

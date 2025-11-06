@@ -70,6 +70,7 @@ import { Student, StudentFormData } from "@/types";
 import * as XLSX from "xlsx";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { useNavigate } from "react-router-dom";
+import { StudentPageSkeleton } from "@/components/skeletons/StudentPageSkeleton";
 
 // Bulk creation interfaces
 interface BulkStudentData {
@@ -99,7 +100,6 @@ interface BulkCreationResult {
 
 const Students: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -149,19 +149,31 @@ const Students: React.FC = () => {
   >(new Set());
   const [isExporting, setIsExporting] = useState(false);
 
-  // Pagination states
+  // Pagination states (server-side)
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  // Fetch students
-  const fetchStudents = async () => {
+  // Fetch students with server-side pagination and search
+  const fetchStudents = async (page: number = 1, search: string = "") => {
     try {
       setLoading(true);
-      const response = await api.get("/api/students/students/");
-      setStudents(response.data);
-      setFilteredStudents(response.data);
+      const response = await api.get("/api/students/students/", {
+        params: {
+          page,
+          page_size: itemsPerPage,
+          search: search.trim(),
+        },
+      });
+      setStudents(response.data.results);
+      setTotalCount(response.data.count);
+      setTotalPages(response.data.total_pages);
+      setCurrentPage(response.data.current_page);
+      setTotalStudents(response.data.total_students || response.data.count);
     } catch (error) {
       console.error("Error fetching students:", error);
       toast({
@@ -174,71 +186,46 @@ const Students: React.FC = () => {
     }
   };
 
-  // Filter students based on search query
-  const filterStudents = (query: string) => {
-    if (!query.trim()) {
-      setFilteredStudents(students);
-      return;
-    }
+  // Debounced search handler
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchStudents(1, searchQuery);
+    }, 500); // 500ms debounce
 
-    const searchTerm = query.toLowerCase();
-    const filtered = students.filter((student) => {
-      const nameMatch = student.name.toLowerCase().includes(searchTerm);
-      const emailMatch = student.email.toLowerCase().includes(searchTerm);
-      const phoneMatch = student.phone.toLowerCase().includes(searchTerm);
-      const whatsappMatch = student.whatsapp_number
-        ?.toLowerCase()
-        .includes(searchTerm);
-
-      return nameMatch || emailMatch || phoneMatch || whatsappMatch;
-    });
-
-    setFilteredStudents(filtered);
-  };
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    filterStudents(query);
   };
 
   // Clear search
   const clearSearch = () => {
     setSearchQuery("");
-    setFilteredStudents(students);
   };
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
   // Pagination handlers
   const goToPage = (page: number) => {
-    setCurrentPage(page);
+    fetchStudents(page, searchQuery);
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      fetchStudents(currentPage - 1, searchQuery);
     }
   };
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      fetchStudents(currentPage + 1, searchQuery);
     }
   };
 
-  // Reset to first page when search changes
+  // Initial fetch
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    fetchStudents();
+    fetchStudents(1, "");
   }, []);
 
   // Reset form
@@ -777,7 +764,7 @@ const Students: React.FC = () => {
 
   const selectAllForDelete = () => {
     setSelectedStudentsForDelete(
-      new Set(paginatedStudents.map((student) => student.id!))
+      new Set(students.map((student) => student.id!))
     );
   };
 
@@ -867,7 +854,7 @@ const Students: React.FC = () => {
 
   const selectAllForExport = () => {
     setSelectedStudentsForExport(
-      new Set(paginatedStudents.map((student) => student.id!))
+      new Set(students.map((student) => student.id!))
     );
   };
 
@@ -970,17 +957,14 @@ const Students: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (loading && students.length === 0) {
+    return <StudentPageSkeleton />;
   }
 
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">
@@ -990,13 +974,13 @@ const Students: React.FC = () => {
               Manage student information and enrollment
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <Button
               onClick={() => openDialog()}
               className="gap-2 flex-1 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Student</span>
+              <span>Add Student</span>
             </Button>
             <Button
               onClick={() => {
@@ -1007,7 +991,7 @@ const Students: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Import</span>
+              <span className="hidden md:inline">Bulk Import</span>
             </Button>
             <Button
               onClick={() => setIsBulkExportDialogOpen(true)}
@@ -1015,7 +999,7 @@ const Students: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span className="hidden sm:inline">Convert to Excel</span>
+              <span className="hidden md:inline">Export</span>
             </Button>
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
@@ -1023,145 +1007,135 @@ const Students: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Delete</span>
+              <span className="hidden md:inline">Delete</span>
             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="relative flex-1 w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search students by name, email, or phone..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="pl-10 pr-10 w-full"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {searchQuery && (
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredStudents.length} of {students.length} students
+        {/* Statistics Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-500/10 rounded-lg">
+                <User className="h-8 w-8 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  Total Students
+                </p>
+                <p className="text-4xl font-bold">{totalStudents}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All students in database
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Students Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>WhatsApp</TableHead>
-                <TableHead>Created Date</TableHead>
-                {/* <TableHead>View Details</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedStudents.map((student) => (
-                <TableRow key={student.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/student-view/${student.id}`)}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      {student.photo ? (
-                        <OptimizedImage
-                          src={student.photo}
-                          alt={student.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                          <User className="h-5 w-5 text-muted-foreground" />
+        {/* Search Bar */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search students by name, email, or phone..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-10 w-full"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {searchQuery && (
+                <Badge variant="secondary" className="whitespace-nowrap">
+                  {totalCount} results
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Students Grid/List */}
+        <div className="grid grid-cols-1 gap-4">
+          {students.map((student) => (
+            <Card
+              key={student.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/student-view/${student.id}`)}
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Left Section - Student Info */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        {student.photo ? (
+                          <OptimizedImage
+                            src={student.photo}
+                            alt={student.name}
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ring-2 ring-primary/10"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold mb-1 truncate">
+                          {student.name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            <Mail className="h-3 w-3 mr-1" />
+                            {student.email}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {student.phone}
+                          </Badge>
                         </div>
-                      )}
-                      <div>
-                        <div className="font-medium">{student.name}</div>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <Mail className="h-4 w-4 text-muted-foreground" /> */}
-                      <span className="text-sm">{student.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{student.phone}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {student.whatsapp_number ? (
-                      <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {student.whatsapp_number}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {student.created_at
-                        ? new Date(student.created_at).toLocaleDateString()
-                        : "-"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/student-view/${student.id}`)}>
+                  </div>
+
+                  {/* Right Section - Action Button */}
+                  <div className="flex sm:flex-col items-center gap-2 sm:gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 w-full sm:w-auto"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/student-view/${student.id}`);
+                      }}
+                    >
                       <Eye className="h-4 w-4" />
-                      View Details
+                      <span className="hidden sm:inline">View Details</span>
                     </Button>
-                  </TableCell>
-                  {/* <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDialog(student)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteConfirmation(student)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell> */}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Pagination Controls */}
-        {filteredStudents.length > 0 && totalPages > 1 && (
+        {totalCount > 0 && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredStudents.length)} of{" "}
-              {filteredStudents.length} students
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{" "}
+              students
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -1220,7 +1194,7 @@ const Students: React.FC = () => {
           </div>
         )}
 
-        {filteredStudents.length === 0 && (
+        {students.length === 0 && !loading && (
           <div className="text-center py-12">
             <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             {searchQuery ? (
@@ -1948,10 +1922,10 @@ const Students: React.FC = () => {
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
-                    disabled={paginatedStudents.length === 0}
+                    disabled={students.length === 0}
                     className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Select All ({paginatedStudents.length})
+                    Select All ({students.length})
                   </Button>
                   <Button
                     onClick={clearDeleteSelection}
@@ -1979,13 +1953,12 @@ const Students: React.FC = () => {
                             type="checkbox"
                             checked={
                               selectedStudentsForDelete.size > 0 &&
-                              selectedStudentsForDelete.size ===
-                                paginatedStudents.length
+                              selectedStudentsForDelete.size === students.length
                             }
                             onChange={() => {
                               if (
                                 selectedStudentsForDelete.size ===
-                                paginatedStudents.length
+                                students.length
                               ) {
                                 clearDeleteSelection();
                               } else {
@@ -2010,7 +1983,7 @@ const Students: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedStudents.map((student) => (
+                      {students.map((student) => (
                         <tr
                           key={student.id}
                           className="border-t hover:bg-muted/50"
@@ -2188,10 +2161,10 @@ const Students: React.FC = () => {
                     onClick={selectAllForExport}
                     variant="outline"
                     size="sm"
-                    disabled={paginatedStudents.length === 0}
+                    disabled={students.length === 0}
                     className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Select All ({paginatedStudents.length})
+                    Select All ({students.length})
                   </Button>
                   <Button
                     onClick={clearExportSelection}
@@ -2219,13 +2192,12 @@ const Students: React.FC = () => {
                             type="checkbox"
                             checked={
                               selectedStudentsForExport.size > 0 &&
-                              selectedStudentsForExport.size ===
-                                paginatedStudents.length
+                              selectedStudentsForExport.size === students.length
                             }
                             onChange={() => {
                               if (
                                 selectedStudentsForExport.size ===
-                                paginatedStudents.length
+                                students.length
                               ) {
                                 clearExportSelection();
                               } else {
@@ -2253,7 +2225,7 @@ const Students: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedStudents.map((student) => (
+                      {students.map((student) => (
                         <tr
                           key={student.id}
                           className="border-t hover:bg-muted/50"

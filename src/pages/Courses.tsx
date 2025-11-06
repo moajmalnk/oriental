@@ -69,6 +69,7 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 import { Course, CourseFormData, Subject } from "@/types";
 import * as XLSX from "xlsx";
+import { CoursePageSkeleton } from "@/components/skeletons/CoursePageSkeleton";
 
 // Bulk import interfaces
 interface BulkCourseData {
@@ -1064,17 +1065,14 @@ const Courses: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (loading && courses.length === 0) {
+    return <CoursePageSkeleton />;
   }
 
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">
@@ -1084,13 +1082,13 @@ const Courses: React.FC = () => {
               Manage courses and their subjects
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <Button
               onClick={() => openDialog()}
               className="gap-2 flex-1 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Course</span>
+              <span>Add Course</span>
             </Button>
             <Button
               onClick={() => {
@@ -1101,7 +1099,7 @@ const Courses: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Import</span>
+              <span className="hidden md:inline">Bulk Import</span>
             </Button>
             <Button
               onClick={() => setIsBulkExportDialogOpen(true)}
@@ -1109,7 +1107,7 @@ const Courses: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span className="hidden sm:inline">Convert to Excel</span>
+              <span className="hidden md:inline">Export</span>
             </Button>
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
@@ -1117,123 +1115,230 @@ const Courses: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Delete</span>
+              <span className="hidden md:inline">Delete</span>
             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="relative flex-1 w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search courses by name, code, or subject..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="pl-10 pr-10 w-full"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {searchQuery && (
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredCourses.length} of {courses.length} courses
-            </div>
-          )}
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Courses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{courses.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Active courses
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Subjects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {courses.reduce(
+                      (sum, course) => sum + course.subjects.length,
+                      0
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Total subjects
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Avg Duration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Calendar className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {courses.filter((c) => c.duration_months).length > 0
+                      ? Math.round(
+                          courses
+                            .filter((c) => c.duration_months)
+                            .reduce(
+                              (sum, c) => sum + (c.duration_months || 0),
+                              0
+                            ) / courses.filter((c) => c.duration_months).length
+                        )
+                      : 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Months average
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Filtered Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Search className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{filteredCourses.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {searchQuery ? "Search results" : "All courses"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Courses Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course Name</TableHead>
-                <TableHead>Short Code</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Subjects</TableHead>
-                {/* <TableHead className="text-right">Actions</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedCourses.map((course) => (
-                <TableRow key={course.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/course-view/${course.id}`)}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
-                      <span>{course.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{course.short_code}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {course.duration_months ? (
-                      <div className="flex items-center gap-2">
-                        {/* <Calendar className="h-4 w-4 text-muted-foreground" /> */}
-                        <span className="text-sm">
-                          {course.duration_months} months
-                        </span>
+        {/* Search Bar */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search courses by name, code, or subject..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-10 w-full"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {searchQuery && (
+                <Badge variant="secondary" className="whitespace-nowrap">
+                  {filteredCourses.length} of {courses.length} courses
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Courses Grid/List */}
+        <div className="grid grid-cols-1 gap-4">
+          {paginatedCourses.map((course) => (
+            <Card
+              key={course.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/course-view/${course.id}`)}
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Left Section - Course Info */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                        <BookOpen className="h-5 w-5 text-primary" />
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold mb-1 truncate">
+                          {course.name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {course.short_code}
+                          </Badge>
+                          {course.duration_months && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {course.duration_months} months
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            <Users className="h-3 w-3 mr-1" />
+                            {course.subjects.length} subject
+                            {course.subjects.length !== 1 ? "s" : ""}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Subjects Preview */}
+                    {course.subjects.length > 0 && (
+                      <div className="pl-14 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Subjects:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {course.subjects.slice(0, 3).map((subject, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {subject.name}
+                            </Badge>
+                          ))}
+                          {course.subjects.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{course.subjects.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {/* <BookOpen className="h-3 w-3" /> */}
-                        <span>
-                          {course.subjects.length} subject
-                          {course.subjects.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      {course.subjects.slice(0, 2).map((subject, index) => (
-                        <div
-                          key={index}
-                          className="text-xs text-muted-foreground"
-                        >
-                          <div className="font-medium">{subject.name}</div>
-                          {/* <div>
-                            {getSubjectType(subject) === "theory" && (
-                              <span>
-                                TE: {subject.te_max || 0}, CE:{" "}
-                                {subject.ce_max || 0}
-                              </span>
-                            )}
-                            {getSubjectType(subject) === "practical" && (
-                              <span>
-                                PE: {subject.pe_max || 0}, PW:{" "}
-                                {subject.pw_max || 0}
-                              </span>
-                            )}
-                          </div> */}
-                        </div>
-                      ))}
-                      {course.subjects.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{course.subjects.length - 2} more subjects
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/course-view/${course.id}`)}>
+                  </div>
+
+                  {/* Right Section - Action Button */}
+                  <div className="flex sm:flex-col items-center gap-2 sm:gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 w-full sm:w-auto"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/course-view/${course.id}`);
+                      }}
+                    >
                       <Eye className="h-4 w-4" />
-                      View Details
+                      <span className="hidden sm:inline">View Details</span>
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Pagination Controls */}
