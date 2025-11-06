@@ -1159,12 +1159,12 @@ const Courses: React.FC = () => {
                 <TableHead>Short Code</TableHead>
                 <TableHead>Duration</TableHead>
                 <TableHead>Subjects</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedCourses.map((course) => (
-                <TableRow key={course.id} className="hover:bg-muted/50">
+                <TableRow key={course.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/course-view/${course.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
@@ -1225,26 +1225,10 @@ const Courses: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDialog(course)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteDialog(course)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/course-view/${course.id}`)}>
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -2227,7 +2211,8 @@ const Courses: React.FC = () => {
                 Export Courses to Excel
               </DialogTitle>
               <DialogDescription className="text-sm sm:text-base">
-                Select courses to export to Excel format then delete the data, then upload back the exported data for bulk updates.
+                Select courses to export to Excel format then delete the data,
+                then upload back the exported data for bulk updates.
               </DialogDescription>
             </DialogHeader>
 

@@ -85,6 +85,8 @@ import {
   StudentMark,
 } from "@/types";
 import * as XLSX from "xlsx";
+import { DatePicker } from "@/components/ui/date-picker";
+import { useNavigate } from "react-router-dom";
 
 // Bulk creation interfaces
 interface BulkStudentResultData {
@@ -268,6 +270,7 @@ const parseDateToYYYYMMDD = (
 };
 
 const StudentResults: React.FC = () => {
+  const navigate = useNavigate();
   const [studentResults, setStudentResults] = useState<StudentResult[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -2327,12 +2330,12 @@ const StudentResults: React.FC = () => {
                 <TableHead>Result</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Subjects</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedResults.map((result) => (
-                <TableRow key={result.id} className="hover:bg-muted/50">
+                <TableRow key={result.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/student-result-view/${result.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {/* <User className="h-4 w-4 text-muted-foreground" /> */}
@@ -2410,26 +2413,11 @@ const StudentResults: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDialog(result)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openDeleteConfirmation(result)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/student-result-view/${result.id}`)}>
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
+                    
                   </TableCell>
                 </TableRow>
               ))}
@@ -2754,15 +2742,10 @@ const StudentResults: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="published_date">Published Date</Label>
-                  <Input
-                    id="published_date"
-                    type="date"
+                  <DatePicker
                     value={formData.published_date || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        published_date: e.target.value || null,
-                      })
+                    onChange={(value) =>
+                      setFormData({ ...formData, published_date: value })
                     }
                   />
                   <p className="text-xs text-muted-foreground">
