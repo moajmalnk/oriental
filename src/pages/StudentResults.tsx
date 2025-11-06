@@ -87,6 +87,7 @@ import {
 import * as XLSX from "xlsx";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useNavigate } from "react-router-dom";
+import { StudentResultsPageSkeleton } from "@/components/skeletons/StudentResultsPageSkeleton";
 
 // Bulk creation interfaces
 interface BulkStudentResultData {
@@ -272,23 +273,30 @@ const parseDateToYYYYMMDD = (
 const StudentResults: React.FC = () => {
   const navigate = useNavigate();
   const [studentResults, setStudentResults] = useState<StudentResult[]>([]);
+  const [filteredResults, setFilteredResults] = useState<StudentResult[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [filteredResults, setFilteredResults] = useState<StudentResult[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Filter states
+  // Filter states (client-side filtering on current page)
   const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
   const [selectedResult, setSelectedResult] = useState<string>("all");
   const [selectedPublished, setSelectedPublished] = useState<string>("all");
 
-  // Pagination states
+  // Pagination states (server-side)
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Statistics states (always show total database counts)
+  const [totalResults, setTotalResults] = useState(0);
+  const [totalPublished, setTotalPublished] = useState(0);
+  const [totalPass, setTotalPass] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingResult, setEditingResult] = useState<StudentResult | null>(
@@ -360,8 +368,8 @@ const StudentResults: React.FC = () => {
 
   const { toast } = useToast();
 
-  // Fetch all data
-  const fetchData = async () => {
+  // Fetch all data with server-side pagination and search
+  const fetchData = async (page: number = 1, search: string = "") => {
     try {
       setLoading(true);
       const [
@@ -370,33 +378,37 @@ const StudentResults: React.FC = () => {
         coursesResponse,
         batchesResponse,
       ] = await Promise.all([
-        api.get("/api/students/student-results/"),
+        api.get("/api/students/student-results/", {
+          params: {
+            page,
+            page_size: itemsPerPage,
+            search: search.trim(),
+          },
+        }),
         api.get("/api/students/students/"),
         api.get("/api/course/list/"),
         api.get("/api/students/batches/"),
       ]);
 
-      const resultsData = resultsResponse.data;
-      const studentsData = studentsResponse.data;
+      const resultsData = resultsResponse.data.results;
+      const studentsData =
+        studentsResponse.data.results || studentsResponse.data;
       const coursesData = coursesResponse.data;
       const batchesData = batchesResponse.data;
 
-      // Enrich results with names
-      const enrichedResults = resultsData.map((result: any) => ({
-        ...result,
-        student_name:
-          studentsData.find((s: Student) => s.id === result.student)?.name ||
-          "Unknown Student",
-        course_name:
-          coursesData.find((c: Course) => c.id === result.course)?.name ||
-          "Unknown Course",
-        batch_name:
-          batchesData.find((b: Batch) => b.id === result.batch)?.name ||
-          "Unknown Batch",
-      }));
+      setStudentResults(resultsData);
+      setFilteredResults(resultsData); // Initially show all loaded results
+      setTotalCount(resultsResponse.data.count);
+      setTotalPages(resultsResponse.data.total_pages);
+      setCurrentPage(resultsResponse.data.current_page);
 
-      setStudentResults(enrichedResults);
-      setFilteredResults(enrichedResults);
+      // Set total statistics from API (always total DB counts)
+      setTotalResults(
+        resultsResponse.data.total_results || resultsResponse.data.count
+      );
+      setTotalPublished(resultsResponse.data.total_published || 0);
+      setTotalPass(resultsResponse.data.total_pass || 0);
+
       setStudents(studentsData);
       setCourses(coursesData);
       setBatches(batchesData);
@@ -423,39 +435,18 @@ const StudentResults: React.FC = () => {
     }
   };
 
-  // Filter results based on search query and filters
-  const filterResults = () => {
+  // Debounced search handler (server-side)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData(1, searchQuery);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Client-side filtering (filters only current page data)
+  useEffect(() => {
     let filtered = [...studentResults];
-
-    // Apply search query filter
-    if (searchQuery.trim()) {
-      const searchTerm = searchQuery.toLowerCase();
-      filtered = filtered.filter((result) => {
-        const studentMatch = result.student_name
-          ?.toLowerCase()
-          .includes(searchTerm);
-        const courseMatch = result.course_name
-          ?.toLowerCase()
-          .includes(searchTerm);
-        const batchMatch = result.batch_name
-          ?.toLowerCase()
-          .includes(searchTerm);
-        const registerMatch = result.register_number
-          .toLowerCase()
-          .includes(searchTerm);
-        const certificateMatch = result.certificate_number
-          .toLowerCase()
-          .includes(searchTerm);
-
-        return (
-          studentMatch ||
-          courseMatch ||
-          batchMatch ||
-          registerMatch ||
-          certificateMatch
-        );
-      });
-    }
 
     // Apply batch filter
     if (selectedBatch !== "all") {
@@ -485,9 +476,9 @@ const StudentResults: React.FC = () => {
         filtered = filtered.filter(
           (result) => result.result?.toLowerCase() === "distinction"
         );
-      } else if (selectedResult === "no_result") {
+      } else if (selectedResult === "absent") {
         filtered = filtered.filter(
-          (result) => !result.result || result.result.trim() === ""
+          (result) => result.result?.toLowerCase() === "absent"
         );
       }
     }
@@ -502,17 +493,18 @@ const StudentResults: React.FC = () => {
     }
 
     setFilteredResults(filtered);
-  };
+  }, [
+    selectedBatch,
+    selectedCourse,
+    selectedResult,
+    selectedPublished,
+    studentResults,
+  ]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-  };
-
-  // Handle filter changes
-  const handleFilterChange = () => {
-    filterResults();
   };
 
   // Clear all filters
@@ -522,46 +514,27 @@ const StudentResults: React.FC = () => {
     setSelectedCourse("all");
     setSelectedResult("all");
     setSelectedPublished("all");
-    setCurrentPage(1);
   };
 
+  // Initial fetch
   useEffect(() => {
-    fetchData();
+    fetchData(1, "");
   }, []);
-
-  // Apply filters whenever any filter value changes
-  useEffect(() => {
-    filterResults();
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [
-    searchQuery,
-    selectedBatch,
-    selectedCourse,
-    selectedResult,
-    selectedPublished,
-    studentResults,
-  ]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedResults = filteredResults.slice(startIndex, endIndex);
 
   // Pagination handlers
   const goToPage = (page: number) => {
-    setCurrentPage(page);
+    fetchData(page, searchQuery);
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      fetchData(currentPage - 1, searchQuery);
     }
   };
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      fetchData(currentPage + 1, searchQuery);
     }
   };
 
@@ -868,7 +841,7 @@ const StudentResults: React.FC = () => {
         } else {
           // Parse Excel file
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" , cellDates: true});
+          const workbook = XLSX.read(data, { type: "array", cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -1727,7 +1700,7 @@ const StudentResults: React.FC = () => {
 
   const selectAllForDelete = () => {
     setSelectedResultsForDelete(
-      new Set(paginatedResults.map((result) => result.id!))
+      new Set(filteredResults.map((result) => result.id!))
     );
   };
 
@@ -2025,7 +1998,7 @@ const StudentResults: React.FC = () => {
 
   const selectAllResults = () => {
     setSelectedResultsForExport(
-      new Set(paginatedResults.map((result) => result.id!))
+      new Set(filteredResults.map((result) => result.id!))
     );
   };
 
@@ -2156,17 +2129,14 @@ const StudentResults: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (loading && studentResults.length === 0) {
+    return <StudentResultsPageSkeleton />;
   }
 
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">
@@ -2176,13 +2146,13 @@ const StudentResults: React.FC = () => {
               Manage student results and their marks
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <Button
               onClick={() => openDialog()}
               className="gap-2 flex-1 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Result</span>
+              <span>Add Result</span>
             </Button>
             <Button
               onClick={() => {
@@ -2193,7 +2163,7 @@ const StudentResults: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Import</span>
+              <span className="hidden md:inline">Bulk Import</span>
             </Button>
             <Button
               onClick={() => setIsBulkUpdateDialogOpen(true)}
@@ -2201,7 +2171,7 @@ const StudentResults: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span className="hidden sm:inline">Convert to Excel</span>
+              <span className="hidden md:inline">Export</span>
             </Button>
             <Button
               onClick={() => setIsBulkDeleteDialogOpen(true)}
@@ -2209,229 +2179,305 @@ const StudentResults: React.FC = () => {
               className="gap-2 flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-600 hover:text-white"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Delete</span>
+              <span className="hidden md:inline">Delete</span>
             </Button>
           </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalResults}</p>
+                  <p className="text-xs text-muted-foreground">
+                    All results in database
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Pass Rate
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {totalResults > 0
+                      ? Math.round((totalPass / totalResults) * 100)
+                      : 0}
+                    %
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalPass} of {totalResults} passed
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Published
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Award className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalPublished}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Published results
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search and Filters */}
-        <div className="space-y-4">
-          {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-            <div className="relative flex-1 w-full sm:max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search results by student, course, batch, register number..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="pl-10 pr-10 w-full"
-              />
-              {searchQuery && (
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            {/* Search Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search results by student, register number, certificate number..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-10 w-full"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <Badge variant="secondary" className="whitespace-nowrap">
+                {searchQuery
+                  ? `${totalCount} results`
+                  : `${filteredResults.length} of ${studentResults.length} on page`}
+              </Badge>
+            </div>
+
+            {/* Filter Options */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filters:</span>
+              </div>
+
+              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Courses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id!.toString()}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Batches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Batches</SelectItem>
+                  {batches.map((batch) => (
+                    <SelectItem key={batch.id} value={batch.id!.toString()}>
+                      {batch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedResult} onValueChange={setSelectedResult}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All Results" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Results</SelectItem>
+                  <SelectItem value="pass">Pass</SelectItem>
+                  <SelectItem value="fail">Fail</SelectItem>
+                  <SelectItem value="absent">Absent</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedPublished}
+                onValueChange={setSelectedPublished}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="unpublished">Unpublished</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(searchQuery ||
+                selectedCourse !== "all" ||
+                selectedBatch !== "all" ||
+                selectedResult !== "all" ||
+                selectedPublished !== "all") && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  onClick={clearAllFilters}
+                  className="gap-2"
                 >
                   <X className="h-4 w-4" />
+                  Clear All
                 </Button>
               )}
             </div>
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredResults.length} of {studentResults.length} results
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Filter Options */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filters:</span>
-            </div>
-
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Courses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Courses</SelectItem>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id!.toString()}>
-                    {course.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Batches" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Batches</SelectItem>
-                {batches.map((batch) => (
-                  <SelectItem key={batch.id} value={batch.id!.toString()}>
-                    {batch.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedResult} onValueChange={setSelectedResult}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Results" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Results</SelectItem>
-                <SelectItem value="pass">Pass</SelectItem>
-                <SelectItem value="fail">Fail</SelectItem>
-                {/* <SelectItem value="distinction">Distinction</SelectItem> */}
-                <SelectItem value="absent">Absent</SelectItem>
-                {/* <SelectItem value="no_result">No Result</SelectItem> */}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedPublished}
-              onValueChange={setSelectedPublished}
+        {/* Results Grid/List */}
+        <div className="grid grid-cols-1 gap-4">
+          {filteredResults.map((result) => (
+            <Card
+              key={result.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/student-result-view/${result.id}`)}
             >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="unpublished">Unpublished</SelectItem>
-              </SelectContent>
-            </Select>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Left Section - Result Info */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                        <GraduationCap className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold mb-1 truncate">
+                          {result.student_name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            <User className="h-3 w-3 mr-1" />
+                            {result.register_number}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Award className="h-3 w-3 mr-1" />
+                            {result.certificate_number}
+                          </Badge>
+                          {result.result && (
+                            <Badge
+                              variant={
+                                result.result.toLowerCase() === "pass"
+                                  ? "default"
+                                  : result.result.toLowerCase() ===
+                                    "distinction"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                              className="text-xs"
+                            >
+                              {result.result}
+                            </Badge>
+                          )}
+                          {result.is_published ? (
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-green-600 border-green-600"
+                            >
+                              Published
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-orange-600 border-orange-600"
+                            >
+                              Unpublished
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearAllFilters}
-              className="gap-2"
-            >
-              <X className="h-4 w-4" />
-              Clear All
-            </Button>
-          </div>
-        </div>
+                    {/* Additional Info */}
+                    <div className="pl-14 space-y-1">
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          <span>{result.course_name}</span>
+                        </div>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span>{result.batch_name}</span>
+                        </div>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          <span>{result.marks?.length || 0} subjects</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Results Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Register No.</TableHead>
-                <TableHead>Certificate No.</TableHead>
-                <TableHead>Result</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Subjects</TableHead>
-                {/* <TableHead className="text-right">Actions</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedResults.map((result) => (
-                <TableRow key={result.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/student-result-view/${result.id}`)}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {/* <User className="h-4 w-4 text-muted-foreground" /> */}
-                      {result.student_name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
-                      {result.course_name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
-                      {result.batch_name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <Award className="h-4 w-4 text-muted-foreground" /> */}
-                      {result.register_number}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {/* <GraduationCap className="h-4 w-4 text-muted-foreground" /> */}
-                      {result.certificate_number}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {result.result ? (
-                      <Badge
-                        variant={
-                          result.result.toLowerCase() === "pass"
-                            ? "default"
-                            : result.result.toLowerCase() === "distinction"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                      >
-                        {result.result}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">
-                        No result
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {result.is_published ? (
-                        <Badge
-                          variant="outline"
-                          className="text-green-600 border-green-600"
-                        >
-                          Published
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="text-orange-600 border-orange-600"
-                        >
-                          Unpublished
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {result.marks?.length || 0}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/student-result-view/${result.id}`)}>
+                  {/* Right Section - Action Button */}
+                  <div className="flex sm:flex-col items-center gap-2 sm:gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 w-full sm:w-auto"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/student-result-view/${result.id}`);
+                      }}
+                    >
                       <Eye className="h-4 w-4" />
-                      View
+                      <span className="hidden sm:inline">View Details</span>
                     </Button>
-                    
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Pagination Controls */}
-        {filteredResults.length > 0 && totalPages > 1 && (
+        {totalCount > 0 && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredResults.length)} of{" "}
-              {filteredResults.length} results
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{" "}
+              results
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -2490,7 +2536,7 @@ const StudentResults: React.FC = () => {
           </div>
         )}
 
-        {filteredResults.length === 0 && (
+        {filteredResults.length === 0 && !loading && (
           <div className="text-center py-12">
             <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             {searchQuery ||
@@ -3061,10 +3107,10 @@ const StudentResults: React.FC = () => {
                     onClick={selectAllResults}
                     variant="outline"
                     size="sm"
-                    disabled={paginatedResults.length === 0}
+                    disabled={filteredResults.length === 0}
                     className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Select All ({paginatedResults.length})
+                    Select All ({filteredResults.length})
                   </Button>
                   <Button
                     onClick={clearSelection}
@@ -3093,12 +3139,12 @@ const StudentResults: React.FC = () => {
                             checked={
                               selectedResultsForExport.size > 0 &&
                               selectedResultsForExport.size ===
-                                paginatedResults.length
+                                filteredResults.length
                             }
                             onChange={() => {
                               if (
                                 selectedResultsForExport.size ===
-                                paginatedResults.length
+                                filteredResults.length
                               ) {
                                 clearSelection();
                               } else {
@@ -3129,7 +3175,7 @@ const StudentResults: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedResults.map((result) => (
+                      {filteredResults.map((result) => (
                         <tr
                           key={result.id}
                           className="border-t hover:bg-muted/50"
@@ -3549,10 +3595,10 @@ const StudentResults: React.FC = () => {
                     onClick={selectAllForDelete}
                     variant="outline"
                     size="sm"
-                    disabled={paginatedResults.length === 0}
+                    disabled={filteredResults.length === 0}
                     className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Select All ({paginatedResults.length})
+                    Select All ({filteredResults.length})
                   </Button>
                   <Button
                     onClick={clearDeleteSelection}
@@ -3581,12 +3627,12 @@ const StudentResults: React.FC = () => {
                             checked={
                               selectedResultsForDelete.size > 0 &&
                               selectedResultsForDelete.size ===
-                                paginatedResults.length
+                                filteredResults.length
                             }
                             onChange={() => {
                               if (
                                 selectedResultsForDelete.size ===
-                                paginatedResults.length
+                                filteredResults.length
                               ) {
                                 clearDeleteSelection();
                               } else {
@@ -3617,7 +3663,7 @@ const StudentResults: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedResults.map((result) => (
+                      {filteredResults.map((result) => (
                         <tr
                           key={result.id}
                           className="border-t hover:bg-muted/50"

@@ -53,6 +53,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "../hooks/use-toast";
+import { UsersPageSkeleton } from "../components/skeletons/UsersPageSkeleton";
 
 interface CreatedByUser {
   id: number;
@@ -304,13 +305,11 @@ const Users: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
-      <div className="container mx-auto p-4 sm:p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      </div>
+      <Layout>
+        <UsersPageSkeleton />
+      </Layout>
     );
   }
 
