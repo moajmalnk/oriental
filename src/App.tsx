@@ -22,6 +22,10 @@ import CourseView from "./pages/CourseView";
 import { Navigate } from "react-router-dom";
 import BatchView from "./pages/BatchView";
 import StudentResultView from "./pages/StudentResultView";
+import AdmissionForm from "./pages/AdmissionForm";
+import Admissions from "./pages/Admissions";
+import AdmissionView from "./pages/AdmissionView";
+import AdmissionApprove from "./pages/AdmissionApprove";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +39,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
+            <Route path="/admission" element={<AdmissionForm />} />
             <Route
               path="/users"
               element={
@@ -117,6 +122,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <StudentResultView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admissions"
+              element={
+                <ProtectedRoute>
+                  <Admissions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admission-view/:id"
+              element={
+                <ProtectedRoute>
+                  <AdmissionView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admission-approve/:id"
+              element={
+                <ProtectedRoute>
+                  <AdmissionApprove />
                 </ProtectedRoute>
               }
             />

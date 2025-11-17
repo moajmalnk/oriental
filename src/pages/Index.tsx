@@ -227,21 +227,23 @@ const Index = () => {
             {/* Result Availability Status */}
             <div className="mt-12" role="status" aria-live="polite">
               {isResultAvailable ? (
-                <div
-                  className="inline-flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-8 py-4 backdrop-blur-sm"
-                  aria-label="Results are now available"
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckCircle
-                      className="h-5 w-5 text-emerald-400"
-                      aria-hidden="true"
-                    />
-                    <AnnouncementSlideshow />
-                  </div>
+                <div className="flex flex-col items-center gap-4">
                   <div
-                    className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
-                    aria-hidden="true"
-                  ></div>
+                    className="inline-flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-8 py-4 backdrop-blur-sm"
+                    aria-label="Results are now available"
+                  >
+                    <div className="flex items-center gap-3">
+                      <CheckCircle
+                        className="h-5 w-5 text-emerald-400"
+                        aria-hidden="true"
+                      />
+                      <AnnouncementSlideshow />
+                    </div>
+                    <div
+                      className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
+                      aria-hidden="true"
+                    ></div>
+                  </div>
                 </div>
               ) : (
                 <div
@@ -399,13 +401,15 @@ const Index = () => {
                                   Certificate Preview Available
                                 </h3>
                                 <p className="text-muted-foreground leading-relaxed mb-4">
-                                  To view the certificate preview, please switch to desktop
-                                  view (full screen) for the best experience.
+                                  To view the certificate preview, please switch
+                                  to desktop view (full screen) for the best
+                                  experience.
                                 </p>
                                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                   <span>
-                                    Desktop view recommended for certificate preview
+                                    Desktop view recommended for certificate
+                                    preview
                                   </span>
                                 </div>
                               </div>
