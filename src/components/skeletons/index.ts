@@ -7,3 +7,4 @@ export { BatchPageSkeleton } from "./BatchPageSkeleton";
 export { CoursePageSkeleton } from "./CoursePageSkeleton";
 export { StudentResultsPageSkeleton } from "./StudentResultsPageSkeleton";
 export { UsersPageSkeleton } from "./UsersPageSkeleton";
+export { AdmissionsPageSkeleton } from "./AdmissionsPageSkeleton";

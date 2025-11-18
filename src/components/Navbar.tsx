@@ -25,6 +25,8 @@ import {
   X,
   Calendar,
   MessageSquare,
+  User,
+  FilePlus2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -125,6 +127,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
       icon: MessageSquare,
       show: isAuthenticated,
     },
+    {
+      path: "/admissions",
+      label: "Admissions",
+      icon: User,
+      show: isAuthenticated,
+    },
   ];
 
   const handleMobileMenuToggle = () => {
@@ -138,10 +146,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ onBulkCertificateClick }) => {
     }
   };
 
+  const adminRoutePrefixes = [
+    "/courses",
+    "/batches",
+    "/students",
+    "/users",
+    "/student-results",
+    "/announcements",
+    "/admissions",
+    "/dashboard",
+  ];
+
+  const isAdminRoute = adminRoutePrefixes.some((prefix) =>
+    location.pathname.startsWith(prefix)
+  );
+
+  const showAdmissionButton = !isAdminRoute;
+
   return (
     <>
       {/* Theme Toggle - Top Right */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        {showAdmissionButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admission")}
+            className="rounded-full h-10 px-4 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-background/90 transition-all duration-300"
+            aria-label="Apply for admission"
+          >
+            <div className="flex items-center gap-2">
+              <FilePlus2 className="h-4 w-4 text-foreground" />
+              <span className="text-xs font-semibold tracking-wide uppercase text-foreground">
+                Get Admissions
+              </span>
+            </div>
+          </Button>
+        )}
         <ThemeToggle />
       </div>
 
